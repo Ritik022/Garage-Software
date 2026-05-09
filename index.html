@@ -1,0 +1,1032 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Friends Automotive</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔧</text></svg>"/>
+<script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body,#root{height:100%}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;font-size:13px;background:#f0f4f8;color:#111;-webkit-font-smoothing:antialiased}
+input,select,textarea,button{font-family:inherit;font-size:12px}
+input,select,textarea{padding:7px 9px;border:1px solid #d0d7de;border-radius:6px;background:#fff;color:#111;outline:none;width:100%;transition:border-color .15s,box-shadow .15s}
+input:focus,select:focus,textarea:focus{border-color:#1565c0;box-shadow:0 0 0 3px rgba(21,101,192,.12)}
+table{border-collapse:collapse;width:100%}
+::-webkit-scrollbar{width:5px;height:5px}::-webkit-scrollbar-thumb{background:#c8d0da;border-radius:3px}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes fadein{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+@media print{.np{display:none!important}body{background:#fff}}
+</style>
+</head>
+<body><div id="root"></div>
+
+<!-- ═══════════════════════════════════════════════════════
+     STEP 1: Paste your Supabase credentials below
+     Get them from: supabase.com → your project → Settings → API
+     ═══════════════════════════════════════════════════════ -->
+<script>
+window.FA_SUPABASE_URL = 'https://lhbnwskqthjdjbgwjogr.supabase.co'
+window.FA_SUPABASE_KEY = 'sb_publishable_Us3B3qv2dpZKQl8CQ6ALow_-RBHNfms'
+</script>
+
+<script type="text/babel" data-presets="react">
+const {useState,useEffect,useCallback} = React
+
+/* ─── SUPABASE ──────────────────────────────────────── */
+const sb = supabase.createClient(window.FA_SUPABASE_URL, window.FA_SUPABASE_KEY)
+
+/* ─── HSN DATABASE ──────────────────────────────────── */
+const HSN = {"Engine Oil":{h:"27101980",g:18},"Air Filter":{h:"84212300",g:18},"Oil Filter":{h:"84212300",g:18},"Fuel Filter":{h:"84212300",g:18},"Cabin Filter":{h:"84212300",g:18},"Spark Plug":{h:"85111000",g:18},"Glow Plug":{h:"85119000",g:18},"Brake Pad":{h:"87083000",g:28},"Brake Shoe":{h:"87083000",g:28},"Brake Disc":{h:"87083000",g:28},"Brake Drum":{h:"87083000",g:28},"Brake Caliper":{h:"87083000",g:28},"Clutch Plate":{h:"87084000",g:28},"Clutch Kit":{h:"87084000",g:28},"Pressure Plate":{h:"87084000",g:28},"Timing Belt":{h:"40103900",g:18},"Timing Chain":{h:"73151200",g:18},"Drive Belt":{h:"40103900",g:18},"Serpentine Belt":{h:"40103900",g:18},"Battery":{h:"85072000",g:28},"Alternator":{h:"85113000",g:28},"Starter Motor":{h:"85114000",g:28},"Radiator":{h:"87089900",g:28},"Coolant":{h:"38200000",g:18},"Thermostat":{h:"83484000",g:18},"Shock Absorber":{h:"87088000",g:28},"Strut":{h:"87088000",g:28},"CV Joint":{h:"87082900",g:28},"Ball Joint":{h:"87089400",g:28},"Tie Rod":{h:"87089400",g:28},"Wheel Bearing":{h:"84823000",g:18},"Control Arm":{h:"87089400",g:28},"Brake Fluid":{h:"38193000",g:18},"Transmission Fluid":{h:"27101980",g:18},"Power Steering Fluid":{h:"27101980",g:18},"Gear Oil":{h:"27101980",g:18},"Wiper Blade":{h:"85122000",g:28},"Headlight Bulb":{h:"85392200",g:12},"Tail Light Bulb":{h:"85392200",g:12},"Exhaust Pipe":{h:"87089300",g:28},"Muffler":{h:"87089300",g:28},"Catalytic Converter":{h:"87089300",g:28},"Oxygen Sensor":{h:"90279000",g:18},"Throttle Body":{h:"84099200",g:28},"Fuel Injector":{h:"84099200",g:28},"Fuel Pump":{h:"84131900",g:18},"Water Pump":{h:"84132000",g:18},"Ignition Coil":{h:"85112000",g:18},"Gasket Set":{h:"84841000",g:18},"Head Gasket":{h:"84841000",g:18},"Flywheel":{h:"84831000",g:28},"Solenoid Valve":{h:"84814000",g:18},"AdBlue":{h:"31021000",g:18},"Tyre":{h:"40111000",g:28},"Tube":{h:"40131000",g:28},"Alloy Wheel":{h:"87087000",g:28},"Rim":{h:"87087000",g:28},"Windshield":{h:"70071100",g:18},"Side Mirror":{h:"87083900",g:28},"Bumper":{h:"87083900",g:28},"Hood":{h:"87083900",g:28},"Fender":{h:"87083900",g:28},"AC Compressor":{h:"84145990",g:28},"AC Filter":{h:"84212300",g:18},"AC Condenser":{h:"84158200",g:28},"AC Gas":{h:"29033000",g:18},"Blower Motor":{h:"87089900",g:28}}
+
+const SERVICES = [
+  {n:"Engine Oil Change",s:"998714",g:18,r:500},{n:"Full Service (Minor)",s:"998714",g:18,r:2500},{n:"Full Service (Major)",s:"998714",g:18,r:5000},
+  {n:"Brake Service",s:"998714",g:18,r:1200},{n:"AC Service",s:"998714",g:18,r:1500},{n:"AC Gas Refill",s:"998714",g:18,r:2000},
+  {n:"Wheel Alignment",s:"998714",g:18,r:700},{n:"Wheel Balancing",s:"998714",g:18,r:600},{n:"Tyre Rotation",s:"998714",g:18,r:400},{n:"Tyre Fitting",s:"998714",g:18,r:200},
+  {n:"Clutch Replacement",s:"998714",g:18,r:3000},{n:"Engine Repair",s:"998714",g:18,r:8000},{n:"Transmission Service",s:"998714",g:18,r:4000},
+  {n:"Suspension Check",s:"998714",g:18,r:800},{n:"Electrical Diagnosis",s:"998714",g:18,r:600},
+  {n:"Diagnose & Scanning Charges",s:"999300",g:18,r:1500},{n:"Denting & Painting",s:"998714",g:18,r:5000},
+  {n:"Windshield Replacement",s:"998714",g:18,r:2000},{n:"Car Wash",s:"999721",g:18,r:300},{n:"Detailing",s:"999721",g:18,r:2500},
+  {n:"Oil Service Labour Charges",s:"998714",g:18,r:1500},{n:"Flywheel R/R Labour",s:"998714",g:18,r:3000},
+  {n:"Towing Charges",s:"996601",g:5,r:800},{n:"Labour Charges",s:"998714",g:18,r:1000},{n:"Inspection / Diagnosis",s:"998714",g:18,r:500}
+]
+
+const MAKES = ["Maruti Suzuki","Hyundai","Tata","Mahindra","Honda","Toyota","Kia","Renault","Nissan","Volkswagen","Skoda","MG","Mercedes-Benz","BMW","Audi","Volvo","Ford","Jeep","Fiat","Isuzu","Other"]
+
+/* ─── SNAKE ↔ CAMEL ─────────────────────────────────── */
+const S2C = {shop_name:'shopName',bank_name:'bankName',account_no:'accountNo',bank_branch:'bankBranch',upi_id:'upiId',labor_rate:'laborRate',invoice_prefix:'invoicePrefix',invoice_terms:'invoiceTerms',company_name:'companyName',customer_name:'customerName',customer_id:'customerId',vehicle_id:'vehicleId',reg_no:'regNo',engine_no:'engineNo',fuel_type:'fuelType',insurance_expiry:'insuranceExpiry',last_service:'lastService',part_no:'partNo',hsn_code:'hsnCode',purchase_price:'purchasePrice',selling_price:'sellingPrice',min_qty:'minQty',job_card_id:'jobCardId',vehicle_reg:'vehicleReg',technician_name:'technicianName',estimated_delivery:'estimatedDelivery',gst_total:'gstTot',grand_total:'grand',customer_phone:'customerPhone',customer_address:'customerAddress',customer_gstin:'customerGstin',customer_email:'customerEmail',vehicle_details:'vehicleDetails',vin_no:'vinNo',vehicle_color:'vehicleColor',vehicle_fuel:'vehicleFuel',additional_discount:'additionalDiscount',payment_status:'paymentStatus',payment_method:'paymentMethod',amount_paid:'amountPaid',due_date:'dueDate',terms_conditions:'termsConditions',created_at:'createdAt',updated_at:'updatedAt'}
+const C2S = Object.fromEntries(Object.entries(S2C).map(([k,v])=>[v,k]))
+C2S.gstTot='gst_total'; C2S.grand='grand_total'; C2S.subtotal='subtotal'
+
+const toCamel = obj => { const r={}; for(const[k,v] of Object.entries(obj)) r[S2C[k]||k]=v; return r }
+const toSnake = obj => { const r={}; for(const[k,v] of Object.entries(obj)) r[C2S[k]||k]=v; return r }
+
+/* ─── HELPERS ───────────────────────────────────────── */
+const fmt = n => '₹'+Number(n||0).toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2})
+const fmtD = d => { try{return new Date(d).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'})}catch{return d||''} }
+const today = () => new Date().toISOString().split('T')[0]
+
+function calcItems(items){
+  let sub=0, gt=0
+  const lines=(items||[]).map(it=>{
+    const a=(+it.qty||0)*(+it.rate||0), disc=a*((+it.discount||0)/100), tax=a-disc, ga=tax*((+it.gst||0)/100)
+    sub+=tax; gt+=ga; return{...it,a,disc,tax,ga,tot:tax+ga}
+  })
+  return {lines, sub, gt, grand:sub+gt}
+}
+
+function toWords(n){
+  const a=['','One','Two','Three','Four','Five','Six','Seven','Eight','Nine','Ten','Eleven','Twelve','Thirteen','Fourteen','Fifteen','Sixteen','Seventeen','Eighteen','Nineteen']
+  const b=['','','Twenty','Thirty','Forty','Fifty','Sixty','Seventy','Eighty','Ninety']
+  if(!n||n===0) return 'Zero'
+  function w(x){
+    if(x<20)return a[x]; if(x<100)return b[Math.floor(x/10)]+(x%10?' '+a[x%10]:'')
+    if(x<1000)return a[Math.floor(x/100)]+' Hundred'+(x%100?' '+w(x%100):'')
+    if(x<100000)return w(Math.floor(x/1000))+' Thousand'+(x%1000?' '+w(x%1000):'')
+    if(x<10000000)return w(Math.floor(x/100000))+' Lakh'+(x%100000?' '+w(x%100000):'')
+    return w(Math.floor(x/10000000))+' Crore'+(x%10000000?' '+w(x%10000000):'')
+  }
+  const r=Math.floor(n), p=Math.round((n-r)*100)
+  return w(r)+' Rupee'+(r!==1?'s':'')+(p>0?' and '+w(p)+' Paise':'')+' Only'
+}
+
+function buildInvNo(settings,id,date){
+  const pfx=settings.invoicePrefix||'FRA'
+  const pts=(date||today()).split('-')
+  const ddmmyy=pts.length===3?pts[2]+pts[1]+pts[0].slice(2):'000000'
+  return `${pfx}-${ddmmyy}-${String(id).padStart(4,'0')}`
+}
+
+/* ─── DATABASE HOOK ─────────────────────────────────── */
+const DEF = {shopName:'Friends Automotive',tagline:'Complete Car Solution',address:'Sector 77 Shikohpur Road beside Bharat Petroleum, Gurugram 122004',phone:'9654483936',email:'rshankar929@gmail.com',gstin:'06JCDPS8205K2Z4',pan:'JCDPS8205K',bankName:'HDFC BANK',accountNo:'50200062379206',ifsc:'HDFC0009433',bankBranch:'GURGAON',upiId:'',laborRate:500,invoicePrefix:'FRA',invoiceTerms:'1. Warranty on parts as per manufacturer terms.\n2. Labour warranty: 1 month.\n3. Goods once sold will not be taken back.'}
+
+function useDB(){
+  const[D,setD]=useState({customers:[],vehicles:[],parts:[],jobCards:[],invoices:[],settings:DEF})
+  const[ready,setReady]=useState(false)
+  const[busy,setBusy]=useState(false)
+  const[err,setErr]=useState(null)
+
+  useEffect(()=>{load()},[])
+
+  async function load(){
+    setReady(false); setErr(null)
+    try{
+      const [{data:st,error:e0},{data:cu,error:e1},{data:ve,error:e2},{data:pa,error:e3},{data:jc,error:e4},{data:iv,error:e5}] = await Promise.all([
+        sb.from('settings').select('*').eq('id',1).single(),
+        sb.from('customers').select('*').order('id',{ascending:false}),
+        sb.from('vehicles').select('*').order('id',{ascending:false}),
+        sb.from('parts').select('*').order('name'),
+        sb.from('job_cards').select('*').order('id',{ascending:false}),
+        sb.from('invoices').select('*').order('id',{ascending:false}),
+      ])
+      if(e0&&e0.code!=='PGRST116') throw e0
+      if(e1) throw e1
+      setD({settings:st?toCamel(st):DEF, customers:(cu||[]).map(toCamel), vehicles:(ve||[]).map(toCamel), parts:(pa||[]).map(toCamel), jobCards:(jc||[]).map(toCamel), invoices:(iv||[]).map(toCamel)})
+    }catch(e){
+      setErr('Cannot connect to database. Check your Supabase URL and Key in index.html, and make sure you ran schema.sql. Error: '+e.message)
+    }
+    setReady(true)
+  }
+
+  async function op(fn){
+    setBusy(true)
+    try{ const r=await fn(); setBusy(false); return r }
+    catch(e){ setBusy(false); alert('Database error: '+e.message); throw e }
+  }
+
+  // ── Customers
+  const saveCustomer=useCallback(async form=>op(async()=>{
+    const row=toSnake(form)
+    if(form.id){
+      const{data:d,error:e}=await sb.from('customers').update(row).eq('id',form.id).select().single(); if(e)throw e
+      const r=toCamel(d); setD(p=>({...p,customers:p.customers.map(c=>c.id===r.id?r:c)})); return r
+    }else{
+      delete row.id; const{data:d,error:e}=await sb.from('customers').insert(row).select().single(); if(e)throw e
+      const r=toCamel(d); setD(p=>({...p,customers:[r,...p.customers]})); return r
+    }
+  }),[])
+  const delCustomer=useCallback(async id=>op(async()=>{
+    const{error:e}=await sb.from('customers').delete().eq('id',id); if(e)throw e
+    setD(p=>({...p,customers:p.customers.filter(c=>c.id!==id)}))
+  }),[])
+
+  // ── Vehicles
+  const saveVehicle=useCallback(async form=>op(async()=>{
+    const row=toSnake(form)
+    if(form.id){
+      const{data:d,error:e}=await sb.from('vehicles').update(row).eq('id',form.id).select().single(); if(e)throw e
+      const r=toCamel(d); setD(p=>({...p,vehicles:p.vehicles.map(v=>v.id===r.id?r:v)})); return r
+    }else{
+      delete row.id; const{data:d,error:e}=await sb.from('vehicles').insert(row).select().single(); if(e)throw e
+      const r=toCamel(d); setD(p=>({...p,vehicles:[r,...p.vehicles]})); return r
+    }
+  }),[])
+  const delVehicle=useCallback(async id=>op(async()=>{
+    const{error:e}=await sb.from('vehicles').delete().eq('id',id); if(e)throw e
+    setD(p=>({...p,vehicles:p.vehicles.filter(v=>v.id!==id)}))
+  }),[])
+
+  // ── Parts
+  const savePart=useCallback(async form=>op(async()=>{
+    const row=toSnake(form)
+    if(form.id){
+      const{data:d,error:e}=await sb.from('parts').update(row).eq('id',form.id).select().single(); if(e)throw e
+      const r=toCamel(d); setD(p=>({...p,parts:p.parts.map(x=>x.id===r.id?r:x)})); return r
+    }else{
+      delete row.id; const{data:d,error:e}=await sb.from('parts').insert(row).select().single(); if(e)throw e
+      const r=toCamel(d); setD(p=>({...p,parts:[...p.parts,r].sort((a,b)=>a.name.localeCompare(b.name))})); return r
+    }
+  }),[])
+  const delPart=useCallback(async id=>op(async()=>{
+    const{error:e}=await sb.from('parts').delete().eq('id',id); if(e)throw e
+    setD(p=>({...p,parts:p.parts.filter(x=>x.id!==id)}))
+  }),[])
+
+  // ── Job Cards
+  const saveJob=useCallback(async form=>op(async()=>{
+    const row=toSnake(form); row.items=form.items||[]
+    if(form.id){
+      const{data:d,error:e}=await sb.from('job_cards').update(row).eq('id',form.id).select().single(); if(e)throw e
+      const r=toCamel(d); setD(p=>({...p,jobCards:p.jobCards.map(j=>j.id===r.id?r:j)})); return r
+    }else{
+      delete row.id; const{data:d,error:e}=await sb.from('job_cards').insert(row).select().single(); if(e)throw e
+      const r=toCamel(d); setD(p=>({...p,jobCards:[r,...p.jobCards]})); return r
+    }
+  }),[])
+  const delJob=useCallback(async id=>op(async()=>{
+    const{error:e}=await sb.from('job_cards').delete().eq('id',id); if(e)throw e
+    setD(p=>({...p,jobCards:p.jobCards.filter(j=>j.id!==id)}))
+  }),[])
+
+  // ── Invoices
+  const saveInvoice=useCallback(async form=>op(async()=>{
+    const row=toSnake(form); row.items=form.items||[]
+    if(form.id){
+      const{data:d,error:e}=await sb.from('invoices').update(row).eq('id',form.id).select().single(); if(e)throw e
+      const r=toCamel(d); setD(p=>({...p,invoices:p.invoices.map(i=>i.id===r.id?r:i)})); return r
+    }else{
+      delete row.id; const{data:d,error:e}=await sb.from('invoices').insert(row).select().single(); if(e)throw e
+      const r=toCamel(d); setD(p=>({...p,invoices:[r,...p.invoices]})); return r
+    }
+  }),[])
+  const markPay=useCallback(async(id,ps)=>op(async()=>{
+    const{data:d,error:e}=await sb.from('invoices').update({payment_status:ps}).eq('id',id).select().single(); if(e)throw e
+    const r=toCamel(d); setD(p=>({...p,invoices:p.invoices.map(i=>i.id===id?r:i)}))
+  }),[])
+  const delInvoice=useCallback(async id=>op(async()=>{
+    const{error:e}=await sb.from('invoices').delete().eq('id',id); if(e)throw e
+    setD(p=>({...p,invoices:p.invoices.filter(i=>i.id!==id)}))
+  }),[])
+
+  // ── Settings
+  const saveSettings=useCallback(async form=>op(async()=>{
+    const row=toSnake(form); row.id=1
+    const{data:d,error:e}=await sb.from('settings').upsert(row).select().single(); if(e)throw e
+    const r=toCamel(d); setD(p=>({...p,settings:r})); return r
+  }),[])
+
+  return{D,ready,busy,err,reload:load,saveCustomer,delCustomer,saveVehicle,delVehicle,savePart,delPart,saveJob,delJob,saveInvoice,markPay,delInvoice,saveSettings}
+}
+
+/* ─── UI PRIMITIVES ─────────────────────────────────── */
+const BM={draft:"#e3f2fd|#0d47a1",open:"#fff3e0|#e65100","in-progress":"#e8f5e9|#2e7d32",completed:"#ede7f6|#4527a0",delivered:"#e0f2f1|#00695c",cancelled:"#fce4ec|#880e4f",pending:"#fff8e1|#f57f17",paid:"#e8f5e9|#1b5e20",partial:"#fff3e0|#bf360c",normal:"#f5f5f5|#777",high:"#fff3e0|#e65100",urgent:"#fce4ec|#c62828",individual:"#e8eaf6|#283593",corporate:"#e1f5fe|#01579b",fleet:"#f3e5f5|#6a1b9a",petrol:"#e3f2fd|#0d47a1",diesel:"#fbe9e7|#bf360c",cng:"#e8f5e9|#1b5e20",electric:"#e0f2f1|#004d40",hybrid:"#f1f8e9|#33691e",spare:"#e3f2fd|#0d47a1",consumable:"#e8f5e9|#1b5e20",lubricant:"#fff8e1|#f57f17",tyre:"#fce4ec|#880e4f",electrical:"#fff3e0|#e65100",body:"#e0f2f1|#004d40",accessory:"#f1f8e9|#33691e",other:"#f5f5f5|#666"}
+const Bdg=({s})=>{const c=BM[s]||'#f5f5f5|#666';const[bg,fg]=c.split('|');return<span style={{fontSize:10,padding:'2px 8px',borderRadius:20,background:bg,color:fg,fontWeight:700,whiteSpace:'nowrap'}}>{(s||'').replace(/-/g,' ').toUpperCase()}</span>}
+
+const IS={width:'100%',boxSizing:'border-box',padding:'7px 9px',border:'1px solid #d0d7de',borderRadius:6,fontSize:12,fontFamily:'inherit'}
+const TH={padding:'9px 10px',textAlign:'left',fontWeight:700,fontSize:11,borderBottom:'2px solid #e8ecf0',background:'#f6f8fa',color:'#555'}
+const TD={padding:'8px 10px',fontSize:12,borderBottom:'1px solid #f0f4f8',verticalAlign:'middle'}
+
+function Modal({title,onClose,wide,children}){
+  return <div onClick={e=>{if(e.target===e.currentTarget)onClose()}} style={{position:'fixed',inset:0,background:'rgba(0,0,0,.55)',zIndex:999,display:'flex',alignItems:'flex-start',justifyContent:'center',overflowY:'auto',padding:'20px 10px'}}>
+    <div style={{background:'#fff',borderRadius:12,width:wide?940:620,maxWidth:'99vw',boxShadow:'0 24px 64px rgba(0,0,0,.28)',animation:'fadein .2s ease',display:'flex',flexDirection:'column',maxHeight:'92vh'}}>
+      <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'14px 20px',borderBottom:'1px solid #e8ecf0',flexShrink:0}}>
+        <strong style={{fontSize:15}}>{title}</strong>
+        <button onClick={onClose} style={{border:'none',background:'none',cursor:'pointer',fontSize:24,color:'#999',padding:'0 4px',lineHeight:1}}>×</button>
+      </div>
+      <div style={{padding:20,overflowY:'auto',flex:1}}>{children}</div>
+    </div>
+  </div>
+}
+const F=({label,half,third,children})=>{const w=third?'calc(33.33% - 9px)':half?'calc(50% - 6px)':'100%';return<div style={{marginBottom:12,width:w,flexShrink:0}}><div style={{fontSize:11,color:'#6b7280',marginBottom:3,fontWeight:600}}>{label}</div>{children}</div>}
+const FR=({children})=><div style={{display:'flex',flexWrap:'wrap',gap:12}}>{children}</div>
+const In=p=><input {...p} style={{...IS,...p.style}}/>
+const Tx=p=><textarea {...p} style={{...IS,minHeight:60,...p.style}}/>
+const Sl=({opts=[],...p})=><select {...p} style={{...IS,...p.style}}><option value="">— Select —</option>{opts.map(o=><option key={o.v??o} value={o.v??o}>{o.l??o}</option>)}</select>
+const PBtn=({onClick,children,col='#1565c0',style:s})=><button onClick={onClick} style={{padding:'8px 18px',background:col,color:'#fff',border:'none',borderRadius:7,cursor:'pointer',fontSize:12,fontWeight:700,display:'inline-flex',alignItems:'center',gap:5,whiteSpace:'nowrap',...s}}>{children}</button>
+const GBtn=({onClick,children,col,style:s})=><button onClick={onClick} style={{padding:'7px 13px',background:'#fff',border:'1px solid #d0d7de',borderRadius:7,cursor:'pointer',fontSize:12,color:col||'#444',fontWeight:500,whiteSpace:'nowrap',...s}}>{children}</button>
+const Btns=({onCancel,onSave,label='Save'})=><div style={{display:'flex',gap:8,justifyContent:'flex-end',marginTop:16,paddingTop:14,borderTop:'1px solid #f0f0f0'}}><GBtn onClick={onCancel}>Cancel</GBtn><PBtn onClick={onSave}>{label}</PBtn></div>
+const SC=({label,val,em,col})=><div style={{background:'#fff',border:'1px solid #e8ecf0',borderRadius:10,padding:'14px 16px',borderTop:`3px solid ${col}`}}><div style={{display:'flex',alignItems:'center',gap:7,marginBottom:6}}><span style={{fontSize:18}}>{em}</span><span style={{fontSize:11,color:'#6b7280',fontWeight:600}}>{label}</span></div><div style={{fontSize:20,fontWeight:800}}>{val}</div></div>
+
+/* ─── LINE ITEM EDITOR ──────────────────────────────── */
+function LineEd({items,setItems,parts}){
+  const add=svc=>setItems(p=>[...p,{id:Date.now()+Math.random(),name:'',qty:1,rate:0,gst:18,discount:0,hsnSac:'',isService:svc}])
+  const upd=(id,k,v)=>setItems(p=>p.map(x=>x.id===id?{...x,[k]:v}:x))
+  function fill(id,name){
+    const p2=parts.find(p=>p.name===name)
+    if(p2){setItems(pr=>pr.map(x=>x.id===id?{...x,name,rate:+p2.sellingPrice||0,gst:+p2.gst||18,hsnSac:p2.hsnCode||''}:x));return}
+    const sv=SERVICES.find(s=>s.n===name)
+    if(sv){setItems(pr=>pr.map(x=>x.id===id?{...x,name,rate:sv.r,gst:sv.g,hsnSac:sv.s}:x));return}
+    upd(id,'name',name)
+  }
+  const{lines,sub,gt,grand}=calcItems(items)
+  const ith={padding:'6px 5px',textAlign:'left',fontWeight:700,fontSize:11,background:'#f0f4f8',borderBottom:'2px solid #e0e7ef',color:'#444',whiteSpace:'nowrap'}
+  const itd={padding:'5px 5px',fontSize:11,borderBottom:'1px solid #f0f4f8',verticalAlign:'middle'}
+  const ii={padding:'4px 6px',border:'1px solid #d0d7de',borderRadius:5,fontSize:11,fontFamily:'inherit',background:'#fff',outline:'none'}
+  return <div>
+    <div style={{display:'flex',gap:8,marginBottom:10}}>
+      <button onClick={()=>add(false)} style={{padding:'6px 14px',background:'#e3f2fd',color:'#0d47a1',border:'1px solid #90caf9',borderRadius:7,cursor:'pointer',fontSize:11,fontWeight:700}}>+ Add Part</button>
+      <button onClick={()=>add(true)} style={{padding:'6px 14px',background:'#e8f5e9',color:'#1b5e20',border:'1px solid #a5d6a7',borderRadius:7,cursor:'pointer',fontSize:11,fontWeight:700}}>+ Add Labour / Service</button>
+    </div>
+    {items.length>0&&<div style={{overflowX:'auto',marginBottom:8}}>
+      <table style={{minWidth:740,borderCollapse:'collapse',width:'100%'}}>
+        <thead><tr>{['#','Description','HSN/SAC','Qty','Rate (₹)','Disc %','GST %','Taxable','GST Amt','Total',''].map((h,i)=><th key={i} style={ith}>{h}</th>)}</tr></thead>
+        <tbody>{lines.map((it,i)=><tr key={it.id} style={{background:it.isService?'#f8fff8':'#fff'}}>
+          <td style={{...itd,color:'#aaa',width:22,textAlign:'center'}}>{i+1}</td>
+          <td style={{...itd,minWidth:160}}>
+            <input list={`dl${it.id}`} value={it.name} onChange={e=>fill(it.id,e.target.value)} placeholder={it.isService?'Service name':'Part name'} style={{...ii,width:'100%',minWidth:140}}/>
+            <datalist id={`dl${it.id}`}>{(it.isService?SERVICES.map(s=>({n:s.n})):[...parts.map(p=>({n:p.name})),...SERVICES]).map(p=><option key={p.n} value={p.n}/>)}</datalist>
+          </td>
+          <td style={itd}><input value={it.hsnSac||''} onChange={e=>upd(it.id,'hsnSac',e.target.value)} style={{...ii,width:80,fontFamily:'monospace',fontSize:10}}/></td>
+          <td style={itd}><input type="number" value={it.qty} onChange={e=>upd(it.id,'qty',+e.target.value)} min={0} style={{...ii,width:50}}/></td>
+          <td style={itd}><input type="number" value={it.rate} onChange={e=>upd(it.id,'rate',+e.target.value)} min={0} style={{...ii,width:76}}/></td>
+          <td style={itd}><input type="number" value={it.discount||0} onChange={e=>upd(it.id,'discount',+e.target.value)} min={0} max={100} style={{...ii,width:44}}/></td>
+          <td style={itd}><select value={it.gst} onChange={e=>upd(it.id,'gst',+e.target.value)} style={{...ii,width:56}}>{[0,5,12,18,28].map(r=><option key={r} value={r}>{r}%</option>)}</select></td>
+          <td style={{...itd,textAlign:'right',color:'#555'}}>{fmt(it.tax)}</td>
+          <td style={{...itd,textAlign:'right',color:'#555'}}>{fmt(it.ga)}</td>
+          <td style={{...itd,fontWeight:800,textAlign:'right',color:'#1565c0'}}>{fmt(it.tot)}</td>
+          <td style={itd}><button onClick={()=>setItems(p=>p.filter(x=>x.id!==it.id))} style={{border:'none',background:'none',color:'#e53935',cursor:'pointer',fontSize:18,padding:'0 4px'}}>×</button></td>
+        </tr>)}</tbody>
+      </table>
+    </div>}
+    {items.length===0&&<div style={{textAlign:'center',padding:20,color:'#aaa',fontSize:12,border:'1px dashed #d0d7de',borderRadius:8}}>No items yet. Add a part or labour above.</div>}
+    <div style={{display:'flex',justifyContent:'flex-end',marginTop:12}}>
+      <div style={{width:280,fontSize:12}}>
+        {[['Subtotal (taxable)',sub],['Total GST',gt]].map(([l,v])=><div key={l} style={{display:'flex',justifyContent:'space-between',padding:'5px 0',borderBottom:'1px solid #f0f0f0'}}><span style={{color:'#888'}}>{l}</span><span>{fmt(v)}</span></div>)}
+        <div style={{display:'flex',justifyContent:'space-between',padding:'8px 0',fontWeight:800,fontSize:17,color:'#1565c0'}}><span>Grand Total</span><span>{fmt(grand)}</span></div>
+      </div>
+    </div>
+  </div>
+}
+
+/* ─── PRINT INVOICE (SGV layout) ────────────────────── */
+function PrintDoc({inv,settings,onClose}){
+  const{lines,sub,gt,grand}=calcItems(inv.items||[])
+  const fg=grand-(inv.additionalDiscount||0)+(inv.adjustment||0)
+  const lbl=inv.type==='estimate'?'ESTIMATE':inv.type==='final-invoice'?'FINAL INVOICE':'TAX INVOICE'
+  const invNo=buildInvNo(settings,inv.id,inv.date)
+  const gG={}; lines.forEach(it=>{if(!gG[it.gst])gG[it.gst]={rate:it.gst,tax:0,ga:0};gG[it.gst].tax+=it.tax;gG[it.gst].ga+=it.ga})
+  const cell={border:'1px solid #333',padding:'5px 7px',fontSize:11,verticalAlign:'top'}
+  const hcell={...cell,background:'#1a1a2e',color:'#fff',fontWeight:700}
+  const emptyRows=Math.max(0,5-lines.length)
+  return <div style={{fontFamily:'Arial,Helvetica,sans-serif',fontSize:11,color:'#111',background:'#fff',maxWidth:840,margin:'0 auto'}}>
+    <style>{`@media print{.np{display:none!important}body{margin:0;background:#fff}#pd{max-width:100%}}@page{size:A4;margin:8mm}`}</style>
+    <div id="pd">
+    {/* HEADER */}
+    <table style={{width:'100%',borderCollapse:'collapse',border:'1px solid #333'}}>
+      <tbody><tr>
+        <td style={{...cell,width:'62%',borderRight:'1px solid #333',padding:'10px 14px'}}>
+          <div style={{display:'flex',alignItems:'center',gap:10,marginBottom:6}}>
+            <div style={{width:48,height:48,background:'#1a1a2e',borderRadius:6,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',color:'#fff',flexShrink:0}}>
+              <div style={{fontSize:14,fontWeight:900,letterSpacing:1}}>FA</div>
+              <div style={{fontSize:7,opacity:.8,letterSpacing:.5}}>AUTOMOTIVE</div>
+            </div>
+            <div>
+              <div style={{fontSize:18,fontWeight:900,color:'#1a1a2e'}}>{settings.shopName}</div>
+              {settings.tagline&&<div style={{fontSize:10,color:'#666',fontStyle:'italic'}}>{settings.tagline}</div>}
+            </div>
+          </div>
+          <div style={{fontSize:10,color:'#333',lineHeight:1.7}}>{settings.address}<br/>Phone: {settings.phone}&nbsp;&nbsp;|&nbsp;&nbsp;GST: {settings.gstin}</div>
+        </td>
+        <td style={{...cell,textAlign:'right',verticalAlign:'middle',padding:'10px 14px'}}>
+          <div style={{color:'#c0392b',fontSize:15,fontWeight:900,letterSpacing:1}}>{lbl}</div>
+          <div style={{fontSize:11,marginTop:4,color:'#333'}}>Date: {fmtD(inv.date)}</div>
+          {settings.upiId&&<div style={{marginTop:8,fontSize:9,color:'#888'}}>Scan to Pay: {settings.upiId}</div>}
+        </td>
+      </tr></tbody>
+    </table>
+    {/* SHOP + INVOICE META */}
+    <table style={{width:'100%',borderCollapse:'collapse',border:'1px solid #333',borderTop:'none'}}>
+      <tbody><tr>
+        <td style={{...cell,width:'45%',borderRight:'1px solid #333'}}>
+          <div style={{fontWeight:900,fontSize:12,color:'#1a1a2e',marginBottom:3}}>{settings.shopName.toUpperCase()}</div>
+          <div style={{fontSize:10,lineHeight:1.7}}>{settings.address}<br/>GSTIN: {settings.gstin}<br/>Contact: {settings.phone}<br/>Email: {settings.email}</div>
+        </td>
+        <td style={{...cell,padding:0}}>
+          <table style={{width:'100%',borderCollapse:'collapse'}}>
+            <tbody>
+              <tr><td style={{...cell,border:'none',borderBottom:'1px solid #333',borderRight:'1px solid #333',fontWeight:700,width:'50%',fontSize:11}}>Invoice No: <span style={{color:'#1a1a2e',fontWeight:900}}>{invNo}</span></td><td style={{...cell,border:'none',borderBottom:'1px solid #333',fontWeight:700,fontSize:11}}>Date: {fmtD(inv.date)}</td></tr>
+              <tr><td style={{...cell,border:'none',borderBottom:'1px solid #333',borderRight:'1px solid #333',fontWeight:700,fontSize:11}}>Vehicle No: {inv.vehicleReg||'—'}</td><td style={{...cell,border:'none',borderBottom:'1px solid #333',fontWeight:700,fontSize:11}}>Kilometers: {inv.odometer||'—'}</td></tr>
+              <tr><td style={{...cell,border:'none',borderRight:'1px solid #333',fontWeight:700,fontSize:11}}>VIN No: {inv.vinNo||'—'}</td><td style={{...cell,border:'none',fontWeight:700,fontSize:11}}>Engine No: {inv.engineNo||'—'}</td></tr>
+            </tbody>
+          </table>
+        </td>
+      </tr></tbody>
+    </table>
+    {/* CUSTOMER */}
+    <table style={{width:'100%',borderCollapse:'collapse',border:'1px solid #333',borderTop:'none'}}>
+      <tbody><tr>
+        <td style={{...cell,width:'45%',borderRight:'1px solid #333'}}>
+          <div style={{fontSize:10,lineHeight:1.9}}>
+            {inv.companyName&&<div><b>Company Name:</b> {inv.companyName}</div>}
+            <div><b>Mobile No:</b> {inv.customerPhone||'—'}</div>
+            <div><b>Address:</b> {inv.customerAddress||'—'}</div>
+            {inv.customerGstin&&<div><b>GST:</b> {inv.customerGstin}</div>}
+          </div>
+        </td>
+        <td style={cell}>
+          <div style={{fontSize:10,lineHeight:1.9}}>
+            <div><b>Customer:</b> {inv.customerName||'—'}</div>
+            <div><b>Vehicle:</b> {inv.vehicleDetails||'—'}</div>
+            <div><b>Kilometer:</b> {inv.odometer||'—'}</div>
+            {inv.vehicleColor&&<div><b>Color:</b> {inv.vehicleColor}</div>}
+            {inv.vehicleFuel&&<div><b>Fuel:</b> {inv.vehicleFuel.toUpperCase()}</div>}
+            {inv.customerPhone&&<div><b>PH:</b> {inv.customerPhone}</div>}
+            {inv.customerEmail&&<div><b>Email:</b> {inv.customerEmail}</div>}
+          </div>
+        </td>
+      </tr></tbody>
+    </table>
+    {/* ITEMS TABLE */}
+    <table style={{width:'100%',borderCollapse:'collapse',border:'1px solid #333',borderTop:'none'}}>
+      <thead><tr>
+        {['#','Part Name','Description','HSN Code','IGST Rate (%)','Quantity','Unit Price (₹)','Tax (₹)','Parts Total (₹)'].map(h=><th key={h} style={{...hcell,textAlign:['Unit Price (₹)','Tax (₹)','Parts Total (₹)'].includes(h)?'right':'center',padding:'6px 6px',fontSize:10}}>{h}</th>)}
+      </tr></thead>
+      <tbody>
+        {lines.map((it,i)=><tr key={it.id} style={{background:i%2?'#f9f9f9':'#fff'}}>
+          <td style={{...cell,textAlign:'center',width:22,fontSize:10}}>{i+1}</td>
+          <td style={{...cell,fontWeight:600,fontSize:11}}>{it.name}</td>
+          <td style={{...cell,textAlign:'center',color:'#555',fontSize:10}}>{it.isService?'Labour':'Part'}</td>
+          <td style={{...cell,textAlign:'center',fontFamily:'monospace',fontSize:10}}>{it.hsnSac}</td>
+          <td style={{...cell,textAlign:'center',fontSize:10}}>{it.gst}.00%</td>
+          <td style={{...cell,textAlign:'center',fontSize:10}}>{it.qty}.0</td>
+          <td style={{...cell,textAlign:'right',fontSize:10}}>₹{Number(it.rate).toFixed(2)}</td>
+          <td style={{...cell,textAlign:'right',fontSize:10}}>₹{Number(it.ga).toFixed(2)}</td>
+          <td style={{...cell,textAlign:'right',fontWeight:700,fontSize:11}}>₹{Number(it.tot).toFixed(2)}</td>
+        </tr>)}
+        {[...Array(emptyRows)].map((_,i)=><tr key={`e${i}`} style={{height:20}}>{[...Array(9)].map((_,j)=><td key={j} style={{...cell,fontSize:10}}>&nbsp;</td>)}</tr>)}
+      </tbody>
+    </table>
+    {/* AMOUNT IN WORDS + SUBTOTALS */}
+    <table style={{width:'100%',borderCollapse:'collapse',border:'1px solid #333',borderTop:'none'}}>
+      <tbody><tr>
+        <td style={{...cell,width:'55%',borderRight:'1px solid #333'}}>
+          <div style={{fontWeight:700,fontSize:11,marginBottom:6}}>Amount ( in Words ) :<br/><span style={{fontWeight:400,fontStyle:'italic'}}>{toWords(fg)}</span></div>
+          <div style={{fontWeight:700,fontSize:11,marginTop:8}}>Bank Details</div>
+        </td>
+        <td style={cell}>
+          {[['Subtotal:',sub],['Tax Total:',gt],['Discount:',inv.additionalDiscount||0]].map(([l,v])=><div key={l} style={{display:'flex',justifyContent:'space-between',padding:'3px 0',fontSize:11}}><span>{l}</span><span style={{fontWeight:700}}>₹{Number(v).toFixed(2)}</span></div>)}
+        </td>
+      </tr></tbody>
+    </table>
+    {/* BANK + GRAND TOTAL */}
+    <table style={{width:'100%',borderCollapse:'collapse',border:'1px solid #333',borderTop:'none'}}>
+      <thead><tr>
+        {['#','Bank Name','Account No','IFSC Code','Branch'].map(h=><th key={h} style={{...hcell,fontSize:10}}>{h}</th>)}
+        <th style={{...hcell,textAlign:'right',fontSize:11}}>Grand Total: ₹{fg.toFixed(2)}</th>
+      </tr></thead>
+      <tbody><tr>
+        <td style={{...cell,textAlign:'center',fontSize:10}}>1</td>
+        <td style={{...cell,fontSize:10}}>{settings.bankName}</td>
+        <td style={{...cell,fontFamily:'monospace',fontSize:10}}>{settings.accountNo}</td>
+        <td style={{...cell,fontFamily:'monospace',fontSize:10}}>{settings.ifsc}</td>
+        <td style={{...cell,fontSize:10}}>{settings.bankBranch||''}</td>
+        <td style={cell}></td>
+      </tr></tbody>
+    </table>
+    {/* SIGNATURES */}
+    <table style={{width:'100%',borderCollapse:'collapse',border:'1px solid #333',borderTop:'none'}}>
+      <tbody>
+        <tr><td colSpan={3} style={{...cell,fontSize:10,fontStyle:'italic',color:'#444',lineHeight:1.6}}>I certify that the work has been done to my satisfaction and that I have taken delivery of the vehicle in good condition, with all items / valuables and parts intact</td></tr>
+        <tr>
+          {['Customer / Authorized Signatory','Service Advisor Signature','Cashier / Authorized Signature'].map((s,i)=><td key={i} style={{...cell,textAlign:'center',height:60,borderRight:i<2?'1px solid #333':'none'}}><div style={{borderTop:'1px solid #333',marginTop:40,paddingTop:4,fontSize:10}}>{s}</div></td>)}
+        </tr>
+      </tbody>
+    </table>
+    {/* TERMS */}
+    {(inv.termsConditions||settings.invoiceTerms)&&<table style={{width:'100%',borderCollapse:'collapse',border:'1px solid #333',borderTop:'none'}}><tbody><tr><td style={{...cell,fontSize:10}}><b>Terms &amp; Conditions:</b><div style={{whiteSpace:'pre-wrap',marginTop:4,lineHeight:1.6,color:'#333'}}>{inv.termsConditions||settings.invoiceTerms}</div></td></tr></tbody></table>}
+    {inv.notes&&<table style={{width:'100%',borderCollapse:'collapse',border:'1px solid #333',borderTop:'none'}}><tbody><tr><td style={{...cell,fontSize:10}}><b>Notes: </b>{inv.notes}</td></tr></tbody></table>}
+    </div>
+    <div className="np" style={{display:'flex',gap:8,justifyContent:'center',marginTop:16}}>
+      <GBtn onClick={onClose}>Close</GBtn>
+      <PBtn onClick={()=>window.print()}>🖨 Print / Save PDF</PBtn>
+    </div>
+  </div>
+}
+
+/* ─── INVOICE EDITOR (all fields editable) ──────────── */
+function InvEditor({initial,data,onSave,onClose}){
+  const blank={type:'invoice',date:today(),dueDate:'',jobCardId:'',customerId:'',vehicleId:'',customerName:'',companyName:'',customerPhone:'',customerAddress:'',customerGstin:'',customerEmail:'',vehicleReg:'',vehicleDetails:'',odometer:'',vinNo:'',engineNo:'',vehicleColor:'',vehicleFuel:'',items:[],notes:'',termsConditions:'',paymentStatus:'pending',paymentMethod:'',amountPaid:0,additionalDiscount:0,adjustment:0}
+  const[form,setForm]=useState(initial?{...blank,...initial}:blank)
+  const[items,setItems]=useState(initial?.items||[])
+  const f=(k,v)=>setForm(p=>({...p,[k]:v}))
+  const custVehs=data.vehicles.filter(v=>v.customerId==form.customerId)
+
+  function pickC(id){
+    const c=data.customers.find(x=>x.id==id); if(!c)return
+    setForm(p=>({...p,customerId:id,customerName:c.name||p.customerName,companyName:(c.type!=='individual'?c.name:'')||p.companyName,customerPhone:c.phone||p.customerPhone,customerAddress:c.address||p.customerAddress,customerGstin:c.gstin||p.customerGstin,customerEmail:c.email||p.customerEmail}))
+  }
+  function pickV(id){
+    const v=data.vehicles.find(x=>x.id==id); if(!v)return
+    setForm(p=>({...p,vehicleId:id,vehicleReg:v.regNo||p.vehicleReg,vehicleDetails:`${v.make} ${v.model} ${v.year||''}`.trim()||p.vehicleDetails,odometer:v.odometer||p.odometer,vinNo:v.vin||p.vinNo,engineNo:v.engineNo||p.engineNo,vehicleColor:v.color||p.vehicleColor,vehicleFuel:v.fuelType||p.vehicleFuel}))
+  }
+  const{sub,gt,grand}=calcItems(items)
+  const finalTotal=(grand-(form.additionalDiscount||0))+(form.adjustment||0)
+  function doSave(){
+    const{sub:s,gt:g,grand:gr}=calcItems(items)
+    const fg=gr-(form.additionalDiscount||0)+(form.adjustment||0)
+    onSave({...form,items,subtotal:s,gstTot:g,grand:fg})
+  }
+  const sec={border:'1px solid #e8ecf0',borderRadius:8,padding:14,marginBottom:14,background:'#fafbfc'}
+  const stl={fontSize:12,fontWeight:800,color:'#1565c0',marginBottom:12,paddingBottom:8,borderBottom:'1px solid #e8ecf0'}
+  return <div>
+    <div style={sec}><div style={stl}>📄 Document Type &amp; Dates</div>
+      <FR>
+        <F label="Type" third><select value={form.type} onChange={e=>f('type',e.target.value)} style={IS}><option value="estimate">Estimate</option><option value="invoice">Tax Invoice</option><option value="final-invoice">Final Invoice</option></select></F>
+        <F label="Date" third><In type="date" value={form.date} onChange={e=>f('date',e.target.value)}/></F>
+        <F label="Due Date" third><In type="date" value={form.dueDate||''} onChange={e=>f('dueDate',e.target.value)}/></F>
+        <F label="Linked Job Card # (optional)" third><In value={form.jobCardId||''} onChange={e=>f('jobCardId',e.target.value)} placeholder="e.g. 1001"/></F>
+      </FR>
+    </div>
+    <div style={sec}><div style={stl}>👤 Customer Details</div>
+      <FR>
+        <F label="Quick-select Customer"><Sl value={form.customerId||''} onChange={e=>pickC(e.target.value)} opts={data.customers.map(c=>({v:c.id,l:`${c.name} — ${c.phone}`}))}/></F>
+        <F label="Customer Name *" half><In value={form.customerName} onChange={e=>f('customerName',e.target.value)} placeholder="Contact person name"/></F>
+        <F label="Company Name" half><In value={form.companyName||''} onChange={e=>f('companyName',e.target.value)} placeholder="Fleet / company (if applicable)"/></F>
+        <F label="Phone" half><In value={form.customerPhone||''} onChange={e=>f('customerPhone',e.target.value)}/></F>
+        <F label="Email" half><In type="email" value={form.customerEmail||''} onChange={e=>f('customerEmail',e.target.value)}/></F>
+        <F label="GSTIN (Corporate)"><In value={form.customerGstin||''} onChange={e=>f('customerGstin',e.target.value)} placeholder="15-digit GSTIN"/></F>
+        <F label="Address"><Tx value={form.customerAddress||''} onChange={e=>f('customerAddress',e.target.value)} style={{minHeight:52}}/></F>
+      </FR>
+    </div>
+    <div style={sec}><div style={stl}>🚗 Vehicle Details</div>
+      <FR>
+        <F label="Quick-select Vehicle"><Sl value={form.vehicleId||''} onChange={e=>pickV(e.target.value)} opts={(custVehs.length>0?custVehs:data.vehicles).map(v=>({v:v.id,l:`${v.regNo} — ${v.make} ${v.model}`}))}/></F>
+        <F label="Reg No." third><In value={form.vehicleReg||''} onChange={e=>f('vehicleReg',e.target.value.toUpperCase())} placeholder="HR98H1599"/></F>
+        <F label="Make / Model / Year" third><In value={form.vehicleDetails||''} onChange={e=>f('vehicleDetails',e.target.value)} placeholder="Mahindra Bolero BS6"/></F>
+        <F label="Odometer (km)" third><In type="number" value={form.odometer||''} onChange={e=>f('odometer',e.target.value)}/></F>
+        <F label="VIN / Chassis No." third><In value={form.vinNo||''} onChange={e=>f('vinNo',e.target.value)} placeholder="MA1NA2XZXN6J94001"/></F>
+        <F label="Engine No." third><In value={form.engineNo||''} onChange={e=>f('engineNo',e.target.value)} placeholder="XZN6J71659"/></F>
+        <F label="Color" third><In value={form.vehicleColor||''} onChange={e=>f('vehicleColor',e.target.value)} placeholder="WHITE"/></F>
+        <F label="Fuel Type" third><In value={form.vehicleFuel||''} onChange={e=>f('vehicleFuel',e.target.value)} placeholder="DIESEL"/></F>
+      </FR>
+    </div>
+    <div style={{...sec,background:'#fff'}}><div style={stl}>📋 Parts &amp; Labour Items</div>
+      <LineEd items={items} setItems={setItems} parts={data.parts}/>
+    </div>
+    <div style={sec}><div style={stl}>💰 Adjustments &amp; Totals</div>
+      <FR>
+        <F label="Additional Discount (₹)" third><In type="number" value={form.additionalDiscount||0} onChange={e=>f('additionalDiscount',+e.target.value)} min={0}/></F>
+        <F label="Adjustment ± (₹)" third><In type="number" value={form.adjustment||0} onChange={e=>f('adjustment',+e.target.value)}/></F>
+        <F label="Final Grand Total (preview)" third><div style={{padding:'8px 10px',background:'#e3f2fd',borderRadius:6,fontWeight:900,fontSize:15,color:'#1565c0'}}>{fmt(finalTotal)}</div></F>
+      </FR>
+    </div>
+    <div style={sec}><div style={stl}>💳 Payment</div>
+      <FR>
+        <F label="Payment Status" third><select value={form.paymentStatus} onChange={e=>f('paymentStatus',e.target.value)} style={IS}><option value="pending">Pending</option><option value="partial">Partial</option><option value="paid">Paid</option></select></F>
+        <F label="Payment Method" third><Sl value={form.paymentMethod||''} onChange={e=>f('paymentMethod',e.target.value)} opts={['Cash','UPI','Credit Card','Debit Card','Bank Transfer','Cheque','Insurance']}/></F>
+        <F label="Amount Paid (₹)" third><In type="number" value={form.amountPaid||0} onChange={e=>f('amountPaid',+e.target.value)} min={0}/></F>
+      </FR>
+    </div>
+    <div style={sec}><div style={stl}>📝 Notes &amp; Terms</div>
+      <FR>
+        <F label="Notes / Special Instructions"><Tx value={form.notes||''} onChange={e=>f('notes',e.target.value)} placeholder="Any special notes for this invoice…"/></F>
+        <F label="Terms &amp; Conditions (override; blank = use default from Settings)"><Tx value={form.termsConditions||''} onChange={e=>f('termsConditions',e.target.value)} style={{minHeight:72}}/></F>
+      </FR>
+    </div>
+    <Btns onCancel={onClose} onSave={doSave} label={initial?.id?'Save Changes':'Create Invoice'}/>
+  </div>
+}
+
+/* ─── DASHBOARD ─────────────────────────────────────── */
+function Dashboard({data,setTab}){
+  const m=new Date().toISOString().slice(0,7)
+  const openJ=data.jobCards.filter(j=>['open','in-progress'].includes(j.status)).length
+  const mRev=data.invoices.filter(i=>i.date?.startsWith&&i.date.startsWith(m)).reduce((s,i)=>s+(+i.grand||0),0)
+  const pDue=data.invoices.filter(i=>i.paymentStatus!=='paid').reduce((s,i)=>s+(+i.grand||0),0)
+  const lowS=data.parts.filter(p=>(+p.qty||0)<=(+p.minQty||2)).length
+  return <div>
+    <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16}}>
+      <h2 style={{fontSize:19,fontWeight:800,margin:0}}>Dashboard</h2>
+      <span style={{fontSize:11,color:'#6b7280'}}>{new Date().toLocaleDateString('en-IN',{weekday:'long',year:'numeric',month:'long',day:'numeric'})}</span>
+    </div>
+    <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(145px,1fr))',gap:12,marginBottom:20}}>
+      <SC label="Open Jobs" val={openJ} em="🔧" col="#1565c0"/>
+      <SC label="Month Revenue" val={fmt(mRev)} em="💰" col="#6a1b9a"/>
+      <SC label="Pending Dues" val={fmt(pDue)} em="⏳" col="#e65100"/>
+      <SC label="Customers" val={data.customers.length} em="👥" col="#01579b"/>
+      <SC label="Vehicles" val={data.vehicles.length} em="🚗" col="#004d40"/>
+      <SC label="Parts" val={data.parts.length} em="📦" col="#4e342e"/>
+      <SC label="Low Stock" val={lowS} em="⚠️" col={lowS>0?"#c62828":"#2e7d32"}/>
+      <SC label="Total Jobs" val={data.jobCards.length} em="📋" col="#37474f"/>
+    </div>
+    {lowS>0&&<div style={{background:'#fff3e0',border:'1px solid #ffb74d',borderRadius:8,padding:'10px 16px',marginBottom:16,fontSize:12,color:'#e65100'}}>⚠ <b>{lowS} part{lowS>1?'s':''}</b> at or below minimum stock. <button onClick={()=>setTab('Inventory')} style={{color:'#e65100',background:'none',border:'none',cursor:'pointer',textDecoration:'underline',fontSize:12}}>View →</button></div>}
+    <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:16}}>
+      <div style={{background:'#fff',border:'1px solid #e8ecf0',borderRadius:10,padding:16}}>
+        <div style={{display:'flex',justifyContent:'space-between',marginBottom:12}}><b style={{fontSize:14}}>Recent Job Cards</b><button onClick={()=>setTab('Job Cards')} style={{fontSize:12,color:'#1565c0',background:'none',border:'none',cursor:'pointer'}}>View all →</button></div>
+        {data.jobCards.length===0?<p style={{color:'#aaa',textAlign:'center',padding:20,fontSize:12}}>No job cards yet.</p>:<table style={{fontSize:12}}><thead><tr>{['Job #','Customer','Vehicle','Status','Amount'].map(h=><th key={h} style={TH}>{h}</th>)}</tr></thead><tbody>{data.jobCards.slice(0,8).map(j=><tr key={j.id}><td style={{...TD,color:'#1565c0',fontWeight:800}}>JC-{j.id}</td><td style={TD}>{j.customerName}</td><td style={{...TD,fontWeight:700}}>{j.vehicleReg}</td><td style={TD}><Bdg s={j.status}/></td><td style={{...TD,fontWeight:700}}>{fmt(j.grand)}</td></tr>)}</tbody></table>}
+      </div>
+      <div style={{background:'#fff',border:'1px solid #e8ecf0',borderRadius:10,padding:16}}>
+        <div style={{display:'flex',justifyContent:'space-between',marginBottom:12}}><b style={{fontSize:14}}>Recent Invoices</b><button onClick={()=>setTab('Invoices')} style={{fontSize:12,color:'#1565c0',background:'none',border:'none',cursor:'pointer'}}>View all →</button></div>
+        {data.invoices.length===0?<p style={{color:'#aaa',textAlign:'center',padding:20,fontSize:12}}>No invoices yet.</p>:<table style={{fontSize:12}}><thead><tr>{['#','Customer','Amount','Status'].map(h=><th key={h} style={TH}>{h}</th>)}</tr></thead><tbody>{data.invoices.slice(0,5).map(i=><tr key={i.id}><td style={{...TD,color:'#1565c0',fontWeight:800}}>{i.type==='estimate'?'EST':i.type==='final-invoice'?'FINV':'INV'}-{i.id}</td><td style={TD}>{i.customerName}</td><td style={{...TD,fontWeight:700}}>{fmt(i.grand)}</td><td style={TD}><Bdg s={i.paymentStatus||'pending'}/></td></tr>)}</tbody></table>}
+      </div>
+    </div>
+  </div>
+}
+
+/* ─── CUSTOMERS ─────────────────────────────────────── */
+function Customers({data,db}){
+  const[show,setShow]=useState(false);const[ed,setEd]=useState(null);const[q,setQ]=useState('')
+  const blank={name:'',companyName:'',phone:'',email:'',address:'',gstin:'',type:'individual',notes:''}
+  const[form,setForm]=useState(blank);const f=(k,v)=>setForm(p=>({...p,[k]:v}))
+  function open(c){setEd(c||null);setForm(c?{...c}:blank);setShow(true)}
+  async function doSave(){if(!form.name||!form.phone){alert('Name and phone required.');return}await db.saveCustomer(form);setShow(false)}
+  const list=data.customers.filter(c=>!q||c.name?.toLowerCase().includes(q.toLowerCase())||c.phone?.includes(q))
+  return <div>
+    <div style={{display:'flex',alignItems:'center',gap:10,marginBottom:16}}>
+      <h2 style={{fontSize:19,fontWeight:800,margin:0,flex:1}}>Customers</h2>
+      <input value={q} onChange={e=>setQ(e.target.value)} placeholder="Search name / phone…" style={{...IS,width:200}}/>
+      <PBtn onClick={()=>open(null)}>+ Add Customer</PBtn>
+    </div>
+    <table><thead><tr>{['ID','Name','Phone','Email','Type','GSTIN','Actions'].map(h=><th key={h} style={TH}>{h}</th>)}</tr></thead>
+    <tbody>{list.map(c=><tr key={c.id}>
+      <td style={{...TD,color:'#1565c0',fontWeight:800}}>C-{c.id}</td>
+      <td style={{...TD,fontWeight:700}}>{c.name}{c.companyName&&<div style={{fontSize:10,color:'#888'}}>{c.companyName}</div>}</td>
+      <td style={TD}>{c.phone}</td><td style={{...TD,color:'#6b7280'}}>{c.email||'—'}</td>
+      <td style={TD}><Bdg s={c.type||'individual'}/></td>
+      <td style={{...TD,fontFamily:'monospace',fontSize:10}}>{c.gstin||'—'}</td>
+      <td style={TD}>
+        <button onClick={()=>open(c)} style={{marginRight:5,padding:'3px 9px',border:'1px solid #d0d7de',borderRadius:5,cursor:'pointer',fontSize:11}}>✏</button>
+        <button onClick={async()=>{if(confirm('Delete customer?'))await db.delCustomer(c.id)}} style={{padding:'3px 9px',border:'1px solid #ffcdd2',borderRadius:5,cursor:'pointer',fontSize:11,color:'#c62828'}}>🗑</button>
+      </td>
+    </tr>)}</tbody></table>
+    {list.length===0&&<p style={{textAlign:'center',color:'#aaa',padding:36}}>No customers yet.</p>}
+    {show&&<Modal title={ed?'Edit Customer':'Add Customer'} onClose={()=>setShow(false)}>
+      <FR>
+        <F label="Full Name *" half><In value={form.name} onChange={e=>f('name',e.target.value)}/></F>
+        <F label="Phone *" half><In value={form.phone||''} onChange={e=>f('phone',e.target.value)} placeholder="+91 XXXXX XXXXX"/></F>
+        <F label="Email" half><In type="email" value={form.email||''} onChange={e=>f('email',e.target.value)}/></F>
+        <F label="Type" half><Sl value={form.type||'individual'} onChange={e=>f('type',e.target.value)} opts={['individual','corporate','fleet']}/></F>
+        <F label="Company Name"><In value={form.companyName||''} onChange={e=>f('companyName',e.target.value)} placeholder="Fleet or company name (if applicable)"/></F>
+        <F label="GSTIN (Corporate)"><In value={form.gstin||''} onChange={e=>f('gstin',e.target.value)} placeholder="15-digit GSTIN"/></F>
+        <F label="Address"><Tx value={form.address||''} onChange={e=>f('address',e.target.value)} style={{minHeight:52}}/></F>
+        <F label="Notes"><Tx value={form.notes||''} onChange={e=>f('notes',e.target.value)} style={{minHeight:48}}/></F>
+      </FR>
+      <Btns onCancel={()=>setShow(false)} onSave={doSave} label={ed?'Update':'Save Customer'}/>
+    </Modal>}
+  </div>
+}
+
+/* ─── VEHICLES ──────────────────────────────────────── */
+function Vehicles({data,db}){
+  const[show,setShow]=useState(false);const[ed,setEd]=useState(null);const[q,setQ]=useState('')
+  const blank={customerId:'',regNo:'',make:'',model:'',variant:'',year:'',vin:'',engineNo:'',color:'',fuelType:'petrol',odometer:'',insuranceExpiry:'',lastService:'',notes:''}
+  const[form,setForm]=useState(blank);const f=(k,v)=>setForm(p=>({...p,[k]:v}))
+  function open(v){setEd(v||null);setForm(v?{...v}:blank);setShow(true)}
+  async function doSave(){if(!form.regNo||!form.make||!form.customerId){alert('Customer, Make and Reg No required.');return}await db.saveVehicle(form);setShow(false)}
+  const list=data.vehicles.filter(v=>!q||v.regNo?.toLowerCase().includes(q.toLowerCase())||v.make?.toLowerCase().includes(q.toLowerCase()))
+  const getCust=id=>data.customers.find(c=>c.id==id)
+  return <div>
+    <div style={{display:'flex',alignItems:'center',gap:10,marginBottom:16}}>
+      <h2 style={{fontSize:19,fontWeight:800,margin:0,flex:1}}>Vehicles</h2>
+      <input value={q} onChange={e=>setQ(e.target.value)} placeholder="Search reg / make / customer…" style={{...IS,width:230}}/>
+      <PBtn onClick={()=>open(null)}>+ Add Vehicle</PBtn>
+    </div>
+    <div style={{overflowX:'auto'}}>
+      <table style={{minWidth:800}}><thead><tr>{['ID','Reg No.','Make / Model','Year','Fuel','Color','Customer','Odo.','Actions'].map(h=><th key={h} style={TH}>{h}</th>)}</tr></thead>
+      <tbody>{list.map(v=><tr key={v.id}>
+        <td style={{...TD,color:'#1565c0',fontWeight:800}}>V-{v.id}</td>
+        <td style={{...TD,fontWeight:900,fontSize:13}}>{v.regNo}</td>
+        <td style={TD}>{v.make} {v.model}{v.variant&&<span style={{color:'#888'}}> ({v.variant})</span>}</td>
+        <td style={TD}>{v.year||'—'}</td><td style={TD}><Bdg s={v.fuelType||'petrol'}/></td>
+        <td style={{...TD,color:'#6b7280'}}>{v.color||'—'}</td>
+        <td style={TD}>{getCust(v.customerId)?.name||'—'}</td>
+        <td style={{...TD,color:'#6b7280'}}>{v.odometer?v.odometer+' km':'—'}</td>
+        <td style={TD}>
+          <button onClick={()=>open(v)} style={{marginRight:5,padding:'3px 9px',border:'1px solid #d0d7de',borderRadius:5,cursor:'pointer',fontSize:11}}>✏</button>
+          <button onClick={async()=>{if(confirm('Delete?'))await db.delVehicle(v.id)}} style={{padding:'3px 9px',border:'1px solid #ffcdd2',borderRadius:5,cursor:'pointer',fontSize:11,color:'#c62828'}}>🗑</button>
+        </td>
+      </tr>)}</tbody></table>
+    </div>
+    {list.length===0&&<p style={{textAlign:'center',color:'#aaa',padding:36}}>No vehicles yet.</p>}
+    {show&&<Modal title={ed?'Edit Vehicle':'Add Vehicle'} onClose={()=>setShow(false)}>
+      <FR>
+        <F label="Customer *"><Sl value={form.customerId||''} onChange={e=>f('customerId',+e.target.value)} opts={data.customers.map(c=>({v:c.id,l:`${c.name} — ${c.phone}`}))}/></F>
+        <F label="Make *" half><Sl value={form.make||''} onChange={e=>f('make',e.target.value)} opts={MAKES}/></F>
+        <F label="Model *" half><In value={form.model||''} onChange={e=>f('model',e.target.value)} placeholder="Bolero, Swift, Creta…"/></F>
+        <F label="Variant" half><In value={form.variant||''} onChange={e=>f('variant',e.target.value)} placeholder="VXi, ZXi, BS6…"/></F>
+        <F label="Year" half><In type="number" value={form.year||''} onChange={e=>f('year',e.target.value)} placeholder="2023"/></F>
+        <F label="Reg No. *" half><In value={form.regNo||''} onChange={e=>f('regNo',e.target.value.toUpperCase())} placeholder="HR98H1599"/></F>
+        <F label="VIN / Chassis No." half><In value={form.vin||''} onChange={e=>f('vin',e.target.value)}/></F>
+        <F label="Engine No." half><In value={form.engineNo||''} onChange={e=>f('engineNo',e.target.value)}/></F>
+        <F label="Color" half><In value={form.color||''} onChange={e=>f('color',e.target.value)} placeholder="White, Silver…"/></F>
+        <F label="Fuel Type" half><Sl value={form.fuelType||'petrol'} onChange={e=>f('fuelType',e.target.value)} opts={['petrol','diesel','cng','electric','hybrid']}/></F>
+        <F label="Odometer (km)" half><In type="number" value={form.odometer||''} onChange={e=>f('odometer',e.target.value)}/></F>
+        <F label="Insurance Expiry" half><In type="date" value={form.insuranceExpiry||''} onChange={e=>f('insuranceExpiry',e.target.value)}/></F>
+        <F label="Last Service Date" half><In type="date" value={form.lastService||''} onChange={e=>f('lastService',e.target.value)}/></F>
+        <F label="Notes"><Tx value={form.notes||''} onChange={e=>f('notes',e.target.value)} style={{minHeight:52}}/></F>
+      </FR>
+      <Btns onCancel={()=>setShow(false)} onSave={doSave} label={ed?'Update':'Save Vehicle'}/>
+    </Modal>}
+  </div>
+}
+
+/* ─── INVENTORY ─────────────────────────────────────── */
+function Inventory({data,db}){
+  const[show,setShow]=useState(false);const[ed,setEd]=useState(null);const[q,setQ]=useState('');const[cat,setCat]=useState('')
+  const blank={name:'',partNo:'',hsnCode:'',gst:18,purchasePrice:'',sellingPrice:'',qty:0,minQty:2,unit:'nos',category:'spare',rack:'',notes:''}
+  const[form,setForm]=useState(blank);const f=(k,v)=>setForm(p=>({...p,[k]:v}))
+  function open(p){setEd(p||null);setForm(p?{...p}:blank);setShow(true)}
+  function autoHSN(){
+    const n=form.name.toLowerCase()
+    let m=Object.entries(HSN).find(([k])=>k.toLowerCase()===n)
+    if(!m)m=Object.entries(HSN).find(([k])=>n.includes(k.toLowerCase())||k.toLowerCase().includes(n))
+    if(m){setForm(p=>({...p,hsnCode:m[1].h,gst:m[1].g}));alert(`✓ Found!\nHSN: ${m[1].h}  |  GST: ${m[1].g}%`)}
+    else alert('Not in HSN database.\n\nCommon codes:\n• Brakes/Suspension: 87083000 @ 28%\n• Filters: 84212300 @ 18%\n• Battery: 85072000 @ 28%\n• Engine parts: 84099200 @ 28%\n• Tyres: 40111000 @ 28%\n• Engine Oil/Fluids: 27101980 @ 18%')
+  }
+  async function doSave(){if(!form.name||!form.sellingPrice){alert('Name and selling price required.');return}await db.savePart(form);setShow(false)}
+  const list=data.parts.filter(p=>(!q||p.name?.toLowerCase().includes(q.toLowerCase())||p.partNo?.includes(q))&&(!cat||p.category===cat))
+  const low=data.parts.filter(p=>(+p.qty||0)<=(+p.minQty||2)).length
+  return <div>
+    <div style={{display:'flex',alignItems:'center',gap:10,marginBottom:16,flexWrap:'wrap'}}>
+      <h2 style={{fontSize:19,fontWeight:800,margin:0,flex:1}}>Parts Inventory</h2>
+      <input value={q} onChange={e=>setQ(e.target.value)} placeholder="Search part…" style={{...IS,width:160}}/>
+      <select value={cat} onChange={e=>setCat(e.target.value)} style={{...IS,width:150}}>
+        <option value="">All Categories</option>
+        {['spare','consumable','accessory','lubricant','tyre','electrical','body','other'].map(c=><option key={c} value={c}>{c.charAt(0).toUpperCase()+c.slice(1)}</option>)}
+      </select>
+      <PBtn onClick={()=>open(null)}>+ Add Part</PBtn>
+    </div>
+    {low>0&&<div style={{background:'#fff3e0',border:'1px solid #ffb74d',borderRadius:8,padding:'9px 16px',marginBottom:14,fontSize:12,color:'#e65100'}}>⚠ <b>{low} part{low>1?'s':''}</b> at or below minimum stock level.</div>}
+    <div style={{overflowX:'auto'}}>
+      <table style={{minWidth:860}}><thead><tr>{['Part Name','Part No.','Category','HSN Code','GST','Sell Price','Buy Price','Stock','Min','Actions'].map(h=><th key={h} style={TH}>{h}</th>)}</tr></thead>
+      <tbody>{list.map(p=><tr key={p.id} style={{background:(+p.qty||0)<=(+p.minQty||2)?'#fff8e1':'#fff'}}>
+        <td style={{...TD,fontWeight:700}}>{p.name}</td>
+        <td style={{...TD,fontFamily:'monospace',fontSize:10,color:'#888'}}>{p.partNo||'—'}</td>
+        <td style={TD}><Bdg s={p.category||'spare'}/></td>
+        <td style={{...TD,fontFamily:'monospace',fontSize:10}}>{p.hsnCode}</td>
+        <td style={TD}>{p.gst}%</td>
+        <td style={{...TD,fontWeight:800,color:'#1565c0'}}>{fmt(p.sellingPrice)}</td>
+        <td style={{...TD,color:'#888'}}>{fmt(p.purchasePrice)}</td>
+        <td style={{...TD,fontWeight:900,color:(+p.qty||0)<=(+p.minQty||2)?'#c62828':'#2e7d32'}}>{p.qty||0} {p.unit}</td>
+        <td style={{...TD,color:'#aaa'}}>{p.minQty||2}</td>
+        <td style={TD}>
+          <button onClick={()=>open(p)} style={{marginRight:4,padding:'3px 9px',border:'1px solid #d0d7de',borderRadius:5,cursor:'pointer',fontSize:11}}>✏</button>
+          <button onClick={async()=>{if(confirm('Delete?'))await db.delPart(p.id)}} style={{padding:'3px 9px',border:'1px solid #ffcdd2',borderRadius:5,cursor:'pointer',fontSize:11,color:'#c62828'}}>🗑</button>
+        </td>
+      </tr>)}</tbody></table>
+    </div>
+    {list.length===0&&<p style={{textAlign:'center',color:'#aaa',padding:36}}>No parts yet.</p>}
+    {show&&<Modal title={ed?'Edit Part':'Add Part'} onClose={()=>setShow(false)}>
+      <FR>
+        <F label="Part Name *" half><In value={form.name||''} onChange={e=>f('name',e.target.value)} placeholder="e.g. Brake Pad, Oil Filter"/></F>
+        <F label="Part Number" half><In value={form.partNo||''} onChange={e=>f('partNo',e.target.value)} placeholder="Manufacturer part no."/></F>
+        <F label="Category" half><Sl value={form.category||'spare'} onChange={e=>f('category',e.target.value)} opts={['spare','consumable','accessory','lubricant','tyre','electrical','body','other']}/></F>
+        <F label="Unit" half><Sl value={form.unit||'nos'} onChange={e=>f('unit',e.target.value)} opts={['nos','litre','set','pair','kg','ml','mtr','box']}/></F>
+        <F label="HSN Code *">
+          <div style={{display:'flex',gap:6}}>
+            <In value={form.hsnCode||''} onChange={e=>f('hsnCode',e.target.value)} placeholder="e.g. 87083000" style={{flex:1}}/>
+            <button onClick={autoHSN} style={{padding:'7px 14px',background:'#e8f5e9',color:'#1b5e20',border:'1px solid #a5d6a7',borderRadius:6,cursor:'pointer',whiteSpace:'nowrap',fontSize:11,fontWeight:700,flexShrink:0}}>🔍 Auto HSN</button>
+          </div>
+        </F>
+        <F label="GST Rate" half><select value={form.gst||18} onChange={e=>f('gst',+e.target.value)} style={IS}>{[0,5,12,18,28].map(r=><option key={r} value={r}>{r}%</option>)}</select></F>
+        <F label="Selling Price (₹) *" half><In type="number" value={form.sellingPrice||''} onChange={e=>f('sellingPrice',e.target.value)}/></F>
+        <F label="Purchase Price (₹)" half><In type="number" value={form.purchasePrice||''} onChange={e=>f('purchasePrice',e.target.value)}/></F>
+        <F label="Current Stock" half><In type="number" value={form.qty||0} onChange={e=>f('qty',+e.target.value)}/></F>
+        <F label="Min Stock Alert" half><In type="number" value={form.minQty||2} onChange={e=>f('minQty',+e.target.value)}/></F>
+        <F label="Rack / Location" half><In value={form.rack||''} onChange={e=>f('rack',e.target.value)} placeholder="e.g. A3-Row2"/></F>
+        <F label="Notes"><Tx value={form.notes||''} onChange={e=>f('notes',e.target.value)} style={{minHeight:48}}/></F>
+      </FR>
+      <Btns onCancel={()=>setShow(false)} onSave={doSave} label={ed?'Update Part':'Save Part'}/>
+    </Modal>}
+  </div>
+}
+
+/* ─── JOB FORM ──────────────────────────────────────── */
+function JobForm({initial,data,onSave,onClose}){
+  const blank={customerId:'',vehicleId:'',status:'open',priority:'normal',complaint:'',diagnosis:'',technicianName:'',estimatedDelivery:'',odometer:'',notes:''}
+  const[form,setForm]=useState(initial?{...initial}:blank)
+  const[items,setItems]=useState(initial?.items||[])
+  const f=(k,v)=>setForm(p=>({...p,[k]:v}))
+  const custVehs=data.vehicles.filter(v=>v.customerId==form.customerId)
+  function doSave(){
+    if(!form.customerId||!form.vehicleId){alert('Select customer and vehicle.');return}
+    const cust=data.customers.find(c=>c.id==form.customerId)
+    const veh=data.vehicles.find(v=>v.id==form.vehicleId)
+    const{sub,gt,grand}=calcItems(items)
+    onSave({...form,items,subtotal:sub,gstTot:gt,grand,customerName:cust?.name||'',vehicleReg:veh?.regNo||''})
+  }
+  return <div>
+    <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12,marginBottom:4}}>
+      <F label="Customer *"><Sl value={form.customerId||''} onChange={e=>{f('customerId',+e.target.value);f('vehicleId','')}} opts={data.customers.map(c=>({v:c.id,l:`${c.name} — ${c.phone}`}))}/></F>
+      <F label="Vehicle *"><Sl value={form.vehicleId||''} onChange={e=>f('vehicleId',+e.target.value)} opts={custVehs.map(v=>({v:v.id,l:`${v.regNo} — ${v.make} ${v.model}`}))}/></F>
+      <F label="Status"><Sl value={form.status||'open'} onChange={e=>f('status',e.target.value)} opts={['open','in-progress','completed','delivered','cancelled']}/></F>
+      <F label="Priority"><Sl value={form.priority||'normal'} onChange={e=>f('priority',e.target.value)} opts={['normal','high','urgent']}/></F>
+      <F label="Technician"><In value={form.technicianName||''} onChange={e=>f('technicianName',e.target.value)} placeholder="Assigned technician name"/></F>
+      <F label="Odometer (km)"><In type="number" value={form.odometer||''} onChange={e=>f('odometer',e.target.value)}/></F>
+      <F label="Expected Delivery"><In type="date" value={form.estimatedDelivery||''} onChange={e=>f('estimatedDelivery',e.target.value)}/></F>
+    </div>
+    <F label="Customer Complaint"><Tx value={form.complaint||''} onChange={e=>f('complaint',e.target.value)} placeholder="What the customer reported…"/></F>
+    <F label="Diagnosis / Work Done"><Tx value={form.diagnosis||''} onChange={e=>f('diagnosis',e.target.value)} placeholder="Technician notes & work performed…"/></F>
+    <F label="Internal Notes"><Tx value={form.notes||''} onChange={e=>f('notes',e.target.value)} style={{minHeight:48}}/></F>
+    <div style={{border:'1px solid #e8ecf0',borderRadius:8,padding:14,margin:'12px 0',background:'#fafbfc'}}>
+      <div style={{fontSize:12,fontWeight:800,color:'#1565c0',marginBottom:10}}>📋 Parts &amp; Labour Items</div>
+      <LineEd items={items} setItems={setItems} parts={data.parts}/>
+    </div>
+    <Btns onCancel={onClose} onSave={doSave} label="Save Job Card"/>
+  </div>
+}
+
+/* ─── JOB CARDS ─────────────────────────────────────── */
+function JobCards({data,db,setTab}){
+  const[show,setShow]=useState(false);const[ed,setEd]=useState(null);const[q,setQ]=useState('');const[sf,setSf]=useState('');const[newInv,setNewInv]=useState(null)
+  function open(j){setEd(j||null);setShow(true)}
+  async function doSave(form){await db.saveJob(form);setShow(false);setEd(null)}
+  function genInv(job,type){
+    const cust=data.customers.find(c=>c.id==job.customerId)
+    const veh=data.vehicles.find(v=>v.id==job.vehicleId)
+    setNewInv({type,jobCardId:job.id,customerId:job.customerId,vehicleId:job.vehicleId,customerName:job.customerName||'',vehicleReg:job.vehicleReg||'',companyName:(cust?.type!=='individual'?cust?.name:'')||'',customerPhone:cust?.phone||'',customerAddress:cust?.address||'',customerGstin:cust?.gstin||'',customerEmail:cust?.email||'',vehicleDetails:veh?`${veh.make} ${veh.model} ${veh.year||''}`.trim():'',odometer:job.odometer||veh?.odometer||'',vinNo:veh?.vin||'',engineNo:veh?.engineNo||'',vehicleColor:veh?.color||'',vehicleFuel:veh?.fuelType||'',items:job.items||[],date:today(),paymentStatus:'pending',additionalDiscount:0,adjustment:0,amountPaid:0})
+  }
+  async function saveNewInv(form){await db.saveInvoice(form);setNewInv(null);setTab('Invoices')}
+  const list=data.jobCards.filter(j=>(!q||j.customerName?.toLowerCase().includes(q.toLowerCase())||j.vehicleReg?.toLowerCase().includes(q.toLowerCase())||String(j.id).includes(q))&&(!sf||j.status===sf))
+  return <div>
+    <div style={{display:'flex',alignItems:'center',gap:10,marginBottom:16,flexWrap:'wrap'}}>
+      <h2 style={{fontSize:19,fontWeight:800,margin:0,flex:1}}>Job Cards</h2>
+      <input value={q} onChange={e=>setQ(e.target.value)} placeholder="Search…" style={{...IS,width:160}}/>
+      <select value={sf} onChange={e=>setSf(e.target.value)} style={{...IS,width:130}}><option value="">All Status</option>{['open','in-progress','completed','delivered','cancelled'].map(s=><option key={s} value={s}>{s}</option>)}</select>
+      <PBtn onClick={()=>open(null)}>+ New Job Card</PBtn>
+    </div>
+    <div style={{overflowX:'auto'}}>
+      <table style={{minWidth:900}}><thead><tr>{['Job #','Customer','Vehicle','Status','Priority','Technician','Amount','Date','Actions'].map(h=><th key={h} style={TH}>{h}</th>)}</tr></thead>
+      <tbody>{list.map(j=><tr key={j.id}>
+        <td style={{...TD,color:'#1565c0',fontWeight:900}}>JC-{j.id}</td>
+        <td style={TD}>{j.customerName}</td><td style={{...TD,fontWeight:800}}>{j.vehicleReg}</td>
+        <td style={TD}><Bdg s={j.status}/></td><td style={TD}><Bdg s={j.priority||'normal'}/></td>
+        <td style={{...TD,color:'#6b7280'}}>{j.technicianName||'—'}</td>
+        <td style={{...TD,fontWeight:800}}>{fmt(j.grand)}</td>
+        <td style={{...TD,color:'#6b7280'}}>{fmtD(j.createdAt)}</td>
+        <td style={TD}><div style={{display:'flex',gap:3}}>
+          <button onClick={()=>open(j)} style={{padding:'3px 8px',border:'1px solid #d0d7de',borderRadius:5,cursor:'pointer',fontSize:11}}>✏</button>
+          <button onClick={()=>genInv(j,'estimate')} style={{padding:'3px 7px',background:'#fce4ec',color:'#880e4f',border:'1px solid #f48fb1',borderRadius:5,cursor:'pointer',fontSize:10,fontWeight:700}}>EST</button>
+          <button onClick={()=>genInv(j,'invoice')} style={{padding:'3px 7px',background:'#e3f2fd',color:'#0d47a1',border:'1px solid #90caf9',borderRadius:5,cursor:'pointer',fontSize:10,fontWeight:700}}>INV</button>
+          <button onClick={()=>genInv(j,'final-invoice')} style={{padding:'3px 7px',background:'#e8f5e9',color:'#1b5e20',border:'1px solid #a5d6a7',borderRadius:5,cursor:'pointer',fontSize:10,fontWeight:700}}>FINAL</button>
+          <button onClick={async()=>{if(confirm('Delete?'))await db.delJob(j.id)}} style={{padding:'3px 8px',border:'1px solid #ffcdd2',borderRadius:5,cursor:'pointer',fontSize:11,color:'#c62828'}}>🗑</button>
+        </div></td>
+      </tr>)}</tbody></table>
+    </div>
+    {list.length===0&&<p style={{textAlign:'center',color:'#aaa',padding:36}}>No job cards yet.</p>}
+    {show&&<Modal title={ed?'Edit Job Card':'New Job Card'} onClose={()=>{setShow(false);setEd(null)}} wide><JobForm initial={ed} data={data} onSave={doSave} onClose={()=>{setShow(false);setEd(null)}}/></Modal>}
+    {newInv&&<Modal title="Generate Invoice from Job Card" onClose={()=>setNewInv(null)} wide><InvEditor initial={newInv} data={data} onSave={saveNewInv} onClose={()=>setNewInv(null)}/></Modal>}
+  </div>
+}
+
+/* ─── INVOICES ──────────────────────────────────────── */
+function Invoices({data,db}){
+  const[sub,setSub]=useState('invoice');const[showNew,setShowNew]=useState(false);const[editI,setEditI]=useState(null);const[printI,setPrintI]=useState(null);const[q,setQ]=useState('')
+  const TABS=[{k:'estimate',l:'Estimates'},{k:'invoice',l:'Invoices'},{k:'final-invoice',l:'Final Invoices'}]
+  const pre=sub==='estimate'?'EST':sub==='final-invoice'?'FINV':'INV'
+  const list=data.invoices.filter(i=>i.type===sub&&(!q||i.customerName?.toLowerCase().includes(q.toLowerCase())||i.vehicleReg?.toLowerCase().includes(q.toLowerCase())||String(i.id).includes(q)))
+  const total=list.reduce((s,i)=>s+(+i.grand||0),0)
+  const paid=list.filter(i=>i.paymentStatus==='paid').reduce((s,i)=>s+(+i.grand||0),0)
+  const partP=list.filter(i=>i.paymentStatus==='partial').reduce((s,i)=>s+(+i.amountPaid||0),0)
+  const pC={paid:'#e8f5e9|#1b5e20',partial:'#fff3e0|#bf360c',pending:'#fff8e1|#f57f17'}
+  return <div>
+    <div style={{display:'flex',alignItems:'center',gap:10,marginBottom:16,flexWrap:'wrap'}}>
+      <h2 style={{fontSize:19,fontWeight:800,margin:0,flex:1}}>Billing &amp; Invoices</h2>
+      <input value={q} onChange={e=>setQ(e.target.value)} placeholder="Search…" style={{...IS,width:180}}/>
+      <PBtn onClick={()=>setShowNew(true)}>+ New Invoice / Estimate</PBtn>
+    </div>
+    <div style={{display:'flex',gap:2,marginBottom:16,background:'#f0f4f8',borderRadius:8,padding:3,width:'fit-content'}}>
+      {TABS.map(t=><button key={t.k} onClick={()=>setSub(t.k)} style={{padding:'7px 18px',border:'none',borderRadius:6,cursor:'pointer',background:sub===t.k?'#1565c0':'transparent',color:sub===t.k?'#fff':'#555',fontWeight:sub===t.k?800:500,fontSize:12}}>{t.l} <span style={{fontSize:10,opacity:.7}}>({data.invoices.filter(i=>i.type===t.k).length})</span></button>)}
+    </div>
+    {list.length>0&&<div style={{display:'flex',gap:10,marginBottom:14,flexWrap:'wrap'}}>
+      {[['Total Billed',total,'#dbeafe','#1e40af'],['Collected',paid+partP,'#dcfce7','#166534'],['Outstanding',total-paid-partP,'#fef3c7','#92400e']].map(([l,v,bg,fg])=><div key={l} style={{background:bg,borderRadius:8,padding:'7px 16px',fontSize:12}}><span style={{color:'#888'}}>{l}: </span><b style={{color:fg,fontSize:13}}>{fmt(v)}</b></div>)}
+    </div>}
+    <table><thead><tr>{['#','Customer','Vehicle','Date','Amount','Payment','Method','Actions'].map(h=><th key={h} style={TH}>{h}</th>)}</tr></thead>
+    <tbody>{list.map(inv=>{
+      const[pbg,pfg]=(pC[inv.paymentStatus]||'#f5f5f5|#777').split('|')
+      return <tr key={inv.id}>
+        <td style={{...TD,color:'#1565c0',fontWeight:800}}>{pre}-{inv.id}</td>
+        <td style={TD}>{inv.customerName}{inv.companyName&&<div style={{fontSize:10,color:'#888'}}>{inv.companyName}</div>}</td>
+        <td style={{...TD,fontWeight:700}}>{inv.vehicleReg||'—'}</td>
+        <td style={{...TD,color:'#6b7280'}}>{fmtD(inv.date)}</td>
+        <td style={{...TD,fontWeight:800}}>{fmt(inv.grand)}</td>
+        <td style={TD}><select value={inv.paymentStatus||'pending'} onChange={e=>db.markPay(inv.id,e.target.value)} style={{padding:'4px 6px',border:'1px solid #d0d7de',borderRadius:5,fontSize:11,background:pbg,color:pfg,fontWeight:700,cursor:'pointer',width:'auto'}}><option value="pending">Pending</option><option value="partial">Partial</option><option value="paid">Paid</option></select></td>
+        <td style={{...TD,color:'#6b7280',fontSize:11}}>{inv.paymentMethod||'—'}</td>
+        <td style={TD}><div style={{display:'flex',gap:4}}>
+          <button onClick={()=>setPrintI(inv)} style={{padding:'4px 10px',background:'#1565c0',color:'#fff',border:'none',borderRadius:5,cursor:'pointer',fontSize:11,fontWeight:700}}>🖨 Print</button>
+          <button onClick={()=>setEditI(inv)} style={{padding:'3px 8px',border:'1px solid #d0d7de',borderRadius:5,cursor:'pointer',fontSize:11}}>✏</button>
+          <button onClick={async()=>{if(confirm('Delete?'))await db.delInvoice(inv.id)}} style={{padding:'3px 8px',border:'1px solid #ffcdd2',borderRadius:5,cursor:'pointer',fontSize:11,color:'#c62828'}}>🗑</button>
+        </div></td>
+      </tr>
+    })}</tbody></table>
+    {list.length===0&&<p style={{textAlign:'center',color:'#aaa',padding:36}}>No {TABS.find(t=>t.k===sub)?.l.toLowerCase()} yet. <button onClick={()=>setShowNew(true)} style={{color:'#1565c0',background:'none',border:'none',cursor:'pointer',textDecoration:'underline'}}>Create one →</button></p>}
+    {showNew&&<Modal title="New Invoice / Estimate" onClose={()=>setShowNew(false)} wide><InvEditor data={data} onSave={async f=>{await db.saveInvoice(f);setShowNew(false)}} onClose={()=>setShowNew(false)}/></Modal>}
+    {editI&&<Modal title={`Edit — ${pre}-${editI.id}`} onClose={()=>setEditI(null)} wide><InvEditor initial={editI} data={data} onSave={async f=>{await db.saveInvoice(f);setEditI(null)}} onClose={()=>setEditI(null)}/></Modal>}
+    {printI&&<Modal title="Invoice Preview" onClose={()=>setPrintI(null)} wide><PrintDoc inv={printI} settings={data.D?.settings||data.settings} onClose={()=>setPrintI(null)}/></Modal>}
+  </div>
+}
+
+/* ─── SETTINGS ──────────────────────────────────────── */
+function Settings({data,db}){
+  const[form,setForm]=useState({...data.settings});const[ok,setOk]=useState(false)
+  const f=(k,v)=>setForm(p=>({...p,[k]:v}))
+  async function doSave(){await db.saveSettings(form);setOk(true);setTimeout(()=>setOk(false),2500)}
+  const sec={background:'#fff',border:'1px solid #e8ecf0',borderRadius:10,padding:18,marginBottom:16}
+  const stl={fontSize:13,fontWeight:800,color:'#1565c0',marginBottom:14,paddingBottom:10,borderBottom:'1px solid #e8ecf0'}
+  return <div>
+    <h2 style={{fontSize:19,fontWeight:800,margin:'0 0 18px'}}>Workshop Settings</h2>
+    <div style={sec}><div style={stl}>🏪 Business Information</div>
+      <FR>
+        <F label="Workshop Name" half><In value={form.shopName||''} onChange={e=>f('shopName',e.target.value)}/></F>
+        <F label="Tagline" half><In value={form.tagline||''} onChange={e=>f('tagline',e.target.value)} placeholder="Complete Car Solution"/></F>
+        <F label="Phone" half><In value={form.phone||''} onChange={e=>f('phone',e.target.value)}/></F>
+        <F label="Email" half><In type="email" value={form.email||''} onChange={e=>f('email',e.target.value)}/></F>
+        <F label="GSTIN" half><In value={form.gstin||''} onChange={e=>f('gstin',e.target.value)}/></F>
+        <F label="PAN" half><In value={form.pan||''} onChange={e=>f('pan',e.target.value)}/></F>
+        <F label="Invoice Number Prefix" half><In value={form.invoicePrefix||'FRA'} onChange={e=>f('invoicePrefix',e.target.value)}/></F>
+        <F label="Default Labour Rate (₹/hr)" half><In type="number" value={form.laborRate||500} onChange={e=>f('laborRate',+e.target.value)}/></F>
+        <F label="Full Address"><Tx value={form.address||''} onChange={e=>f('address',e.target.value)} style={{minHeight:60}}/></F>
+      </FR>
+    </div>
+    <div style={sec}><div style={stl}>🏦 Bank Details</div>
+      <FR>
+        <F label="Bank Name" half><In value={form.bankName||''} onChange={e=>f('bankName',e.target.value)}/></F>
+        <F label="Account Number" half><In value={form.accountNo||''} onChange={e=>f('accountNo',e.target.value)}/></F>
+        <F label="IFSC Code" half><In value={form.ifsc||''} onChange={e=>f('ifsc',e.target.value)}/></F>
+        <F label="Branch" half><In value={form.bankBranch||''} onChange={e=>f('bankBranch',e.target.value)}/></F>
+        <F label="UPI ID" half><In value={form.upiId||''} onChange={e=>f('upiId',e.target.value)} placeholder="name@upi"/></F>
+      </FR>
+    </div>
+    <div style={sec}><div style={stl}>📄 Default Invoice Terms &amp; Conditions</div>
+      <Tx value={form.invoiceTerms||''} onChange={e=>f('invoiceTerms',e.target.value)} style={{minHeight:100}}/>
+    </div>
+    <PBtn onClick={doSave} col={ok?'#2e7d32':'#1565c0'}>{ok?'✓ Saved!':'Save Settings'}</PBtn>
+    <div style={{...sec,marginTop:24,background:'#fafbfc'}}>
+      <div style={stl}>📊 Database Statistics</div>
+      <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(110px,1fr))',gap:10}}>
+        {[['Customers',data.customers.length,'#dbeafe','#1e40af'],['Vehicles',data.vehicles.length,'#dcfce7','#166534'],['Parts',data.parts.length,'#fef3c7','#92400e'],['Job Cards',data.jobCards.length,'#ede9fe','#4c1d95'],['Invoices',data.invoices.length,'#fce7f3','#831843']].map(([l,v,bg,fg])=><div key={l} style={{background:bg,borderRadius:8,padding:'10px 14px',textAlign:'center'}}><div style={{fontSize:24,fontWeight:900,color:fg}}>{v}</div><div style={{fontSize:11,color:fg,opacity:.8,marginTop:2}}>{l}</div></div>)}
+      </div>
+      <p style={{fontSize:11,color:'#888',marginTop:12,lineHeight:1.6}}>All data is stored in your <b>Supabase PostgreSQL database</b> — accessible from any device, anywhere in the world. Automatic backups included.</p>
+    </div>
+  </div>
+}
+
+/* ─── SETUP SCREEN ──────────────────────────────────── */
+function SetupScreen(){
+  return <div style={{display:'flex',alignItems:'center',justifyContent:'center',minHeight:'100vh',padding:20,background:'#f0f4f8'}}>
+    <div style={{background:'#fff',borderRadius:12,padding:36,maxWidth:600,width:'100%',boxShadow:'0 8px 32px rgba(0,0,0,.12)',textAlign:'center'}}>
+      <div style={{fontSize:48,marginBottom:12}}>🔧</div>
+      <h1 style={{fontSize:22,fontWeight:900,color:'#1565c0',marginBottom:8}}>Friends Automotive</h1>
+      <p style={{color:'#6b7280',marginBottom:24,lineHeight:1.7,fontSize:13}}>Industrial-Grade Garage Management System</p>
+      <div style={{background:'#fff3e0',border:'1px solid #ffb74d',borderRadius:8,padding:16,marginBottom:20,textAlign:'left'}}>
+        <b style={{color:'#e65100'}}>⚠ Supabase credentials not configured yet.</b>
+        <p style={{color:'#666',marginTop:6,fontSize:12,lineHeight:1.7}}>Edit <code style={{background:'#f5f5f5',padding:'1px 4px',borderRadius:3}}>index.html</code> and replace the two placeholder values near the top of the file with your Supabase URL and anon key.</p>
+      </div>
+      <div style={{background:'#f6f8fa',borderRadius:8,padding:20,textAlign:'left',marginBottom:20}}>
+        <p style={{fontWeight:700,marginBottom:10,color:'#111',fontSize:13}}>How to set up (free, takes 5 minutes):</p>
+        <ol style={{paddingLeft:18,lineHeight:2.2,color:'#444',fontSize:12}}>
+          <li>Go to <a href="https://supabase.com" target="_blank" style={{color:'#1565c0',fontWeight:600}}>supabase.com</a> → Sign up free (no credit card)</li>
+          <li>Click <b>New project</b> → give it a name and password</li>
+          <li>Wait ~60 seconds for the project to start</li>
+          <li>Go to <b>SQL Editor</b> → paste the contents of <code>schema.sql</code> → click Run</li>
+          <li>Go to <b>Settings → API</b> → copy <b>Project URL</b> and <b>anon public key</b></li>
+          <li>Open <code>index.html</code> → replace the two <code>PASTE_..._HERE</code> placeholders</li>
+          <li>Push to GitHub → Enable GitHub Pages → done!</li>
+        </ol>
+      </div>
+      <p style={{fontSize:12,color:'#888',lineHeight:1.6}}>Your data will be stored in a real <b>PostgreSQL database</b> — accessible from any phone, tablet, or computer worldwide. 500MB free storage handles thousands of customers and invoices.</p>
+    </div>
+  </div>
+}
+
+/* ─── ERROR SCREEN ──────────────────────────────────── */
+function ErrScreen({msg,onRetry}){
+  return <div style={{display:'flex',alignItems:'center',justifyContent:'center',minHeight:'100vh',padding:20,background:'#f0f4f8'}}>
+    <div style={{background:'#fff',borderRadius:12,padding:32,maxWidth:500,width:'100%',textAlign:'center',boxShadow:'0 8px 32px rgba(0,0,0,.1)'}}>
+      <div style={{fontSize:40,marginBottom:12}}>⚠️</div>
+      <h2 style={{color:'#c62828',marginBottom:12,fontSize:18}}>Database Connection Failed</h2>
+      <p style={{color:'#555',marginBottom:20,lineHeight:1.7,fontSize:13}}>{msg}</p>
+      <div style={{background:'#f6f8fa',borderRadius:8,padding:16,textAlign:'left',fontSize:12,marginBottom:20}}>
+        <b>Checklist:</b>
+        <ul style={{paddingLeft:16,marginTop:8,lineHeight:2.2,color:'#444'}}>
+          <li>Is <code>FA_SUPABASE_URL</code> correct in <code>index.html</code>?</li>
+          <li>Is <code>FA_SUPABASE_KEY</code> the <b>anon public</b> key (not service_role)?</li>
+          <li>Did you run <code>schema.sql</code> in the Supabase SQL Editor?</li>
+          <li>Is your Supabase project active and not paused?</li>
+        </ul>
+      </div>
+      <PBtn onClick={onRetry}>🔄 Retry Connection</PBtn>
+    </div>
+  </div>
+}
+
+/* ─── APP SHELL ─────────────────────────────────────── */
+const NAV=[{k:'Dashboard',e:'📊'},{k:'Job Cards',e:'🔧'},{k:'Invoices',e:'🧾'},{k:'Customers',e:'👥'},{k:'Vehicles',e:'🚗'},{k:'Inventory',e:'📦'},{k:'Settings',e:'⚙️'}]
+
+function App(){
+  const db=useDB()
+  const{D,ready,busy,err,reload}=db
+  const[tab,setTab]=useState('Dashboard')
+  const[col,setCol]=useState(false)
+
+  const configured=!window.FA_SUPABASE_URL.includes('PASTE_')
+  if(!configured)return <SetupScreen/>
+  if(ready&&err)return <ErrScreen msg={err} onRetry={reload}/>
+  if(!ready)return <div style={{display:'flex',alignItems:'center',justifyContent:'center',height:'100vh',flexDirection:'column',gap:16,background:'#f0f4f8'}}>
+    <div style={{width:44,height:44,border:'4px solid #dbeafe',borderTop:'4px solid #1565c0',borderRadius:'50%',animation:'spin .8s linear infinite'}}/>
+    <div style={{fontSize:15,fontWeight:800,color:'#1565c0'}}>Friends Automotive</div>
+    <div style={{fontSize:12,color:'#888'}}>Connecting to database…</div>
+  </div>
+
+  // Pass settings through to PrintDoc via data
+  const data={...D}
+
+  return <div style={{display:'flex',height:'100vh',overflow:'hidden',background:'#f0f4f8'}}>
+    {/* SIDEBAR */}
+    <div style={{width:col?54:198,background:'linear-gradient(175deg,#0d2137,#0f3460)',flexShrink:0,display:'flex',flexDirection:'column',transition:'width .2s',overflow:'hidden',boxShadow:'2px 0 12px rgba(0,0,0,.2)'}}>
+      <div style={{padding:col?'14px 10px':'14px 16px',borderBottom:'1px solid rgba(255,255,255,.08)',display:'flex',alignItems:'center',gap:10,minHeight:58}}>
+        <div style={{width:32,height:32,background:'linear-gradient(135deg,#1976d2,#1565c0)',borderRadius:8,display:'flex',alignItems:'center',justifyContent:'center',color:'#fff',fontSize:14,fontWeight:900,flexShrink:0,boxShadow:'0 2px 8px rgba(21,101,192,.4)'}}>FA</div>
+        {!col&&<div style={{overflow:'hidden'}}>
+          <div style={{color:'#fff',fontSize:13,fontWeight:800,whiteSpace:'nowrap'}}>Friends Automotive</div>
+          <div style={{color:'rgba(255,255,255,.4)',fontSize:10,whiteSpace:'nowrap'}}>Garage Management</div>
+        </div>}
+      </div>
+      <nav style={{flex:1,padding:'8px 0',overflowY:'auto'}}>
+        {NAV.map(t=><button key={t.k} onClick={()=>setTab(t.k)} title={t.k} style={{width:'100%',textAlign:'left',padding:col?'10px 0':'10px 16px',border:'none',cursor:'pointer',display:'flex',alignItems:'center',gap:10,background:tab===t.k?'rgba(25,118,210,.35)':'transparent',color:tab===t.k?'#90caf9':'rgba(255,255,255,.65)',fontWeight:tab===t.k?800:500,fontSize:12,justifyContent:col?'center':'flex-start',borderLeft:tab===t.k?'3px solid #42a5f5':'3px solid transparent',transition:'all .15s'}}><span style={{fontSize:17,flexShrink:0}}>{t.e}</span>{!col&&t.k}</button>)}
+      </nav>
+      {!col&&<div style={{padding:'10px 14px',borderTop:'1px solid rgba(255,255,255,.08)',fontSize:10,color:'rgba(255,255,255,.3)',lineHeight:1.8}}>
+        <div>{data.customers.length} customers · {data.vehicles.length} vehicles</div>
+        <div>{data.parts.length} parts · {data.jobCards.length} jobs</div>
+        <div>{data.invoices.length} invoices{busy&&<span style={{color:'#90caf9'}}> · saving…</span>}</div>
+      </div>}
+    </div>
+
+    {/* MAIN */}
+    <div style={{flex:1,display:'flex',flexDirection:'column',minWidth:0,overflow:'hidden'}}>
+      <div style={{height:50,background:'#fff',borderBottom:'1px solid #e8ecf0',display:'flex',alignItems:'center',padding:'0 20px',gap:12,flexShrink:0,boxShadow:'0 1px 4px rgba(0,0,0,.06)'}}>
+        <button onClick={()=>setCol(p=>!p)} style={{border:'none',background:'none',cursor:'pointer',color:'#888',fontSize:22,padding:'2px 4px',lineHeight:1}}>☰</button>
+        <span style={{fontSize:16,fontWeight:800,flex:1}}>{tab}</span>
+        {busy&&<span style={{fontSize:11,color:'#1565c0',fontWeight:600}}>⟳ Saving to database…</span>}
+        <div style={{background:'#dbeafe',color:'#1e40af',fontSize:10,padding:'4px 12px',borderRadius:20,fontWeight:800,fontFamily:'monospace'}}>{data.settings?.gstin}</div>
+      </div>
+      <div style={{flex:1,overflowY:'auto',padding:20,background:'#f0f4f8'}}>
+        {tab==='Dashboard'&&<Dashboard data={data} setTab={setTab}/>}
+        {tab==='Job Cards'&&<JobCards data={data} db={db} setTab={setTab}/>}
+        {tab==='Invoices'&&<Invoices data={data} db={db}/>}
+        {tab==='Customers'&&<Customers data={data} db={db}/>}
+        {tab==='Vehicles'&&<Vehicles data={data} db={db}/>}
+        {tab==='Inventory'&&<Inventory data={data} db={db}/>}
+        {tab==='Settings'&&<Settings data={data} db={db}/>}
+      </div>
+    </div>
+  </div>
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(React.createElement(App))
+</script>
+</body>
+</html>
