@@ -103,7 +103,7 @@ function buildInvNo(settings,id,date){
 }
 
 /* ─── DATABASE HOOK ─────────────────────────────────── */
-const DEF = {shopName:'Friends Automotive',tagline:'Complete Car Solution',address:'Sector 77 Shikohpur Road beside Bharat Petroleum, Gurugram 122004',phone:'9654483936',email:'rshankar929@gmail.com',gstin:'06JCDPS8205K2Z4',pan:'JCDPS8205K',bankName:'HDFC BANK',accountNo:'50200062379206',ifsc:'HDFC0009433',bankBranch:'GURGAON',upiId:'',laborRate:500,invoicePrefix:'FRA',invoiceTerms:'1. Warranty on parts as per manufacturer terms.\n2. Labour warranty: 1 month.\n3. Goods once sold will not be taken back.'}
+const DEF = {shopName:'Friends Automotive',tagline:'Complete Car Solution',address:'Sector 77 Shikohpur Road beside Bharat Petroleum, Gurugram 122004',phone:'9654483936',email:'rshankar929@gmail.com',gstin:'06JCDPS8205K2Z4',pan:'JCDPS8205K',bankName:'HDFC BANK',accountNo:'50200062379206',ifsc:'HDFC0009433',bankBranch:'GURGAON',upiId:'',laborRate:500,invoicePrefix:'FRA',invoiceTerms:'1. Warranty on parts as per manufacturer terms.\n2. Labour warranty: 1 month.\n3. Goods once sold will not be taken back.',logoUrl:''}
 
 function useDB(){
   const[D,setD]=useState({customers:[],vehicles:[],parts:[],jobCards:[],invoices:[],settings:DEF})
@@ -126,7 +126,8 @@ function useDB(){
       ])
       if(e0&&e0.code!=='PGRST116') throw e0
       if(e1) throw e1
-      setD({settings:st?toCamel(st):DEF, customers:(cu||[]).map(toCamel), vehicles:(ve||[]).map(toCamel), parts:(pa||[]).map(toCamel), jobCards:(jc||[]).map(toCamel), invoices:(iv||[]).map(toCamel)})
+      const logoUrl=localStorage.getItem('fa_logo')||''
+      setD({settings:{...(st?toCamel(st):DEF),logoUrl}, customers:(cu||[]).map(toCamel), vehicles:(ve||[]).map(toCamel), parts:(pa||[]).map(toCamel), jobCards:(jc||[]).map(toCamel), invoices:(iv||[]).map(toCamel)})
     }catch(e){
       setErr('Cannot connect to database. Check your Supabase URL and Key in index.html, and make sure you ran schema.sql. Error: '+e.message)
     }
@@ -225,9 +226,11 @@ function useDB(){
 
   // ── Settings
   const saveSettings=useCallback(async form=>op(async()=>{
-    const row=toSnake(form); row.id=1
+    const{logoUrl,...rest}=form
+    if(logoUrl) localStorage.setItem('fa_logo',logoUrl)
+    const row=toSnake(rest); row.id=1
     const{data:d,error:e}=await sb.from('settings').upsert(row).select().single(); if(e)throw e
-    const r=toCamel(d); setD(p=>({...p,settings:r})); return r
+    const r=toCamel(d); setD(p=>({...p,settings:{...r,logoUrl:logoUrl||localStorage.getItem('fa_logo')||''}})); return r
   }),[])
 
   return{D,ready,busy,err,reload:load,saveCustomer,delCustomer,saveVehicle,delVehicle,savePart,delPart,saveJob,delJob,saveInvoice,markPay,delInvoice,saveSettings}
@@ -321,23 +324,27 @@ function PrintDoc({inv,settings,onClose}){
   const lbl=inv.type==='estimate'?'ESTIMATE':inv.type==='final-invoice'?'FINAL INVOICE':'TAX INVOICE'
   const invNo=buildInvNo(settings,inv.id,inv.date)
   const gG={}; lines.forEach(it=>{if(!gG[it.gst])gG[it.gst]={rate:it.gst,tax:0,ga:0};gG[it.gst].tax+=it.tax;gG[it.gst].ga+=it.ga})
-  const cell={border:'1px solid #333',padding:'5px 7px',fontSize:11,verticalAlign:'top'}
-  const hcell={...cell,background:'#1a1a2e',color:'#fff',fontWeight:700}
+  const cell={border:'1px solid #1565c0',padding:'5px 7px',fontSize:11,verticalAlign:'top'}
+  const hcell={...cell,background:'#1565c0',color:'#fff',fontWeight:700}
   const emptyRows=Math.max(0,5-lines.length)
+  const totalQty=lines.reduce((a,it)=>a+(+it.qty||0),0)
   return <div style={{fontFamily:'Arial,Helvetica,sans-serif',fontSize:11,color:'#111',background:'#fff',maxWidth:840,margin:'0 auto'}}>
     <style>{`@media print{.np{display:none!important}body{margin:0;background:#fff}#pd{max-width:100%}}@page{size:A4;margin:8mm}`}</style>
     <div id="pd">
     {/* HEADER */}
-    <table style={{width:'100%',borderCollapse:'collapse',border:'1px solid #333'}}>
+    <table style={{width:'100%',borderCollapse:'collapse',border:'1px solid #1565c0'}}>
       <tbody><tr>
-        <td style={{...cell,width:'62%',borderRight:'1px solid #333',padding:'10px 14px'}}>
+        <td style={{...cell,width:'62%',borderRight:'1px solid #1565c0',padding:'10px 14px'}}>
           <div style={{display:'flex',alignItems:'center',gap:10,marginBottom:6}}>
-            <div style={{width:48,height:48,background:'#1a1a2e',borderRadius:6,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',color:'#fff',flexShrink:0}}>
-              <div style={{fontSize:14,fontWeight:900,letterSpacing:1}}>FA</div>
-              <div style={{fontSize:7,opacity:.8,letterSpacing:.5}}>AUTOMOTIVE</div>
-            </div>
+            {settings.logoUrl
+              ?<img src={settings.logoUrl} style={{width:64,height:64,objectFit:'contain',borderRadius:6,flexShrink:0}} alt="logo"/>
+              :<div style={{width:48,height:48,background:'#1565c0',borderRadius:6,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',color:'#fff',flexShrink:0}}>
+                <div style={{fontSize:14,fontWeight:900,letterSpacing:1}}>FA</div>
+                <div style={{fontSize:7,opacity:.8,letterSpacing:.5}}>AUTOMOTIVE</div>
+              </div>
+            }
             <div>
-              <div style={{fontSize:18,fontWeight:900,color:'#1a1a2e'}}>{settings.shopName}</div>
+              <div style={{fontSize:18,fontWeight:900,color:'#1565c0'}}>{settings.shopName}</div>
               {settings.tagline&&<div style={{fontSize:10,color:'#666',fontStyle:'italic'}}>{settings.tagline}</div>}
             </div>
           </div>
@@ -345,8 +352,11 @@ function PrintDoc({inv,settings,onClose}){
         </td>
         <td style={{...cell,textAlign:'right',verticalAlign:'middle',padding:'10px 14px'}}>
           <div style={{color:'#c0392b',fontSize:15,fontWeight:900,letterSpacing:1}}>{lbl}</div>
-          <div style={{fontSize:11,marginTop:4,color:'#333'}}>Date: {fmtD(inv.date)}</div>
-          {settings.upiId&&<div style={{marginTop:8,fontSize:9,color:'#888'}}>Scan to Pay: {settings.upiId}</div>}
+          <div style={{fontSize:11,marginTop:4,color:'#333'}}>No: {invNo}&nbsp;&nbsp;Date: {fmtD(inv.date)}</div>
+          {settings.upiId&&<div style={{marginTop:6,display:'flex',flexDirection:'column',alignItems:'flex-end',gap:2}}>
+            <img src={`https://api.qrserver.com/v1/create-qr-code/?size=80x80&data=${encodeURIComponent('upi://pay?pa='+settings.upiId+'&pn='+(settings.shopName||'Shop')+'&am='+fg.toFixed(2)+'&cu=INR')}`} alt="UPI QR" style={{width:80,height:80}}/>
+            <div style={{fontSize:8,color:'#888'}}>Scan to Pay via UPI</div>
+          </div>}
         </td>
       </tr></tbody>
     </table>
@@ -412,6 +422,17 @@ function PrintDoc({inv,settings,onClose}){
         </tr>)}
         {[...Array(emptyRows)].map((_,i)=><tr key={`e${i}`} style={{height:20}}>{[...Array(10)].map((_,j)=><td key={j} style={{...cell,fontSize:10}}>&nbsp;</td>)}</tr>)}
       </tbody>
+      <tfoot>
+        <tr style={{background:'#e3f2fd'}}>
+          <td colSpan={4} style={{...hcell,textAlign:'right',fontSize:10,background:'#1565c0'}}>TOTALS</td>
+          <td style={{...cell,textAlign:'center',fontWeight:700,fontSize:10}}>{totalQty}</td>
+          <td style={{...cell,textAlign:'right',fontWeight:700,fontSize:10}}>₹{sub.toFixed(2)}</td>
+          <td style={{...cell,fontSize:10}}></td>
+          <td style={{...cell,textAlign:'right',fontWeight:700,fontSize:10}}>₹{(gt/2).toFixed(2)}</td>
+          <td style={{...cell,textAlign:'right',fontWeight:700,fontSize:10}}>₹{(gt/2).toFixed(2)}</td>
+          <td style={{...cell,textAlign:'right',fontWeight:800,fontSize:11,color:'#1565c0'}}>₹{grand.toFixed(2)}</td>
+        </tr>
+      </tfoot>
     </table>
     {/* AMOUNT IN WORDS + SUBTOTALS */}
     <table style={{width:'100%',borderCollapse:'collapse',border:'1px solid #333',borderTop:'none'}}>
@@ -904,6 +925,17 @@ function Settings({data,db}){
         <F label="Branch" half><In value={form.bankBranch||''} onChange={e=>f('bankBranch',e.target.value)}/></F>
         <F label="UPI ID" half><In value={form.upiId||''} onChange={e=>f('upiId',e.target.value)} placeholder="name@upi"/></F>
       </FR>
+    </div>
+    <div style={sec}><div style={stl}>🖼 Workshop Logo</div>
+      <FR>
+        <F label="Upload Logo (shown on invoices)">
+          <input type="file" accept="image/*" onChange={e=>{const file=e.target.files[0];if(!file)return;const r=new FileReader();r.onload=ev=>f('logoUrl',ev.target.result);r.readAsDataURL(file)}} style={{fontSize:12,padding:'6px 0'}}/>
+        </F>
+      </FR>
+      {form.logoUrl&&<div style={{marginTop:8,display:'flex',alignItems:'center',gap:12}}>
+        <img src={form.logoUrl} style={{height:64,maxWidth:180,objectFit:'contain',border:'1px solid #e0e0e0',borderRadius:6,padding:4}} alt="logo preview"/>
+        <button onClick={()=>{f('logoUrl','');localStorage.removeItem('fa_logo')}} style={{padding:'4px 12px',background:'#fce4ec',color:'#c62828',border:'1px solid #ef9a9a',borderRadius:6,cursor:'pointer',fontSize:11}}>Remove Logo</button>
+      </div>}
     </div>
     <div style={sec}><div style={stl}>📄 Default Invoice Terms &amp; Conditions</div>
       <Tx value={form.invoiceTerms||''} onChange={e=>f('invoiceTerms',e.target.value)} style={{minHeight:100}}/>
