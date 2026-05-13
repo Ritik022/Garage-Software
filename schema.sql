@@ -166,4 +166,9 @@ ALTER TABLE parts     DISABLE ROW LEVEL SECURITY;
 ALTER TABLE job_cards DISABLE ROW LEVEL SECURITY;
 ALTER TABLE invoices  DISABLE ROW LEVEL SECURITY;
 
+-- ── Migration: add CGST/SGST columns if not already present ──
+-- Run this block if you applied the schema before this update:
+ALTER TABLE invoices ADD COLUMN IF NOT EXISTS cgst_total NUMERIC(10,2) DEFAULT 0;
+ALTER TABLE invoices ADD COLUMN IF NOT EXISTS sgst_total NUMERIC(10,2) DEFAULT 0;
+
 -- Done!
