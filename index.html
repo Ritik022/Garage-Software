@@ -481,7 +481,8 @@ function InvEditor({initial,data,onSave,onClose}){
   function doSave(){
     const{sub:s,gt:g,cgst:cg,sgst:sg,grand:gr}=calcItems(items)
     const fg=gr-(form.additionalDiscount||0)+(form.adjustment||0)
-    onSave({...form,items,subtotal:s,gstTot:g,cgstTot:cg,sgstTot:sg,grand:fg})
+    const ni=v=>v===''||v==null?null:+v
+    onSave({...form,jobCardId:ni(form.jobCardId),customerId:ni(form.customerId),vehicleId:ni(form.vehicleId),odometer:ni(form.odometer),items,subtotal:s,gstTot:g,cgstTot:cg,sgstTot:sg,grand:fg})
   }
   const sec={border:'1px solid #e8ecf0',borderRadius:8,padding:14,marginBottom:14,background:'#fafbfc'}
   const stl={fontSize:12,fontWeight:800,color:'#1565c0',marginBottom:12,paddingBottom:8,borderBottom:'1px solid #e8ecf0'}
