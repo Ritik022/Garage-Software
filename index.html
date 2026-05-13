@@ -395,7 +395,7 @@ function PrintDoc({inv,settings,onClose}){
     {/* ITEMS TABLE */}
     <table style={{width:'100%',borderCollapse:'collapse',border:'1px solid #333',borderTop:'none'}}>
       <thead><tr>
-        {['#','Part Name','Description','HSN Code','GST %','CGST','SGST','Qty','Unit Price (₹)','Total (₹)'].map(h=><th key={h} style={{...hcell,textAlign:['Unit Price (₹)','CGST','SGST','Total (₹)'].includes(h)?'right':'center',padding:'6px 6px',fontSize:10}}>{h}</th>)}
+        {['#','Part Name','Description','HSN Code','Quantity','Unit Price (₹)','GST Rate (%)','CGST','SGST','Parts Total (₹)'].map(h=><th key={h} style={{...hcell,textAlign:['Unit Price (₹)','CGST','SGST','Parts Total (₹)'].includes(h)?'right':'center',padding:'6px 6px',fontSize:10}}>{h}</th>)}
       </tr></thead>
       <tbody>
         {lines.map((it,i)=><tr key={it.id} style={{background:i%2?'#f9f9f9':'#fff'}}>
@@ -403,11 +403,11 @@ function PrintDoc({inv,settings,onClose}){
           <td style={{...cell,fontWeight:600,fontSize:11}}>{it.name}</td>
           <td style={{...cell,textAlign:'center',color:'#555',fontSize:10}}>{it.isService?'Labour':'Part'}</td>
           <td style={{...cell,textAlign:'center',fontFamily:'monospace',fontSize:10}}>{it.hsnSac}</td>
+          <td style={{...cell,textAlign:'center',fontSize:10}}>{it.qty}.0</td>
+          <td style={{...cell,textAlign:'right',fontSize:10}}>₹{Number(it.rate).toFixed(2)}</td>
           <td style={{...cell,textAlign:'center',fontSize:10}}>{it.gst}.00%</td>
           <td style={{...cell,textAlign:'right',fontSize:10}}>₹{Number(it.ga/2).toFixed(2)}</td>
           <td style={{...cell,textAlign:'right',fontSize:10}}>₹{Number(it.ga/2).toFixed(2)}</td>
-          <td style={{...cell,textAlign:'center',fontSize:10}}>{it.qty}.0</td>
-          <td style={{...cell,textAlign:'right',fontSize:10}}>₹{Number(it.rate).toFixed(2)}</td>
           <td style={{...cell,textAlign:'right',fontWeight:700,fontSize:11}}>₹{Number(it.tot).toFixed(2)}</td>
         </tr>)}
         {[...Array(emptyRows)].map((_,i)=><tr key={`e${i}`} style={{height:20}}>{[...Array(10)].map((_,j)=><td key={j} style={{...cell,fontSize:10}}>&nbsp;</td>)}</tr>)}
