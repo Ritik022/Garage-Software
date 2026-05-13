@@ -135,6 +135,7 @@ CREATE TABLE IF NOT EXISTS invoices (
   due_date            DATE,
   notes               TEXT DEFAULT '',
   terms_conditions    TEXT DEFAULT '',
+  inv_serial          INTEGER DEFAULT NULL,
   created_at          TIMESTAMPTZ DEFAULT NOW(),
   updated_at          TIMESTAMPTZ DEFAULT NOW()
 );
@@ -171,6 +172,7 @@ ALTER TABLE invoices  DISABLE ROW LEVEL SECURITY;
 ALTER TABLE invoices ADD COLUMN IF NOT EXISTS cgst_total NUMERIC(10,2) DEFAULT 0;
 ALTER TABLE invoices ADD COLUMN IF NOT EXISTS sgst_total NUMERIC(10,2) DEFAULT 0;
 ALTER TABLE settings ADD COLUMN IF NOT EXISTS logo_url TEXT DEFAULT '';
+ALTER TABLE invoices ADD COLUMN IF NOT EXISTS inv_serial INTEGER DEFAULT NULL;
 
 -- Done!
 
