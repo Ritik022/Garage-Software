@@ -35,7 +35,7 @@ window.FA_SUPABASE_KEY = 'sb_publishable_Us3B3qv2dpZKQl8CQ6ALow_-RBHNfms'
 </script>
 
 <script type="text/babel" data-presets="react">
-const {useState,useEffect,useCallback} = React
+const {useState,useEffect,useCallback,useRef} = React
 
 /* ─── SUPABASE ──────────────────────────────────────── */
 const sb = supabase.createClient(window.FA_SUPABASE_URL, window.FA_SUPABASE_KEY)
@@ -127,7 +127,8 @@ function useDB(){
       if(e0&&e0.code!=='PGRST116') throw e0
       if(e1) throw e1
       const logoUrl=localStorage.getItem('fa_logo')||''
-      setD({settings:{...(st?toCamel(st):DEF),logoUrl}, customers:(cu||[]).map(toCamel), vehicles:(ve||[]).map(toCamel), parts:(pa||[]).map(toCamel), jobCards:(jc||[]).map(toCamel), invoices:(iv||[]).map(toCamel)})
+      const anthropicKey=localStorage.getItem('fa_anthropic_key')||''
+      setD({settings:{...(st?toCamel(st):DEF),logoUrl,anthropicKey}, customers:(cu||[]).map(toCamel), vehicles:(ve||[]).map(toCamel), parts:(pa||[]).map(toCamel), jobCards:(jc||[]).map(toCamel), invoices:(iv||[]).map(toCamel)})
     }catch(e){
       setErr('Cannot connect to database. Check your Supabase URL and Key in index.html, and make sure you ran schema.sql. Error: '+e.message)
     }
@@ -226,11 +227,14 @@ function useDB(){
 
   // ── Settings
   const saveSettings=useCallback(async form=>op(async()=>{
-    const{logoUrl,...rest}=form
+    const{logoUrl,anthropicKey,...rest}=form
     if(logoUrl) localStorage.setItem('fa_logo',logoUrl)
+    if(anthropicKey!==undefined) localStorage.setItem('fa_anthropic_key',anthropicKey)
     const row=toSnake(rest); row.id=1
     const{data:d,error:e}=await sb.from('settings').upsert(row).select().single(); if(e)throw e
-    const r=toCamel(d); setD(p=>({...p,settings:{...r,logoUrl:logoUrl||localStorage.getItem('fa_logo')||''}})); return r
+    const r=toCamel(d)
+    setD(p=>({...p,settings:{...r,logoUrl:logoUrl||localStorage.getItem('fa_logo')||'',anthropicKey:anthropicKey||localStorage.getItem('fa_anthropic_key')||''}}))
+    return r
   }),[])
 
   return{D,ready,busy,err,reload:load,saveCustomer,delCustomer,saveVehicle,delVehicle,savePart,delPart,saveJob,delJob,saveInvoice,markPay,delInvoice,saveSettings}
@@ -352,7 +356,8 @@ function PrintDoc({inv,settings,onClose}){
         </td>
         <td style={{...cell,textAlign:'right',verticalAlign:'middle',padding:'10px 14px'}}>
           <div style={{color:'#c0392b',fontSize:15,fontWeight:900,letterSpacing:1}}>{lbl}</div>
-          <div style={{fontSize:11,marginTop:4,color:'#333'}}>No: {invNo}&nbsp;&nbsp;Date: {fmtD(inv.date)}</div>
+          <div style={{fontSize:11,marginTop:4,color:'#333'}}>Invoice No: <b>{invNo}</b></div>
+          <div style={{fontSize:11,marginTop:2,color:'#333'}}>Date: <b>{fmtD(inv.date)}</b></div>
           {settings.upiId&&<div style={{marginTop:6,display:'flex',flexDirection:'column',alignItems:'flex-end',gap:2}}>
             <img src={`https://api.qrserver.com/v1/create-qr-code/?size=80x80&data=${encodeURIComponent('upi://pay?pa='+settings.upiId+'&pn='+(settings.shopName||'Shop')+'&am='+fg.toFixed(2)+'&cu=INR')}`} alt="UPI QR" style={{width:80,height:80}}/>
             <div style={{fontSize:8,color:'#888'}}>Scan to Pay via UPI</div>
@@ -486,8 +491,42 @@ function InvEditor({initial,data,onSave,onClose}){
   const blank={type:'invoice',date:today(),dueDate:'',jobCardId:'',customerId:'',vehicleId:'',customerName:'',companyName:'',customerPhone:'',customerAddress:'',customerGstin:'',customerEmail:'',vehicleReg:'',vehicleDetails:'',odometer:'',vinNo:'',engineNo:'',vehicleColor:'',vehicleFuel:'',items:[],notes:'',termsConditions:'',paymentStatus:'pending',paymentMethod:'',amountPaid:0,additionalDiscount:0,adjustment:0}
   const[form,setForm]=useState(initial?{...blank,...initial}:blank)
   const[items,setItems]=useState(initial?.items||[])
+  const[aiLoading,setAiLoading]=useState(false)
+  const pdfRef=useRef(null)
   const f=(k,v)=>setForm(p=>({...p,[k]:v}))
   const custVehs=data.vehicles.filter(v=>v.customerId==form.customerId)
+
+  async function importFromPDF(file){
+    const apiKey=localStorage.getItem('fa_anthropic_key')
+    if(!apiKey){alert('Please add your Anthropic API key in Settings → AI Settings first.');return}
+    setAiLoading(true)
+    try{
+      const base64=await new Promise((res,rej)=>{const r=new FileReader();r.onload=e=>res(e.target.result.split(',')[1]);r.onerror=rej;r.readAsDataURL(file)})
+      const resp=await fetch('https://api.anthropic.com/v1/messages',{
+        method:'POST',
+        headers:{'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-allow-browser':'true'},
+        body:JSON.stringify({
+          model:'claude-haiku-4-5-20251001',max_tokens:1500,
+          messages:[{role:'user',content:[
+            {type:'document',source:{type:'base64',media_type:'application/pdf',data:base64}},
+            {type:'text',text:`Extract details from this invoice/document. Return ONLY a JSON object, no explanation:\n{"customerName":"","customerPhone":"","customerEmail":"","customerAddress":"","customerGstin":"","vehicleReg":"","vehicleDetails":"","odometer":null,"date":"YYYY-MM-DD","notes":"","items":[{"name":"","qty":1,"rate":0,"gst":18,"hsnSac":"","discount":0,"isService":false}]}\nUse null for missing numbers, empty string for missing text. isService=true for labour/service items.`}
+          ]}]
+        })
+      })
+      if(!resp.ok){const e=await resp.json();throw new Error(e.error?.message||'API error '+resp.status)}
+      const d=await resp.json()
+      const text=d.content[0].text
+      const json=JSON.parse(text.match(/\{[\s\S]*\}/)[0])
+      const upd={}
+      ;['customerName','customerPhone','customerEmail','customerAddress','customerGstin','vehicleReg','vehicleDetails','notes'].forEach(k=>{if(json[k])upd[k]=json[k]})
+      if(json.odometer) upd.odometer=json.odometer
+      if(json.date&&json.date.match(/^\d{4}-\d{2}-\d{2}$/)) upd.date=json.date
+      setForm(p=>({...p,...upd}))
+      if(json.items?.length) setItems(json.items.map(it=>({id:Date.now()+Math.random(),name:it.name||'',qty:+it.qty||1,rate:+it.rate||0,gst:+it.gst||18,hsnSac:it.hsnSac||'',discount:+it.discount||0,isService:!!it.isService})))
+      alert(`✓ AI extracted ${json.items?.length||0} item(s) and filled in the details. Please review before saving.`)
+    }catch(e){alert('AI import failed: '+e.message)}
+    setAiLoading(false)
+  }
 
   function pickC(id){
     const c=data.customers.find(x=>x.id==id); if(!c)return
@@ -508,6 +547,14 @@ function InvEditor({initial,data,onSave,onClose}){
   const sec={border:'1px solid #e8ecf0',borderRadius:8,padding:14,marginBottom:14,background:'#fafbfc'}
   const stl={fontSize:12,fontWeight:800,color:'#1565c0',marginBottom:12,paddingBottom:8,borderBottom:'1px solid #e8ecf0'}
   return <div>
+    <div style={{background:'linear-gradient(135deg,#e8f5e9,#e3f2fd)',border:'1px solid #90caf9',borderRadius:8,padding:'10px 14px',marginBottom:14,display:'flex',alignItems:'center',gap:12,flexWrap:'wrap'}}>
+      <div style={{flex:1,minWidth:180}}>
+        <div style={{fontWeight:800,fontSize:12,color:'#1565c0',marginBottom:2}}>🤖 AI Auto-Fill from PDF</div>
+        <div style={{fontSize:11,color:'#555'}}>Upload any invoice or document — Claude AI will extract and fill in all fields automatically.</div>
+      </div>
+      <input ref={pdfRef} type="file" accept=".pdf" style={{display:'none'}} onChange={e=>{if(e.target.files[0])importFromPDF(e.target.files[0]);e.target.value=''}}/>
+      <PBtn onClick={()=>pdfRef.current?.click()} col={aiLoading?'#999':'#1b5e20'} style={{whiteSpace:'nowrap'}}>{aiLoading?'⏳ AI Processing…':'📎 Import from PDF'}</PBtn>
+    </div>
     <div style={sec}><div style={stl}>📄 Document Type &amp; Dates</div>
       <FR>
         <F label="Type" third><select value={form.type} onChange={e=>f('type',e.target.value)} style={IS}><option value="estimate">Estimate</option><option value="invoice">Tax Invoice</option><option value="final-invoice">Final Invoice</option></select></F>
@@ -936,6 +983,12 @@ function Settings({data,db}){
         <img src={form.logoUrl} style={{height:64,maxWidth:180,objectFit:'contain',border:'1px solid #e0e0e0',borderRadius:6,padding:4}} alt="logo preview"/>
         <button onClick={()=>{f('logoUrl','');localStorage.removeItem('fa_logo')}} style={{padding:'4px 12px',background:'#fce4ec',color:'#c62828',border:'1px solid #ef9a9a',borderRadius:6,cursor:'pointer',fontSize:11}}>Remove Logo</button>
       </div>}
+    </div>
+    <div style={sec}><div style={stl}>🤖 AI Settings (Claude)</div>
+      <FR>
+        <F label="Anthropic API Key" half><In type="password" value={form.anthropicKey||''} onChange={e=>f('anthropicKey',e.target.value)} placeholder="sk-ant-api03-..."/></F>
+      </FR>
+      <div style={{fontSize:11,color:'#888',marginTop:6,lineHeight:1.7}}>Required for <b>AI PDF Import</b> in invoice creation. Get your key at <b>console.anthropic.com</b>. Stored locally in your browser only — never sent to any server.</div>
     </div>
     <div style={sec}><div style={stl}>📄 Default Invoice Terms &amp; Conditions</div>
       <Tx value={form.invoiceTerms||''} onChange={e=>f('invoiceTerms',e.target.value)} style={{minHeight:100}}/>
