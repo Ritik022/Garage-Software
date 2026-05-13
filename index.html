@@ -338,21 +338,22 @@ function PrintDoc({inv,settings,onClose}){
     {/* HEADER */}
     <table style={{width:'100%',borderCollapse:'collapse',border:'1px solid #1565c0'}}>
       <tbody><tr>
-        <td style={{...cell,width:'62%',borderRight:'1px solid #1565c0',padding:'10px 14px'}}>
-          <div style={{display:'flex',alignItems:'center',gap:10,marginBottom:6}}>
+        <td style={{...cell,width:'62%',borderRight:'1px solid #1565c0',padding:'12px 16px'}}>
+          <div style={{display:'flex',flexDirection:'column',alignItems:'flex-start',gap:6}}>
             {settings.logoUrl
-              ?<img src={settings.logoUrl} style={{width:64,height:64,objectFit:'contain',borderRadius:6,flexShrink:0}} alt="logo"/>
-              :<div style={{width:48,height:48,background:'#1565c0',borderRadius:6,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',color:'#fff',flexShrink:0}}>
-                <div style={{fontSize:14,fontWeight:900,letterSpacing:1}}>FA</div>
-                <div style={{fontSize:7,opacity:.8,letterSpacing:.5}}>AUTOMOTIVE</div>
+              ?<img src={settings.logoUrl} style={{width:100,height:100,objectFit:'contain',borderRadius:8,marginBottom:4}} alt="logo"/>
+              :<div style={{width:60,height:60,background:'#1565c0',borderRadius:8,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',color:'#fff',marginBottom:4}}>
+                <div style={{fontSize:18,fontWeight:900,letterSpacing:1}}>FA</div>
+                <div style={{fontSize:8,opacity:.8,letterSpacing:.5}}>AUTOMOTIVE</div>
               </div>
             }
-            <div>
-              <div style={{fontSize:18,fontWeight:900,color:'#1565c0'}}>{settings.shopName}</div>
-              {settings.tagline&&<div style={{fontSize:10,color:'#666',fontStyle:'italic'}}>{settings.tagline}</div>}
+            <div style={{fontSize:20,fontWeight:900,color:'#1565c0',lineHeight:1.2}}>{settings.shopName}</div>
+            {settings.tagline&&<div style={{fontSize:10,color:'#666',fontStyle:'italic',marginTop:-2}}>{settings.tagline}</div>}
+            <div style={{fontSize:10,color:'#333',lineHeight:1.8,marginTop:2}}>
+              {settings.address}<br/>
+              Phone: {settings.phone}&nbsp;&nbsp;|&nbsp;&nbsp;GST: {settings.gstin}
             </div>
           </div>
-          <div style={{fontSize:10,color:'#333',lineHeight:1.7}}>{settings.address}<br/>Phone: {settings.phone}&nbsp;&nbsp;|&nbsp;&nbsp;GST: {settings.gstin}</div>
         </td>
         <td style={{...cell,textAlign:'right',verticalAlign:'middle',padding:'10px 14px'}}>
           <div style={{color:'#c0392b',fontSize:15,fontWeight:900,letterSpacing:1}}>{lbl}</div>
