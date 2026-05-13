@@ -760,8 +760,8 @@ function JobForm({initial,data,onSave,onClose}){
     if(!form.customerId||!form.vehicleId){alert('Select customer and vehicle.');return}
     const cust=data.customers.find(c=>c.id==form.customerId)
     const veh=data.vehicles.find(v=>v.id==form.vehicleId)
-    const{sub,gt,cgst,sgst,grand}=calcItems(items)
-    onSave({...form,items,subtotal:sub,gstTot:gt,cgstTot:cgst,sgstTot:sgst,grand,customerName:cust?.name||'',vehicleReg:veh?.regNo||''})
+    const{sub,gt,grand}=calcItems(items)
+    onSave({...form,items,subtotal:sub,gstTot:gt,grand,customerName:cust?.name||'',vehicleReg:veh?.regNo||''})
   }
   return <div>
     <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12,marginBottom:4}}>
