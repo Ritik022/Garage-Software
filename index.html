@@ -58,7 +58,7 @@ const SERVICES = [
 const MAKES = ["Maruti Suzuki","Hyundai","Tata","Mahindra","Honda","Toyota","Kia","Renault","Nissan","Volkswagen","Skoda","MG","Mercedes-Benz","BMW","Audi","Volvo","Ford","Jeep","Fiat","Isuzu","Other"]
 
 /* ─── SNAKE ↔ CAMEL ─────────────────────────────────── */
-const S2C = {shop_name:'shopName',bank_name:'bankName',account_no:'accountNo',bank_branch:'bankBranch',upi_id:'upiId',labor_rate:'laborRate',invoice_prefix:'invoicePrefix',invoice_terms:'invoiceTerms',company_name:'companyName',customer_name:'customerName',customer_id:'customerId',vehicle_id:'vehicleId',reg_no:'regNo',engine_no:'engineNo',fuel_type:'fuelType',insurance_expiry:'insuranceExpiry',last_service:'lastService',part_no:'partNo',hsn_code:'hsnCode',purchase_price:'purchasePrice',selling_price:'sellingPrice',min_qty:'minQty',job_card_id:'jobCardId',vehicle_reg:'vehicleReg',technician_name:'technicianName',estimated_delivery:'estimatedDelivery',gst_total:'gstTot',cgst_total:'cgstTot',sgst_total:'sgstTot',grand_total:'grand',customer_phone:'customerPhone',customer_address:'customerAddress',customer_gstin:'customerGstin',customer_email:'customerEmail',vehicle_details:'vehicleDetails',vin_no:'vinNo',vehicle_color:'vehicleColor',vehicle_fuel:'vehicleFuel',additional_discount:'additionalDiscount',payment_status:'paymentStatus',payment_method:'paymentMethod',amount_paid:'amountPaid',due_date:'dueDate',terms_conditions:'termsConditions',created_at:'createdAt',updated_at:'updatedAt'}
+const S2C = {shop_name:'shopName',bank_name:'bankName',account_no:'accountNo',bank_branch:'bankBranch',upi_id:'upiId',labor_rate:'laborRate',invoice_prefix:'invoicePrefix',invoice_terms:'invoiceTerms',company_name:'companyName',customer_name:'customerName',customer_id:'customerId',vehicle_id:'vehicleId',reg_no:'regNo',engine_no:'engineNo',fuel_type:'fuelType',insurance_expiry:'insuranceExpiry',last_service:'lastService',part_no:'partNo',hsn_code:'hsnCode',purchase_price:'purchasePrice',selling_price:'sellingPrice',min_qty:'minQty',job_card_id:'jobCardId',vehicle_reg:'vehicleReg',technician_name:'technicianName',estimated_delivery:'estimatedDelivery',gst_total:'gstTot',cgst_total:'cgstTot',sgst_total:'sgstTot',grand_total:'grand',logo_url:'logoUrl',customer_phone:'customerPhone',customer_address:'customerAddress',customer_gstin:'customerGstin',customer_email:'customerEmail',vehicle_details:'vehicleDetails',vin_no:'vinNo',vehicle_color:'vehicleColor',vehicle_fuel:'vehicleFuel',additional_discount:'additionalDiscount',payment_status:'paymentStatus',payment_method:'paymentMethod',amount_paid:'amountPaid',due_date:'dueDate',terms_conditions:'termsConditions',created_at:'createdAt',updated_at:'updatedAt'}
 const C2S = Object.fromEntries(Object.entries(S2C).map(([k,v])=>[v,k]))
 C2S.gstTot='gst_total'; C2S.cgstTot='cgst_total'; C2S.sgstTot='sgst_total'; C2S.grand='grand_total'; C2S.subtotal='subtotal'
 
@@ -126,8 +126,7 @@ function useDB(){
       ])
       if(e0&&e0.code!=='PGRST116') throw e0
       if(e1) throw e1
-      const logoUrl=localStorage.getItem('fa_logo')||''
-      setD({settings:{...(st?toCamel(st):DEF),logoUrl}, customers:(cu||[]).map(toCamel), vehicles:(ve||[]).map(toCamel), parts:(pa||[]).map(toCamel), jobCards:(jc||[]).map(toCamel), invoices:(iv||[]).map(toCamel)})
+      setD({settings:st?toCamel(st):DEF, customers:(cu||[]).map(toCamel), vehicles:(ve||[]).map(toCamel), parts:(pa||[]).map(toCamel), jobCards:(jc||[]).map(toCamel), invoices:(iv||[]).map(toCamel)})
     }catch(e){
       setErr('Cannot connect to database. Check your Supabase URL and Key in index.html, and make sure you ran schema.sql. Error: '+e.message)
     }
@@ -226,13 +225,9 @@ function useDB(){
 
   // ── Settings
   const saveSettings=useCallback(async form=>op(async()=>{
-    const{logoUrl,...rest}=form
-    if(logoUrl) localStorage.setItem('fa_logo',logoUrl)
-    const row=toSnake(rest); row.id=1
+    const row=toSnake(form); row.id=1
     const{data:d,error:e}=await sb.from('settings').upsert(row).select().single(); if(e)throw e
-    const r=toCamel(d)
-    setD(p=>({...p,settings:{...r,logoUrl:logoUrl||localStorage.getItem('fa_logo')||''}}))
-    return r
+    const r=toCamel(d); setD(p=>({...p,settings:r})); return r
   }),[])
 
   return{D,ready,busy,err,reload:load,saveCustomer,delCustomer,saveVehicle,delVehicle,savePart,delPart,saveJob,delJob,saveInvoice,markPay,delInvoice,saveSettings}
@@ -974,7 +969,7 @@ function Settings({data,db}){
       </FR>
       {form.logoUrl&&<div style={{marginTop:8,display:'flex',alignItems:'center',gap:12}}>
         <img src={form.logoUrl} style={{height:64,maxWidth:180,objectFit:'contain',border:'1px solid #e0e0e0',borderRadius:6,padding:4}} alt="logo preview"/>
-        <button onClick={()=>{f('logoUrl','');localStorage.removeItem('fa_logo')}} style={{padding:'4px 12px',background:'#fce4ec',color:'#c62828',border:'1px solid #ef9a9a',borderRadius:6,cursor:'pointer',fontSize:11}}>Remove Logo</button>
+        <button onClick={()=>f('logoUrl','')} style={{padding:'4px 12px',background:'#fce4ec',color:'#c62828',border:'1px solid #ef9a9a',borderRadius:6,cursor:'pointer',fontSize:11}}>Remove Logo</button>
       </div>}
     </div>
     <div style={sec}><div style={stl}>🤖 AI Setup — PDF Import (one-time)</div>
@@ -1071,25 +1066,59 @@ function ErrScreen({msg,onRetry}){
   </div>
 }
 
+/* ─── LOGIN SCREEN ──────────────────────────────────── */
+function LoginScreen(){
+  const[email,setEmail]=useState('')
+  const[pass,setPass]=useState('')
+  const[err,setErr]=useState('')
+  const[loading,setLoading]=useState(false)
+  async function doLogin(e){
+    e.preventDefault(); setLoading(true); setErr('')
+    const{error}=await sb.auth.signInWithPassword({email,password:pass})
+    if(error) setErr(error.message)
+    setLoading(false)
+  }
+  return <div style={{display:'flex',alignItems:'center',justifyContent:'center',minHeight:'100vh',background:'linear-gradient(135deg,#0d2137 0%,#0f3460 100%)'}}>
+    <div style={{background:'#fff',borderRadius:16,padding:40,maxWidth:380,width:'100%',margin:16,boxShadow:'0 24px 64px rgba(0,0,0,.35)'}}>
+      <div style={{textAlign:'center',marginBottom:28}}>
+        <div style={{width:60,height:60,background:'linear-gradient(135deg,#1976d2,#1565c0)',borderRadius:14,display:'flex',alignItems:'center',justifyContent:'center',color:'#fff',fontSize:22,fontWeight:900,margin:'0 auto 14px',boxShadow:'0 4px 16px rgba(21,101,192,.4)'}}>FA</div>
+        <div style={{fontSize:20,fontWeight:900,color:'#1a1a2e'}}>Friends Automotive</div>
+        <div style={{fontSize:12,color:'#888',marginTop:4}}>Admin Access Only</div>
+      </div>
+      <form onSubmit={doLogin}>
+        <div style={{marginBottom:14}}>
+          <label style={{fontSize:12,fontWeight:600,color:'#444',display:'block',marginBottom:5}}>Email</label>
+          <input type="email" value={email} onChange={e=>setEmail(e.target.value)} required autoFocus style={{width:'100%',padding:'10px 12px',border:'1px solid #d0d7de',borderRadius:8,fontSize:13,outline:'none',boxSizing:'border-box'}} placeholder="admin@example.com"/>
+        </div>
+        <div style={{marginBottom:20}}>
+          <label style={{fontSize:12,fontWeight:600,color:'#444',display:'block',marginBottom:5}}>Password</label>
+          <input type="password" value={pass} onChange={e=>setPass(e.target.value)} required style={{width:'100%',padding:'10px 12px',border:'1px solid #d0d7de',borderRadius:8,fontSize:13,outline:'none',boxSizing:'border-box'}} placeholder="••••••••"/>
+        </div>
+        {err&&<div style={{background:'#fce4ec',color:'#c62828',padding:'9px 12px',borderRadius:7,fontSize:12,marginBottom:16,lineHeight:1.5}}>{err}</div>}
+        <button type="submit" disabled={loading} style={{width:'100%',padding:'12px',background:'#1565c0',color:'#fff',border:'none',borderRadius:8,fontSize:14,fontWeight:700,cursor:'pointer',opacity:loading?.7:1}}>
+          {loading?'Signing in…':'Sign In'}
+        </button>
+      </form>
+    </div>
+  </div>
+}
+
 /* ─── APP SHELL ─────────────────────────────────────── */
 const NAV=[{k:'Dashboard',e:'📊'},{k:'Job Cards',e:'🔧'},{k:'Invoices',e:'🧾'},{k:'Customers',e:'👥'},{k:'Vehicles',e:'🚗'},{k:'Inventory',e:'📦'},{k:'Settings',e:'⚙️'}]
 
-function App(){
+function AppShell({onLogout}){
   const db=useDB()
   const{D,ready,busy,err,reload}=db
   const[tab,setTab]=useState('Dashboard')
   const[col,setCol]=useState(false)
 
-  const configured=!window.FA_SUPABASE_URL.includes('PASTE_')
-  if(!configured)return <SetupScreen/>
   if(ready&&err)return <ErrScreen msg={err} onRetry={reload}/>
   if(!ready)return <div style={{display:'flex',alignItems:'center',justifyContent:'center',height:'100vh',flexDirection:'column',gap:16,background:'#f0f4f8'}}>
     <div style={{width:44,height:44,border:'4px solid #dbeafe',borderTop:'4px solid #1565c0',borderRadius:'50%',animation:'spin .8s linear infinite'}}/>
     <div style={{fontSize:15,fontWeight:800,color:'#1565c0'}}>Friends Automotive</div>
-    <div style={{fontSize:12,color:'#888'}}>Connecting to database…</div>
+    <div style={{fontSize:12,color:'#888'}}>Loading data…</div>
   </div>
 
-  // Pass settings through to PrintDoc via data
   const data={...D}
 
   return <div style={{display:'flex',height:'100vh',overflow:'hidden',background:'#f0f4f8'}}>
@@ -1110,6 +1139,9 @@ function App(){
         <div>{data.parts.length} parts · {data.jobCards.length} jobs</div>
         <div>{data.invoices.length} invoices{busy&&<span style={{color:'#90caf9'}}> · saving…</span>}</div>
       </div>}
+      <button onClick={onLogout} title="Logout" style={{margin:col?'8px auto':'8px 10px',width:col?36:undefined,padding:col?'7px 0':'8px 14px',background:'rgba(255,255,255,.07)',border:'1px solid rgba(255,255,255,.12)',borderRadius:7,cursor:'pointer',color:'rgba(255,255,255,.6)',fontSize:11,display:'flex',alignItems:'center',gap:6,justifyContent:col?'center':'flex-start',flexShrink:0}}>
+        <span style={{fontSize:15}}>🚪</span>{!col&&'Logout'}
+      </button>
     </div>
 
     {/* MAIN */}
@@ -1131,6 +1163,27 @@ function App(){
       </div>
     </div>
   </div>
+}
+
+function App(){
+  const[session,setSession]=useState(null)
+  const[authChecked,setAuthChecked]=useState(false)
+  const configured=!window.FA_SUPABASE_URL.includes('PASTE_')
+
+  useEffect(()=>{
+    if(!configured){setAuthChecked(true);return}
+    sb.auth.getSession().then(({data:{session}})=>{setSession(session);setAuthChecked(true)})
+    const{data:{subscription}}=sb.auth.onAuthStateChange((_,s)=>setSession(s))
+    return()=>subscription.unsubscribe()
+  },[])
+
+  if(!configured) return <SetupScreen/>
+  if(!authChecked) return <div style={{display:'flex',alignItems:'center',justifyContent:'center',height:'100vh',flexDirection:'column',gap:16,background:'#f0f4f8'}}>
+    <div style={{width:44,height:44,border:'4px solid #dbeafe',borderTop:'4px solid #1565c0',borderRadius:'50%',animation:'spin .8s linear infinite'}}/>
+    <div style={{fontSize:12,color:'#888'}}>Checking authentication…</div>
+  </div>
+  if(!session) return <LoginScreen/>
+  return <AppShell onLogout={()=>sb.auth.signOut()}/>
 }
 
 ReactDOM.createRoot(document.getElementById('root')).render(React.createElement(App))

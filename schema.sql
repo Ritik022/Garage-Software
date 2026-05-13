@@ -17,6 +17,7 @@ CREATE TABLE IF NOT EXISTS settings (
   ifsc           TEXT DEFAULT 'HDFC0009433',
   bank_branch    TEXT DEFAULT 'GURGAON',
   upi_id         TEXT DEFAULT '',
+  logo_url       TEXT DEFAULT '',
   labor_rate     INTEGER DEFAULT 500,
   invoice_prefix TEXT DEFAULT 'FRA',
   invoice_terms  TEXT DEFAULT '1. Warranty on parts as per manufacturer terms.
@@ -166,9 +167,11 @@ ALTER TABLE parts     DISABLE ROW LEVEL SECURITY;
 ALTER TABLE job_cards DISABLE ROW LEVEL SECURITY;
 ALTER TABLE invoices  DISABLE ROW LEVEL SECURITY;
 
--- ── Migration: add CGST/SGST columns if not already present ──
--- Run this block if you applied the schema before this update:
+-- ── Migrations: run these if you applied schema before these updates ──
 ALTER TABLE invoices ADD COLUMN IF NOT EXISTS cgst_total NUMERIC(10,2) DEFAULT 0;
 ALTER TABLE invoices ADD COLUMN IF NOT EXISTS sgst_total NUMERIC(10,2) DEFAULT 0;
+ALTER TABLE settings ADD COLUMN IF NOT EXISTS logo_url TEXT DEFAULT '';
+
+-- Done!
 
 -- Done!
