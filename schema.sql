@@ -122,6 +122,8 @@ CREATE TABLE IF NOT EXISTS invoices (
   items               JSONB DEFAULT '[]',
   subtotal            NUMERIC(10,2) DEFAULT 0,
   gst_total           NUMERIC(10,2) DEFAULT 0,
+  cgst_total          NUMERIC(10,2) DEFAULT 0,
+  sgst_total          NUMERIC(10,2) DEFAULT 0,
   grand_total         NUMERIC(10,2) DEFAULT 0,
   additional_discount NUMERIC(10,2) DEFAULT 0,
   adjustment          NUMERIC(10,2) DEFAULT 0,
