@@ -215,11 +215,20 @@ function useDB(){
       const{data:d,error:e}=await sb.from('invoices').update(row).eq('id',form.id).select().single(); if(e)throw e
       const r=toCamel(d); setD(p=>({...p,invoices:p.invoices.map(i=>i.id===r.id?r:i)})); return r
     }else{
-      const fy=fyOf(form.date)
-      const fyStartD=`${fy.start}-04-01`, fyEndD=`${fy.start+1}-03-31`
-      const{data:ex}=await sb.from('invoices').select('inv_serial').gte('date',fyStartD).lte('date',fyEndD).not('inv_serial','is',null)
-      const used=new Set((ex||[]).map(i=>i.inv_serial))
-      let serial=1; while(used.has(serial))serial++
+      let serial=null
+      // If linked to a job card, reuse the serial already assigned to that job card's invoices
+      if(form.jobCardId){
+        const{data:linked}=await sb.from('invoices').select('inv_serial').eq('job_card_id',+form.jobCardId).not('inv_serial','is',null).limit(1)
+        if(linked&&linked.length>0) serial=linked[0].inv_serial
+      }
+      if(!serial){
+        // Assign next gap-filling serial for this financial year
+        const fy=fyOf(form.date)
+        const fyStartD=`${fy.start}-04-01`, fyEndD=`${fy.start+1}-03-31`
+        const{data:ex}=await sb.from('invoices').select('inv_serial').gte('date',fyStartD).lte('date',fyEndD).not('inv_serial','is',null)
+        const used=new Set((ex||[]).map(i=>i.inv_serial))
+        serial=1; while(used.has(serial))serial++
+      }
       row.inv_serial=serial
       delete row.id; const{data:d,error:e}=await sb.from('invoices').insert(row).select().single(); if(e)throw e
       const r=toCamel(d); setD(p=>({...p,invoices:[r,...p.invoices]})); return r
@@ -337,6 +346,10 @@ function PrintDoc({inv,settings,onClose}){
   const totalQty=lines.reduce((a,it)=>a+(+it.qty||0),0)
   const itemDiscountTotal=lines.reduce((s,it)=>s+(+it.disc||0),0)
   const totalPreDisc=lines.reduce((s,it)=>s+it.a,0)
+  const gstRates=[...new Set(lines.map(it=>+it.gst).filter(r=>r>0))]
+  const uRate=gstRates.length===1?gstRates[0]:null
+  const cgstH=uRate!=null?`CGST (${uRate/2}%)`:'CGST'
+  const sgstH=uRate!=null?`SGST (${uRate/2}%)`:'SGST'
   return <div style={{fontFamily:'Arial,Helvetica,sans-serif',fontSize:11,color:'#111',background:'#fff',maxWidth:840,margin:'0 auto'}}>
     <style>{`@media print{.np{display:none!important}body{margin:0;background:#fff}#pd{max-width:100%}*{-webkit-print-color-adjust:exact;print-color-adjust:exact}}@page{size:A4;margin:8mm}`}</style>
     <div id="pd">
@@ -346,7 +359,7 @@ function PrintDoc({inv,settings,onClose}){
         <td style={{...cell,width:'62%',borderRight:'1px solid #1565c0',padding:'12px 16px'}}>
           <div style={{display:'flex',flexDirection:'column',alignItems:'flex-start',gap:6}}>
             {settings.logoUrl
-              ?<img src={settings.logoUrl} style={{width:100,height:100,objectFit:'contain',borderRadius:8,marginBottom:4}} alt="logo"/>
+              ?<img src={settings.logoUrl} style={{width:140,objectFit:'contain',borderRadius:8,marginBottom:4}} alt="logo"/>
               :<div style={{width:60,height:60,background:'#1565c0',borderRadius:8,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',color:'#fff',marginBottom:4}}>
                 <div style={{fontSize:18,fontWeight:900,letterSpacing:1}}>FA</div>
                 <div style={{fontSize:8,opacity:.8,letterSpacing:.5}}>AUTOMOTIVE</div>
@@ -378,12 +391,12 @@ function PrintDoc({inv,settings,onClose}){
           <div style={{fontWeight:900,fontSize:12,color:'#1a1a2e',marginBottom:3}}>{settings.shopName.toUpperCase()}</div>
           <div style={{fontSize:10,lineHeight:1.7}}>{settings.address}<br/>GSTIN: {settings.gstin}<br/>Contact: {settings.phone}<br/>Email: {settings.email}</div>
         </td>
-        <td style={{...cell,padding:0}}>
-          <table style={{width:'100%',borderCollapse:'collapse'}}>
+        <td style={{...cell,padding:0,height:'1px'}}>
+          <table style={{width:'100%',height:'100%',borderCollapse:'collapse',tableLayout:'fixed'}}>
             <tbody>
-              <tr><td style={{...cell,border:'none',borderBottom:'1px solid #333',borderRight:'1px solid #333',fontWeight:700,width:'50%',fontSize:11}}>Invoice No: <span style={{color:'#1a1a2e',fontWeight:900}}>{invNo}</span></td><td style={{...cell,border:'none',borderBottom:'1px solid #333',fontWeight:700,fontSize:11}}>Date: {fmtD(inv.date)}</td></tr>
-              <tr><td style={{...cell,border:'none',borderBottom:'1px solid #333',borderRight:'1px solid #333',fontWeight:700,fontSize:11}}>Vehicle No: {inv.vehicleReg||'—'}</td><td style={{...cell,border:'none',borderBottom:'1px solid #333',fontWeight:700,fontSize:11}}>Kilometers: {inv.odometer||'—'}</td></tr>
-              <tr><td style={{...cell,border:'none',borderRight:'1px solid #333',fontWeight:700,fontSize:11}}>VIN No: {inv.vinNo||'—'}</td><td style={{...cell,border:'none',fontWeight:700,fontSize:11}}>Engine No: {inv.engineNo||'—'}</td></tr>
+              <tr style={{height:'33.33%'}}><td style={{border:'none',borderBottom:'1px solid #333',borderRight:'1px solid #333',padding:'6px 8px',fontWeight:700,width:'50%',fontSize:11,verticalAlign:'middle'}}>Invoice No: <span style={{color:'#1a1a2e',fontWeight:900}}>{invNo}</span></td><td style={{border:'none',borderBottom:'1px solid #333',padding:'6px 8px',fontWeight:700,fontSize:11,verticalAlign:'middle'}}>Date: {fmtD(inv.date)}</td></tr>
+              <tr style={{height:'33.33%'}}><td style={{border:'none',borderBottom:'1px solid #333',borderRight:'1px solid #333',padding:'6px 8px',fontWeight:700,fontSize:11,verticalAlign:'middle'}}>Vehicle No: {inv.vehicleReg||'—'}</td><td style={{border:'none',borderBottom:'1px solid #333',padding:'6px 8px',fontWeight:700,fontSize:11,verticalAlign:'middle'}}>Kilometers: {inv.odometer||'—'}</td></tr>
+              <tr style={{height:'33.34%'}}><td style={{border:'none',borderRight:'1px solid #333',padding:'6px 8px',fontWeight:700,fontSize:11,verticalAlign:'middle'}}>VIN No: {inv.vinNo||'—'}</td><td style={{border:'none',padding:'6px 8px',fontWeight:700,fontSize:11,verticalAlign:'middle'}}>Engine No: {inv.engineNo||'—'}</td></tr>
             </tbody>
           </table>
         </td>
@@ -392,23 +405,24 @@ function PrintDoc({inv,settings,onClose}){
     {/* CUSTOMER */}
     <table style={{width:'100%',borderCollapse:'collapse',border:'1px solid #333',borderTop:'none'}}>
       <tbody><tr>
-        <td style={{...cell,width:'45%',borderRight:'1px solid #333'}}>
+        <td style={{...cell,width:'50%',borderRight:'1px solid #333',verticalAlign:'top'}}>
+          <div style={{fontWeight:800,fontSize:11,color:'#1a1a2e',marginBottom:5,borderBottom:'1px solid #e8eaf0',paddingBottom:3}}>Bill To</div>
           <div style={{fontSize:10,lineHeight:1.9}}>
-            {inv.companyName&&<div><b>Company Name:</b> {inv.companyName}</div>}
-            <div><b>Mobile No:</b> {inv.customerPhone||'—'}</div>
+            <div><b>Name:</b> {inv.customerName||'—'}</div>
+            {inv.companyName&&<div><b>Company:</b> {inv.companyName}</div>}
+            <div><b>Phone:</b> {inv.customerPhone||'—'}</div>
+            {inv.customerEmail&&<div><b>Email:</b> {inv.customerEmail}</div>}
+            {inv.customerGstin&&<div><b>GSTIN:</b> {inv.customerGstin}</div>}
             <div><b>Address:</b> {inv.customerAddress||'—'}</div>
-            {inv.customerGstin&&<div><b>GST:</b> {inv.customerGstin}</div>}
           </div>
         </td>
-        <td style={cell}>
+        <td style={{...cell,width:'50%',verticalAlign:'top'}}>
+          <div style={{fontWeight:800,fontSize:11,color:'#1a1a2e',marginBottom:5,borderBottom:'1px solid #e8eaf0',paddingBottom:3}}>Vehicle</div>
           <div style={{fontSize:10,lineHeight:1.9}}>
-            <div><b>Customer:</b> {inv.customerName||'—'}</div>
-            <div><b>Vehicle:</b> {inv.vehicleDetails||'—'}</div>
-            <div><b>Kilometer:</b> {inv.odometer||'—'}</div>
+            <div><b>Make / Model:</b> {inv.vehicleDetails||'—'}</div>
+            <div><b>Odometer:</b> {inv.odometer||'—'} km</div>
             {inv.vehicleColor&&<div><b>Color:</b> {inv.vehicleColor}</div>}
             {inv.vehicleFuel&&<div><b>Fuel:</b> {inv.vehicleFuel.toUpperCase()}</div>}
-            {inv.customerPhone&&<div><b>PH:</b> {inv.customerPhone}</div>}
-            {inv.customerEmail&&<div><b>Email:</b> {inv.customerEmail}</div>}
           </div>
         </td>
       </tr></tbody>
@@ -416,7 +430,7 @@ function PrintDoc({inv,settings,onClose}){
     {/* ITEMS TABLE */}
     <table style={{width:'100%',borderCollapse:'collapse',border:'1px solid #333',borderTop:'none'}}>
       <thead><tr>
-        {['#','Part Name','Description','HSN Code','GST (%)','Qty','Disc %','Unit Price (₹)','Disc. Amt (₹)','CGST','SGST','Parts Total (₹)'].map(h=><th key={h} style={{...hcell,textAlign:['Unit Price (₹)','Disc. Amt (₹)','CGST','SGST','Parts Total (₹)'].includes(h)?'right':'center',padding:'6px 6px',fontSize:10}}>{h}</th>)}
+        {[['#',false],['Part Name',false],['Description',false],['HSN Code',false],['GST (%)',false],['Qty',false],['Disc %',false],['Unit Price (₹)',true],['Disc. Amt (₹)',true],[cgstH,true],[sgstH,true],['Total Taxable (₹)',true]].map(([h,r])=><th key={h} style={{...hcell,textAlign:r?'right':'center',padding:'6px 6px',fontSize:10}}>{h}</th>)}
       </tr></thead>
       <tbody>
         {lines.map((it,i)=><tr key={it.id} style={{background:i%2?'#f9f9f9':'#fff'}}>
@@ -457,7 +471,7 @@ function PrintDoc({inv,settings,onClose}){
           <div style={{fontWeight:700,fontSize:11,marginTop:8}}>Bank Details</div>
         </td>
         <td style={cell}>
-          {[['Item Discount:',itemDiscountTotal],['Subtotal (taxable):',sub],['CGST:',gt/2],['SGST:',gt/2],['Total Tax:',gt],['Extra Discount:',inv.additionalDiscount||0],['Adjustment:',inv.adjustment||0]].map(([l,v])=><div key={l} style={{display:'flex',justifyContent:'space-between',padding:'3px 0',fontSize:11}}><span>{l}</span><span style={{fontWeight:700}}>₹{Number(v).toFixed(2)}</span></div>)}
+          {[['Item Discount:',itemDiscountTotal],['Subtotal (taxable):',sub],[cgstH+':',gt/2],[sgstH+':',gt/2],['Total Tax:',gt],['Extra Discount:',inv.additionalDiscount||0],['Adjustment:',inv.adjustment||0]].map(([l,v])=><div key={l} style={{display:'flex',justifyContent:'space-between',padding:'3px 0',fontSize:11}}><span>{l}</span><span style={{fontWeight:700}}>₹{Number(v).toFixed(2)}</span></div>)}
         </td>
       </tr></tbody>
     </table>
