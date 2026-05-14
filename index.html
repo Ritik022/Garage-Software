@@ -351,7 +351,7 @@ function PrintDoc({inv,settings,onClose}){
   const cgstH=uRate!=null?`CGST (${uRate/2}%)`:'CGST'
   const sgstH=uRate!=null?`SGST (${uRate/2}%)`:'SGST'
   return <div style={{fontFamily:'Arial,Helvetica,sans-serif',fontSize:11,color:'#111',background:'#fff',maxWidth:840,margin:'0 auto'}}>
-    <style>{`@media print{.np{display:none!important}body{margin:0;background:#fff}#pd{max-width:100%}*{-webkit-print-color-adjust:exact;print-color-adjust:exact}}@page{size:A4;margin:8mm}`}</style>
+    <style>{`@media print{body *{visibility:hidden!important}#pd,#pd *{visibility:visible!important}#pd{position:fixed;top:0;left:0;width:100%;margin:0;padding:0;background:#fff}*{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}}@page{size:A4;margin:8mm}`}</style>
     <div id="pd">
     {/* HEADER */}
     <table style={{width:'100%',borderCollapse:'collapse',border:'1px solid #1565c0'}}>
