@@ -215,13 +215,18 @@ function useDB(){
       const{data:d,error:e}=await sb.from('invoices').update(row).eq('id',form.id).select().single(); if(e)throw e
       const r=toCamel(d); setD(p=>({...p,invoices:p.invoices.map(i=>i.id===r.id?r:i)})); return r
     }else{
-      // Resolve customer — use selected id, else match by phone, else create new
+      // Resolve customer — selected id > match name+phone and update > create new
       let custId=form.customerId?+form.customerId:null
       let vehId=form.vehicleId?+form.vehicleId:null
       if(!custId&&form.customerName){
         if(form.customerPhone){
-          const{data:found}=await sb.from('customers').select('id').eq('phone',form.customerPhone).limit(1)
-          if(found?.length) custId=found[0].id
+          const{data:found}=await sb.from('customers').select('id,name').eq('phone',form.customerPhone).limit(1)
+          if(found?.length&&found[0].name.toLowerCase().trim()===form.customerName.toLowerCase().trim()){
+            custId=found[0].id
+            const cRow=toSnake({name:form.customerName,companyName:form.companyName||'',phone:form.customerPhone||'',email:form.customerEmail||'',address:form.customerAddress||'',gstin:form.customerGstin||'',type:form.companyName?'company':'individual'})
+            const{data:ud}=await sb.from('customers').update(cRow).eq('id',custId).select().single()
+            if(ud){const uc=toCamel(ud);setD(p=>({...p,customers:p.customers.map(c=>c.id===custId?uc:c)}))}
+          }
         }
         if(!custId){
           const cRow=toSnake({name:form.customerName,companyName:form.companyName||'',phone:form.customerPhone||'',email:form.customerEmail||'',address:form.customerAddress||'',gstin:form.customerGstin||'',type:form.companyName?'company':'individual'})
@@ -230,11 +235,15 @@ function useDB(){
           const nc=toCamel(cd); setD(p=>({...p,customers:[nc,...p.customers]})); custId=nc.id
         }
       }
-      // Resolve vehicle — use selected id, else match by reg no, else create new
+      // Resolve vehicle — selected id > match reg_no and update > create new
       if(!vehId&&form.vehicleReg){
         const{data:found}=await sb.from('vehicles').select('id').eq('reg_no',form.vehicleReg).limit(1)
-        if(found?.length) vehId=found[0].id
-        else if(custId){
+        if(found?.length){
+          vehId=found[0].id
+          const vRow=toSnake({...(custId&&{customerId:custId}),regNo:form.vehicleReg,make:form.vehicleDetails||'',odometer:+form.odometer||0,vin:form.vinNo||'',engineNo:form.engineNo||'',color:form.vehicleColor||'',fuelType:form.vehicleFuel||''})
+          const{data:ud}=await sb.from('vehicles').update(vRow).eq('id',vehId).select().single()
+          if(ud){const uv=toCamel(ud);setD(p=>({...p,vehicles:p.vehicles.map(v=>v.id===vehId?uv:v)}))}
+        }else if(custId){
           const vRow=toSnake({customerId:custId,regNo:form.vehicleReg,make:form.vehicleDetails||'',odometer:+form.odometer||0,vin:form.vinNo||'',engineNo:form.engineNo||'',color:form.vehicleColor||'',fuelType:form.vehicleFuel||''})
           delete vRow.id
           const{data:vd,error:ve}=await sb.from('vehicles').insert(vRow).select().single(); if(ve)throw ve
@@ -450,8 +459,6 @@ function PrintDoc({inv,settings,onClose}){
           <div style={{lineHeight:1.9}}>
             <div><b>Make / Model:</b> {inv.vehicleDetails||'—'}</div>
             <div><b>Odometer:</b> {inv.odometer||'—'} km</div>
-            {inv.vehicleColor&&<div><b>Color:</b> {inv.vehicleColor}</div>}
-            {inv.vehicleFuel&&<div><b>Fuel:</b> {inv.vehicleFuel.toUpperCase()}</div>}
           </div>
           <div style={{borderTop:'1px solid #e8eaf0',marginTop:7,paddingTop:5}}>
             <b>Place of Supply:</b> Haryana (06)
@@ -583,7 +590,7 @@ function InvEditor({initial,data,onSave,onClose}){
   }
   function pickV(id){
     const v=data.vehicles.find(x=>x.id==id); if(!v)return
-    setForm(p=>({...p,vehicleId:id,vehicleReg:v.regNo||p.vehicleReg,vehicleDetails:`${v.make} ${v.model} ${v.year||''}`.trim()||p.vehicleDetails,odometer:v.odometer||p.odometer,vinNo:v.vin||p.vinNo,engineNo:v.engineNo||p.engineNo,vehicleColor:v.color||p.vehicleColor,vehicleFuel:v.fuelType||p.vehicleFuel}))
+    setForm(p=>({...p,vehicleId:id,vehicleReg:v.regNo||p.vehicleReg,vehicleDetails:`${v.make} ${v.model} ${v.variant||''} ${v.year||''}`.trim().replace(/\s+/g,' ')||p.vehicleDetails,odometer:v.odometer||p.odometer,vinNo:v.vin||p.vinNo,engineNo:v.engineNo||p.engineNo,vehicleColor:v.color||p.vehicleColor,vehicleFuel:v.fuelType||p.vehicleFuel}))
   }
   const{sub,gt,grand}=calcItems(items)
   const finalTotal=(grand-(form.additionalDiscount||0))+(form.adjustment||0)
