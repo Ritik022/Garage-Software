@@ -340,8 +340,10 @@ function PrintDoc({inv,settings,onClose}){
   const fg=grand-(inv.additionalDiscount||0)+(inv.adjustment||0)
   const lbl=inv.type==='estimate'?'ESTIMATE':inv.type==='final-invoice'?'FINAL INVOICE':'TAX INVOICE'
   const invNo=buildInvNo(settings,inv)
-  const cell={border:'1px solid #1565c0',padding:'5px 7px',fontSize:11,verticalAlign:'top'}
+  const F='Helvetica,Arial,sans-serif'
+  const cell={border:'1px solid #1565c0',padding:'5px 7px',fontSize:10,verticalAlign:'top',fontFamily:F}
   const hcell={...cell,background:'#1565c0',color:'#fff',fontWeight:700}
+  const ic={border:'none',padding:'6px 8px',fontFamily:F,fontSize:10,verticalAlign:'middle'}
   const emptyRows=Math.max(0,5-lines.length)
   const totalQty=lines.reduce((a,it)=>a+(+it.qty||0),0)
   const itemDiscountTotal=lines.reduce((s,it)=>s+(+it.disc||0),0)
@@ -350,7 +352,7 @@ function PrintDoc({inv,settings,onClose}){
   const uRate=gstRates.length===1?gstRates[0]:null
   const cgstH=uRate!=null?`CGST (${uRate/2}%)`:'CGST'
   const sgstH=uRate!=null?`SGST (${uRate/2}%)`:'SGST'
-  return <div style={{fontFamily:'Arial,Helvetica,sans-serif',fontSize:11,color:'#111',background:'#fff',maxWidth:840,margin:'0 auto'}}>
+  return <div style={{fontFamily:F,fontSize:10,color:'#111',background:'#fff',maxWidth:840,margin:'0 auto'}}>
     <style>{`@media print{body *{visibility:hidden!important}#pd,#pd *{visibility:visible!important}#pd{position:fixed;top:0;left:0;width:100%;margin:0;padding:0;background:#fff}*{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}}@page{size:A4;margin:8mm}`}</style>
     <div id="pd">
     {/* HEADER */}
@@ -367,7 +369,7 @@ function PrintDoc({inv,settings,onClose}){
             }
             <div style={{fontSize:20,fontWeight:900,color:'#1565c0',lineHeight:1.2}}>{settings.shopName}</div>
             {settings.tagline&&<div style={{fontSize:10,color:'#666',fontStyle:'italic',marginTop:-2}}>{settings.tagline}</div>}
-            <div style={{fontSize:10,color:'#333',lineHeight:1.8,marginTop:2}}>
+            <div style={{lineHeight:1.8,marginTop:2,color:'#333'}}>
               {settings.address}<br/>
               Phone: {settings.phone}&nbsp;&nbsp;|&nbsp;&nbsp;GST: {settings.gstin}
             </div>
@@ -375,8 +377,8 @@ function PrintDoc({inv,settings,onClose}){
         </td>
         <td style={{...cell,textAlign:'right',verticalAlign:'middle',padding:'10px 14px'}}>
           <div style={{color:'#c0392b',fontSize:15,fontWeight:900,letterSpacing:1}}>{lbl}</div>
-          <div style={{fontSize:11,marginTop:4,color:'#333'}}>Invoice No: <b>{invNo}</b></div>
-          <div style={{fontSize:11,marginTop:2,color:'#333'}}>Date: <b>{fmtD(inv.date)}</b></div>
+          <div style={{marginTop:4}}>Invoice No: <b>{invNo}</b></div>
+          <div style={{marginTop:2}}>Date: <b>{fmtD(inv.date)}</b></div>
           {settings.upiId&&<div style={{marginTop:6,display:'flex',flexDirection:'column',alignItems:'flex-end',gap:2}}>
             <img src={`https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=${encodeURIComponent(`upi://pay?pa=${settings.upiId||'9654483936@ybl'}&pn=${settings.shopName||'Friends Automotive'}&am=${Number(fg||0).toFixed(2)}&cu=INR`)}`} alt="UPI QR" style={{width:120,height:120}}/>
             <div style={{fontSize:8,color:'#888'}}>Scan to Pay via UPI</div>
@@ -388,15 +390,15 @@ function PrintDoc({inv,settings,onClose}){
     <table style={{width:'100%',borderCollapse:'collapse',border:'1px solid #333',borderTop:'none'}}>
       <tbody><tr>
         <td style={{...cell,width:'45%',borderRight:'1px solid #333'}}>
-          <div style={{fontWeight:900,fontSize:12,color:'#1a1a2e',marginBottom:3}}>{settings.shopName.toUpperCase()}</div>
-          <div style={{fontSize:10,lineHeight:1.7}}>{settings.address}<br/>GSTIN: {settings.gstin}<br/>Contact: {settings.phone}<br/>Email: {settings.email}</div>
+          <div style={{fontWeight:900,fontSize:11,color:'#1a1a2e',marginBottom:3}}>{settings.shopName.toUpperCase()}</div>
+          <div style={{lineHeight:1.7}}>{settings.address}<br/>GSTIN: {settings.gstin}<br/>Contact: {settings.phone}<br/>Email: {settings.email}</div>
         </td>
         <td style={{...cell,padding:0,height:'1px'}}>
           <table style={{width:'100%',height:'100%',borderCollapse:'collapse',tableLayout:'fixed'}}>
             <tbody>
-              <tr style={{height:'33.33%'}}><td style={{border:'none',borderBottom:'1px solid #333',borderRight:'1px solid #333',padding:'6px 8px',fontWeight:700,width:'50%',fontSize:11,verticalAlign:'middle'}}>Invoice No: <span style={{color:'#1a1a2e',fontWeight:900}}>{invNo}</span></td><td style={{border:'none',borderBottom:'1px solid #333',padding:'6px 8px',fontWeight:700,fontSize:11,verticalAlign:'middle'}}>Date: {fmtD(inv.date)}</td></tr>
-              <tr style={{height:'33.33%'}}><td style={{border:'none',borderBottom:'1px solid #333',borderRight:'1px solid #333',padding:'6px 8px',fontWeight:700,fontSize:11,verticalAlign:'middle'}}>Vehicle No: {inv.vehicleReg||'—'}</td><td style={{border:'none',borderBottom:'1px solid #333',padding:'6px 8px',fontWeight:700,fontSize:11,verticalAlign:'middle'}}>Kilometers: {inv.odometer||'—'}</td></tr>
-              <tr style={{height:'33.34%'}}><td style={{border:'none',borderRight:'1px solid #333',padding:'6px 8px',fontWeight:700,fontSize:11,verticalAlign:'middle'}}>VIN No: {inv.vinNo||'—'}</td><td style={{border:'none',padding:'6px 8px',fontWeight:700,fontSize:11,verticalAlign:'middle'}}>Engine No: {inv.engineNo||'—'}</td></tr>
+              <tr style={{height:'33.33%'}}><td style={{...ic,borderBottom:'1px solid #333',borderRight:'1px solid #333',fontWeight:700,width:'50%'}}>Invoice No: <span style={{color:'#1a1a2e',fontWeight:900}}>{invNo}</span></td><td style={{...ic,borderBottom:'1px solid #333',fontWeight:700}}>Date: {fmtD(inv.date)}</td></tr>
+              <tr style={{height:'33.33%'}}><td style={{...ic,borderBottom:'1px solid #333',borderRight:'1px solid #333',fontWeight:700}}>Vehicle No: {inv.vehicleReg||'—'}</td><td style={{...ic,borderBottom:'1px solid #333',fontWeight:700}}>Kilometers: {inv.odometer||'—'}</td></tr>
+              <tr style={{height:'33.34%'}}><td style={{...ic,borderRight:'1px solid #333',fontWeight:700}}>VIN No: {inv.vinNo||'—'}</td><td style={{...ic,fontWeight:700}}>Engine No: {inv.engineNo||'—'}</td></tr>
             </tbody>
           </table>
         </td>
@@ -407,7 +409,7 @@ function PrintDoc({inv,settings,onClose}){
       <tbody><tr>
         <td style={{...cell,width:'50%',borderRight:'1px solid #333',verticalAlign:'top'}}>
           <div style={{fontWeight:800,fontSize:11,color:'#1a1a2e',marginBottom:5,borderBottom:'1px solid #e8eaf0',paddingBottom:3}}>Bill To</div>
-          <div style={{fontSize:10,lineHeight:1.9}}>
+          <div style={{lineHeight:1.9}}>
             <div><b>Name:</b> {inv.customerName||'—'}</div>
             {inv.companyName&&<div><b>Company:</b> {inv.companyName}</div>}
             <div><b>Phone:</b> {inv.customerPhone||'—'}</div>
@@ -418,13 +420,13 @@ function PrintDoc({inv,settings,onClose}){
         </td>
         <td style={{...cell,width:'50%',verticalAlign:'top'}}>
           <div style={{fontWeight:800,fontSize:11,color:'#1a1a2e',marginBottom:5,borderBottom:'1px solid #e8eaf0',paddingBottom:3}}>Vehicle</div>
-          <div style={{fontSize:10,lineHeight:1.9}}>
+          <div style={{lineHeight:1.9}}>
             <div><b>Make / Model:</b> {inv.vehicleDetails||'—'}</div>
             <div><b>Odometer:</b> {inv.odometer||'—'} km</div>
             {inv.vehicleColor&&<div><b>Color:</b> {inv.vehicleColor}</div>}
             {inv.vehicleFuel&&<div><b>Fuel:</b> {inv.vehicleFuel.toUpperCase()}</div>}
           </div>
-          <div style={{borderTop:'1px solid #e8eaf0',marginTop:7,paddingTop:5,fontSize:10}}>
+          <div style={{borderTop:'1px solid #e8eaf0',marginTop:7,paddingTop:5}}>
             <b>Place of Supply:</b> Haryana (06)
           </div>
         </td>
@@ -433,36 +435,36 @@ function PrintDoc({inv,settings,onClose}){
     {/* ITEMS TABLE */}
     <table style={{width:'100%',borderCollapse:'collapse',border:'1px solid #333',borderTop:'none'}}>
       <thead><tr>
-        {[['#',false],['Part Name',false],['Description',false],['HSN Code',false],['GST (%)',false],['Qty',false],['Disc %',false],['Unit Price (₹)',true],['Disc. Amt (₹)',true],[cgstH,true],[sgstH,true],['Total Taxable (₹)',true]].map(([h,r])=><th key={h} style={{...hcell,textAlign:r?'right':'center',padding:'6px 6px',fontSize:10}}>{h}</th>)}
+        {[['#',false],['Part Name',false],['Description',false],['HSN Code',false],['GST (%)',false],['Qty',false],['Disc %',false],['Unit Price (₹)',true],['Disc. Amt (₹)',true],[cgstH,true],[sgstH,true],['Total Taxable (₹)',true]].map(([h,r])=><th key={h} style={{...hcell,textAlign:r?'right':'center',padding:'6px'}}>{h}</th>)}
       </tr></thead>
       <tbody>
         {lines.map((it,i)=><tr key={it.id} style={{background:i%2?'#f9f9f9':'#fff'}}>
-          <td style={{...cell,textAlign:'center',width:22,fontSize:10}}>{i+1}</td>
-          <td style={{...cell,fontWeight:600,fontSize:11}}>{it.name}</td>
-          <td style={{...cell,textAlign:'center',color:'#555',fontSize:10}}>{it.isService?'Labour':'Part'}</td>
-          <td style={{...cell,textAlign:'center',fontFamily:'monospace',fontSize:10}}>{it.hsnSac}</td>
-          <td style={{...cell,textAlign:'center',fontSize:10}}>{it.gst}%</td>
-          <td style={{...cell,textAlign:'center',fontSize:10}}>{it.qty}</td>
-          <td style={{...cell,textAlign:'center',fontSize:10}}>{it.discount||0}%</td>
-          <td style={{...cell,textAlign:'right',fontSize:10}}>₹{Number(it.rate).toFixed(2)}</td>
-          <td style={{...cell,textAlign:'right',fontSize:10}}>₹{Number(it.disc).toFixed(2)}</td>
-          <td style={{...cell,textAlign:'right',fontSize:10}}>₹{Number(it.ga/2).toFixed(2)}</td>
-          <td style={{...cell,textAlign:'right',fontSize:10}}>₹{Number(it.ga/2).toFixed(2)}</td>
-          <td style={{...cell,textAlign:'right',fontWeight:700,fontSize:11}}>₹{Number(it.tax).toFixed(2)}</td>
+          <td style={{...cell,textAlign:'center',width:22}}>{i+1}</td>
+          <td style={{...cell,fontWeight:600}}>{it.name}</td>
+          <td style={{...cell,textAlign:'center',color:'#555'}}>{it.isService?'Labour':'Part'}</td>
+          <td style={{...cell,textAlign:'center'}}>{it.hsnSac}</td>
+          <td style={{...cell,textAlign:'center'}}>{it.gst}%</td>
+          <td style={{...cell,textAlign:'center'}}>{it.qty}</td>
+          <td style={{...cell,textAlign:'center'}}>{it.discount||0}%</td>
+          <td style={{...cell,textAlign:'right'}}>₹{Number(it.rate).toFixed(2)}</td>
+          <td style={{...cell,textAlign:'right'}}>₹{Number(it.disc).toFixed(2)}</td>
+          <td style={{...cell,textAlign:'right'}}>₹{Number(it.ga/2).toFixed(2)}</td>
+          <td style={{...cell,textAlign:'right'}}>₹{Number(it.ga/2).toFixed(2)}</td>
+          <td style={{...cell,textAlign:'right',fontWeight:700}}>₹{Number(it.tax).toFixed(2)}</td>
         </tr>)}
-        {[...Array(emptyRows)].map((_,i)=><tr key={`e${i}`} style={{height:20}}>{[...Array(12)].map((_,j)=><td key={j} style={{...cell,fontSize:10}}>&nbsp;</td>)}</tr>)}
+        {[...Array(emptyRows)].map((_,i)=><tr key={`e${i}`} style={{height:20}}>{[...Array(12)].map((_,j)=><td key={j} style={cell}>&nbsp;</td>)}</tr>)}
       </tbody>
       <tfoot>
         <tr style={{background:'#e3f2fd'}}>
-          <td colSpan={4} style={{...hcell,textAlign:'right',fontSize:10,background:'#1565c0'}}>TOTALS</td>
-          <td style={{...cell,fontSize:10}}></td>
-          <td style={{...cell,textAlign:'center',fontWeight:700,fontSize:10}}>{totalQty}</td>
-          <td style={{...cell,fontSize:10}}></td>
-          <td style={{...cell,textAlign:'right',fontWeight:700,fontSize:10}}>₹{totalPreDisc.toFixed(2)}</td>
-          <td style={{...cell,textAlign:'right',fontWeight:700,fontSize:10}}>₹{itemDiscountTotal.toFixed(2)}</td>
-          <td style={{...cell,textAlign:'right',fontWeight:700,fontSize:10}}>₹{(gt/2).toFixed(2)}</td>
-          <td style={{...cell,textAlign:'right',fontWeight:700,fontSize:10}}>₹{(gt/2).toFixed(2)}</td>
-          <td style={{...cell,textAlign:'right',fontWeight:800,fontSize:11,color:'#1565c0'}}>₹{sub.toFixed(2)}</td>
+          <td colSpan={4} style={{...hcell,textAlign:'right',background:'#1565c0'}}>TOTALS</td>
+          <td style={cell}></td>
+          <td style={{...cell,textAlign:'center',fontWeight:700}}>{totalQty}</td>
+          <td style={cell}></td>
+          <td style={{...cell,textAlign:'right',fontWeight:700}}>₹{totalPreDisc.toFixed(2)}</td>
+          <td style={{...cell,textAlign:'right',fontWeight:700}}>₹{itemDiscountTotal.toFixed(2)}</td>
+          <td style={{...cell,textAlign:'right',fontWeight:700}}>₹{(gt/2).toFixed(2)}</td>
+          <td style={{...cell,textAlign:'right',fontWeight:700}}>₹{(gt/2).toFixed(2)}</td>
+          <td style={{...cell,textAlign:'right',fontWeight:800,color:'#1565c0'}}>₹{sub.toFixed(2)}</td>
         </tr>
       </tfoot>
     </table>
@@ -470,41 +472,41 @@ function PrintDoc({inv,settings,onClose}){
     <table style={{width:'100%',borderCollapse:'collapse',border:'1px solid #333',borderTop:'none'}}>
       <tbody><tr>
         <td style={{...cell,width:'55%',borderRight:'1px solid #333'}}>
-          <div style={{fontWeight:700,fontSize:11,marginBottom:6}}>Amount ( in Words ) :<br/><span style={{fontWeight:400,fontStyle:'italic'}}>{toWords(fg)}</span></div>
+          <div style={{fontWeight:700,fontSize:11,marginBottom:5}}>Amount in Words:<br/><span style={{fontWeight:400,fontStyle:'italic'}}>{toWords(fg)}</span></div>
           <div style={{fontWeight:700,fontSize:11,marginTop:8}}>Bank Details</div>
         </td>
         <td style={cell}>
-          {[['Item Discount:',itemDiscountTotal],['Subtotal (taxable):',sub],[cgstH+':',gt/2],[sgstH+':',gt/2],['Total Tax:',gt],['Extra Discount:',inv.additionalDiscount||0],['Adjustment:',inv.adjustment||0]].map(([l,v])=><div key={l} style={{display:'flex',justifyContent:'space-between',padding:'3px 0',fontSize:11}}><span>{l}</span><span style={{fontWeight:700}}>₹{Number(v).toFixed(2)}</span></div>)}
+          {[['Item Discount:',itemDiscountTotal],['Subtotal (taxable):',sub],[cgstH+':',gt/2],[sgstH+':',gt/2],['Total Tax:',gt],['Extra Discount:',inv.additionalDiscount||0],['Adjustment:',inv.adjustment||0]].map(([l,v])=><div key={l} style={{display:'flex',justifyContent:'space-between',padding:'3px 0'}}><span>{l}</span><span style={{fontWeight:700}}>₹{Number(v).toFixed(2)}</span></div>)}
         </td>
       </tr></tbody>
     </table>
     {/* BANK + GRAND TOTAL */}
     <table style={{width:'100%',borderCollapse:'collapse',border:'1px solid #333',borderTop:'none'}}>
       <thead><tr>
-        {['#','Bank Name','Account No','IFSC Code','Branch'].map(h=><th key={h} style={{...hcell,fontSize:10}}>{h}</th>)}
+        {['#','Bank Name','Account No','IFSC Code','Branch'].map(h=><th key={h} style={hcell}>{h}</th>)}
         <th style={{...hcell,textAlign:'right',fontSize:11}}>Grand Total: ₹{fg.toFixed(2)}</th>
       </tr></thead>
       <tbody><tr>
-        <td style={{...cell,textAlign:'center',fontSize:10}}>1</td>
-        <td style={{...cell,fontSize:10}}>{settings.bankName}</td>
-        <td style={{...cell,fontFamily:'monospace',fontSize:10}}>{settings.accountNo}</td>
-        <td style={{...cell,fontFamily:'monospace',fontSize:10}}>{settings.ifsc}</td>
-        <td style={{...cell,fontSize:10}}>{settings.bankBranch||''}</td>
+        <td style={{...cell,textAlign:'center'}}>1</td>
+        <td style={cell}>{settings.bankName}</td>
+        <td style={{...cell,textAlign:'center'}}>{settings.accountNo}</td>
+        <td style={{...cell,textAlign:'center'}}>{settings.ifsc}</td>
+        <td style={cell}>{settings.bankBranch||''}</td>
         <td style={cell}></td>
       </tr></tbody>
     </table>
     {/* SIGNATURES */}
     <table style={{width:'100%',borderCollapse:'collapse',border:'1px solid #333',borderTop:'none'}}>
       <tbody>
-        <tr><td colSpan={3} style={{...cell,fontSize:10,fontStyle:'italic',color:'#444',lineHeight:1.6}}>I certify that the work has been done to my satisfaction and that I have taken delivery of the vehicle in good condition, with all items / valuables and parts intact</td></tr>
+        <tr><td colSpan={3} style={{...cell,fontStyle:'italic',color:'#444',lineHeight:1.6}}>I certify that the work has been done to my satisfaction and that I have taken delivery of the vehicle in good condition, with all items / valuables and parts intact</td></tr>
         <tr>
-          {['Customer / Authorized Signatory','Service Advisor Signature','Cashier / Authorized Signature'].map((s,i)=><td key={i} style={{...cell,textAlign:'center',height:60,borderRight:i<2?'1px solid #333':'none'}}><div style={{borderTop:'1px solid #333',marginTop:40,paddingTop:4,fontSize:10}}>{s}</div></td>)}
+          {['Customer / Authorized Signatory','Service Advisor Signature','Cashier / Authorized Signature'].map((s,i)=><td key={i} style={{...cell,textAlign:'center',height:60,borderRight:i<2?'1px solid #333':'none'}}><div style={{borderTop:'1px solid #333',marginTop:40,paddingTop:4}}>{s}</div></td>)}
         </tr>
       </tbody>
     </table>
     {/* TERMS */}
-    {(inv.termsConditions||settings.invoiceTerms)&&<table style={{width:'100%',borderCollapse:'collapse',border:'1px solid #333',borderTop:'none'}}><tbody><tr><td style={{...cell,fontSize:10}}><b>Terms &amp; Conditions:</b><div style={{whiteSpace:'pre-wrap',marginTop:4,lineHeight:1.6,color:'#333'}}>{inv.termsConditions||settings.invoiceTerms}</div></td></tr></tbody></table>}
-    {inv.notes&&<table style={{width:'100%',borderCollapse:'collapse',border:'1px solid #333',borderTop:'none'}}><tbody><tr><td style={{...cell,fontSize:10}}><b>Notes: </b>{inv.notes}</td></tr></tbody></table>}
+    {(inv.termsConditions||settings.invoiceTerms)&&<table style={{width:'100%',borderCollapse:'collapse',border:'1px solid #333',borderTop:'none'}}><tbody><tr><td style={cell}><b>Terms &amp; Conditions:</b><div style={{whiteSpace:'pre-wrap',marginTop:4,lineHeight:1.6,color:'#333'}}>{inv.termsConditions||settings.invoiceTerms}</div></td></tr></tbody></table>}
+    {inv.notes&&<table style={{width:'100%',borderCollapse:'collapse',border:'1px solid #333',borderTop:'none'}}><tbody><tr><td style={cell}><b>Notes: </b>{inv.notes}</td></tr></tbody></table>}
     </div>
     <div className="np" style={{display:'flex',gap:8,justifyContent:'center',marginTop:16}}>
       <GBtn onClick={onClose}>Close</GBtn>
