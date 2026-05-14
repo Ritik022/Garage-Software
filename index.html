@@ -424,6 +424,9 @@ function PrintDoc({inv,settings,onClose}){
             {inv.vehicleColor&&<div><b>Color:</b> {inv.vehicleColor}</div>}
             {inv.vehicleFuel&&<div><b>Fuel:</b> {inv.vehicleFuel.toUpperCase()}</div>}
           </div>
+          <div style={{borderTop:'1px solid #e8eaf0',marginTop:7,paddingTop:5,fontSize:10}}>
+            <b>Place of Supply:</b> Haryana (06)
+          </div>
         </td>
       </tr></tbody>
     </table>
@@ -445,7 +448,7 @@ function PrintDoc({inv,settings,onClose}){
           <td style={{...cell,textAlign:'right',fontSize:10}}>₹{Number(it.disc).toFixed(2)}</td>
           <td style={{...cell,textAlign:'right',fontSize:10}}>₹{Number(it.ga/2).toFixed(2)}</td>
           <td style={{...cell,textAlign:'right',fontSize:10}}>₹{Number(it.ga/2).toFixed(2)}</td>
-          <td style={{...cell,textAlign:'right',fontWeight:700,fontSize:11}}>₹{Number(it.tot).toFixed(2)}</td>
+          <td style={{...cell,textAlign:'right',fontWeight:700,fontSize:11}}>₹{Number(it.tax).toFixed(2)}</td>
         </tr>)}
         {[...Array(emptyRows)].map((_,i)=><tr key={`e${i}`} style={{height:20}}>{[...Array(12)].map((_,j)=><td key={j} style={{...cell,fontSize:10}}>&nbsp;</td>)}</tr>)}
       </tbody>
@@ -459,7 +462,7 @@ function PrintDoc({inv,settings,onClose}){
           <td style={{...cell,textAlign:'right',fontWeight:700,fontSize:10}}>₹{itemDiscountTotal.toFixed(2)}</td>
           <td style={{...cell,textAlign:'right',fontWeight:700,fontSize:10}}>₹{(gt/2).toFixed(2)}</td>
           <td style={{...cell,textAlign:'right',fontWeight:700,fontSize:10}}>₹{(gt/2).toFixed(2)}</td>
-          <td style={{...cell,textAlign:'right',fontWeight:800,fontSize:11,color:'#1565c0'}}>₹{grand.toFixed(2)}</td>
+          <td style={{...cell,textAlign:'right',fontWeight:800,fontSize:11,color:'#1565c0'}}>₹{sub.toFixed(2)}</td>
         </tr>
       </tfoot>
     </table>
