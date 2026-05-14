@@ -58,7 +58,7 @@ const SERVICES = [
 const MAKES = ["Maruti Suzuki","Hyundai","Tata","Mahindra","Honda","Toyota","Kia","Renault","Nissan","Volkswagen","Skoda","MG","Mercedes-Benz","BMW","Audi","Volvo","Ford","Jeep","Fiat","Isuzu","Other"]
 
 /* ─── SNAKE ↔ CAMEL ─────────────────────────────────── */
-const S2C = {shop_name:'shopName',bank_name:'bankName',account_no:'accountNo',bank_branch:'bankBranch',upi_id:'upiId',labor_rate:'laborRate',invoice_prefix:'invoicePrefix',invoice_terms:'invoiceTerms',company_name:'companyName',customer_name:'customerName',customer_id:'customerId',vehicle_id:'vehicleId',reg_no:'regNo',engine_no:'engineNo',fuel_type:'fuelType',insurance_expiry:'insuranceExpiry',last_service:'lastService',part_no:'partNo',hsn_code:'hsnCode',purchase_price:'purchasePrice',selling_price:'sellingPrice',min_qty:'minQty',job_card_id:'jobCardId',vehicle_reg:'vehicleReg',technician_name:'technicianName',estimated_delivery:'estimatedDelivery',gst_total:'gstTot',cgst_total:'cgstTot',sgst_total:'sgstTot',grand_total:'grand',logo_url:'logoUrl',customer_phone:'customerPhone',customer_address:'customerAddress',customer_gstin:'customerGstin',customer_email:'customerEmail',vehicle_details:'vehicleDetails',vin_no:'vinNo',vehicle_color:'vehicleColor',vehicle_fuel:'vehicleFuel',additional_discount:'additionalDiscount',payment_status:'paymentStatus',payment_method:'paymentMethod',amount_paid:'amountPaid',due_date:'dueDate',terms_conditions:'termsConditions',inv_serial:'invSerial',created_at:'createdAt',updated_at:'updatedAt'}
+const S2C = {shop_name:'shopName',bank_name:'bankName',account_no:'accountNo',bank_branch:'bankBranch',upi_id:'upiId',labor_rate:'laborRate',invoice_prefix:'invoicePrefix',invoice_terms:'invoiceTerms',company_name:'companyName',customer_name:'customerName',customer_id:'customerId',vehicle_id:'vehicleId',reg_no:'regNo',engine_no:'engineNo',fuel_type:'fuelType',insurance_expiry:'insuranceExpiry',last_service:'lastService',part_no:'partNo',hsn_code:'hsnCode',purchase_price:'purchasePrice',selling_price:'sellingPrice',min_qty:'minQty',job_card_id:'jobCardId',vehicle_reg:'vehicleReg',technician_name:'technicianName',estimated_delivery:'estimatedDelivery',gst_total:'gstTot',cgst_total:'cgstTot',sgst_total:'sgstTot',grand_total:'grand',logo_url:'logoUrl',customer_phone:'customerPhone',customer_address:'customerAddress',customer_gstin:'customerGstin',customer_email:'customerEmail',vehicle_details:'vehicleDetails',vin_no:'vinNo',vehicle_color:'vehicleColor',vehicle_fuel:'vehicleFuel',additional_discount:'additionalDiscount',payment_status:'paymentStatus',payment_method:'paymentMethod',amount_paid:'amountPaid',due_date:'dueDate',terms_conditions:'termsConditions',inv_serial:'invSerial',gst_type:'gstType',created_at:'createdAt',updated_at:'updatedAt'}
 const C2S = Object.fromEntries(Object.entries(S2C).map(([k,v])=>[v,k]))
 C2S.gstTot='gst_total'; C2S.cgstTot='cgst_total'; C2S.sgstTot='sgst_total'; C2S.grand='grand_total'; C2S.subtotal='subtotal'
 
@@ -352,7 +352,7 @@ function LineEd({items,setItems,parts}){
     {items.length===0&&<div style={{textAlign:'center',padding:20,color:'#aaa',fontSize:12,border:'1px dashed #d0d7de',borderRadius:8}}>No items yet. Add a part or labour above.</div>}
     <div style={{display:'flex',justifyContent:'flex-end',marginTop:12}}>
       <div style={{width:280,fontSize:12}}>
-        {[['Subtotal (taxable)',sub],['CGST',gt/2],['SGST',gt/2],['Total GST',gt]].map(([l,v])=><div key={l} style={{display:'flex',justifyContent:'space-between',padding:'5px 0',borderBottom:'1px solid #f0f0f0'}}><span style={{color:'#888'}}>{l}</span><span>{fmt(v)}</span></div>)}
+        {(form.gstType==='igst'?[['Subtotal (taxable)',sub],['IGST',gt],['Total GST',gt]]:[['Subtotal (taxable)',sub],['CGST',gt/2],['SGST',gt/2],['Total GST',gt]]).map(([l,v])=><div key={l} style={{display:'flex',justifyContent:'space-between',padding:'5px 0',borderBottom:'1px solid #f0f0f0'}}><span style={{color:'#888'}}>{l}</span><span>{fmt(v)}</span></div>)}
         <div style={{display:'flex',justifyContent:'space-between',padding:'8px 0',fontWeight:800,fontSize:17,color:'#1565c0'}}><span>Grand Total</span><span>{fmt(grand)}</span></div>
       </div>
     </div>
@@ -377,6 +377,8 @@ function PrintDoc({inv,settings,onClose}){
   const uRate=gstRates.length===1?gstRates[0]:null
   const cgstH=uRate!=null?`CGST (${uRate/2}%)`:'CGST'
   const sgstH=uRate!=null?`SGST (${uRate/2}%)`:'SGST'
+  const isIGST=inv.gstType==='igst'
+  const igstH=uRate!=null?`IGST (${uRate}%)`:'IGST'
   return <div style={{fontFamily:F,fontSize:10,color:'#111',background:'#fff',maxWidth:840,margin:'0 auto'}}>
     <style>{`@media print{body *{visibility:hidden!important}#pd,#pd *{visibility:visible!important}#pd{position:fixed;top:0;left:0;width:100%;margin:0;padding:0;background:#fff}*{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}}@page{size:A4;margin:8mm}`}</style>
     <div id="pd">
@@ -460,7 +462,7 @@ function PrintDoc({inv,settings,onClose}){
     {/* ITEMS TABLE */}
     <table style={{width:'100%',borderCollapse:'collapse',border:'1px solid #333',borderTop:'none'}}>
       <thead><tr>
-        {[['#',false],['Part Name',false],['Description',false],['HSN Code',false],['GST (%)',false],['Qty',false],['Disc %',false],['Unit Price (₹)',true],['Disc. Amt (₹)',true],[cgstH,true],[sgstH,true],['Total Taxable (₹)',true]].map(([h,r])=><th key={h} style={{...hcell,textAlign:r?'right':'center',padding:'6px'}}>{h}</th>)}
+        {(isIGST?[['#',false],['Part Name',false],['Description',false],['HSN Code',false],['GST (%)',false],['Qty',false],['Disc %',false],['Unit Price (₹)',true],['Disc. Amt (₹)',true],[igstH,true],['Total Taxable (₹)',true]]:[['#',false],['Part Name',false],['Description',false],['HSN Code',false],['GST (%)',false],['Qty',false],['Disc %',false],['Unit Price (₹)',true],['Disc. Amt (₹)',true],[cgstH,true],[sgstH,true],['Total Taxable (₹)',true]]).map(([h,r])=><th key={h} style={{...hcell,textAlign:r?'right':'center',padding:'6px'}}>{h}</th>)}
       </tr></thead>
       <tbody>
         {lines.map((it,i)=><tr key={it.id} style={{background:i%2?'#f9f9f9':'#fff'}}>
@@ -473,11 +475,10 @@ function PrintDoc({inv,settings,onClose}){
           <td style={{...cell,textAlign:'center'}}>{it.discount||0}%</td>
           <td style={{...cell,textAlign:'right'}}>₹{Number(it.rate).toFixed(2)}</td>
           <td style={{...cell,textAlign:'right'}}>₹{Number(it.disc).toFixed(2)}</td>
-          <td style={{...cell,textAlign:'right'}}>₹{Number(it.ga/2).toFixed(2)}</td>
-          <td style={{...cell,textAlign:'right'}}>₹{Number(it.ga/2).toFixed(2)}</td>
+          {isIGST?<td style={{...cell,textAlign:'right'}}>₹{Number(it.ga).toFixed(2)}</td>:<React.Fragment><td style={{...cell,textAlign:'right'}}>₹{Number(it.ga/2).toFixed(2)}</td><td style={{...cell,textAlign:'right'}}>₹{Number(it.ga/2).toFixed(2)}</td></React.Fragment>}
           <td style={{...cell,textAlign:'right',fontWeight:700}}>₹{Number(it.tax).toFixed(2)}</td>
         </tr>)}
-        {[...Array(emptyRows)].map((_,i)=><tr key={`e${i}`} style={{height:20}}>{[...Array(12)].map((_,j)=><td key={j} style={cell}>&nbsp;</td>)}</tr>)}
+        {[...Array(emptyRows)].map((_,i)=><tr key={`e${i}`} style={{height:20}}>{[...Array(isIGST?11:12)].map((_,j)=><td key={j} style={cell}>&nbsp;</td>)}</tr>)}
       </tbody>
       <tfoot>
         <tr style={{background:'#e3f2fd'}}>
@@ -487,8 +488,7 @@ function PrintDoc({inv,settings,onClose}){
           <td style={cell}></td>
           <td style={{...cell,textAlign:'right',fontWeight:700}}>₹{totalPreDisc.toFixed(2)}</td>
           <td style={{...cell,textAlign:'right',fontWeight:700}}>₹{itemDiscountTotal.toFixed(2)}</td>
-          <td style={{...cell,textAlign:'right',fontWeight:700}}>₹{(gt/2).toFixed(2)}</td>
-          <td style={{...cell,textAlign:'right',fontWeight:700}}>₹{(gt/2).toFixed(2)}</td>
+          {isIGST?<td style={{...cell,textAlign:'right',fontWeight:700}}>₹{gt.toFixed(2)}</td>:<React.Fragment><td style={{...cell,textAlign:'right',fontWeight:700}}>₹{(gt/2).toFixed(2)}</td><td style={{...cell,textAlign:'right',fontWeight:700}}>₹{(gt/2).toFixed(2)}</td></React.Fragment>}
           <td style={{...cell,textAlign:'right',fontWeight:800,color:'#1565c0'}}>₹{sub.toFixed(2)}</td>
         </tr>
       </tfoot>
@@ -501,7 +501,7 @@ function PrintDoc({inv,settings,onClose}){
           <div style={{fontWeight:700,fontSize:11,marginTop:8}}>Bank Details</div>
         </td>
         <td style={cell}>
-          {[['Item Discount:',itemDiscountTotal],['Subtotal (taxable):',sub],[cgstH+':',gt/2],[sgstH+':',gt/2],['Total Tax:',gt],['Extra Discount:',inv.additionalDiscount||0],['Adjustment:',inv.adjustment||0]].map(([l,v])=><div key={l} style={{display:'flex',justifyContent:'space-between',padding:'3px 0'}}><span>{l}</span><span style={{fontWeight:700}}>₹{Number(v).toFixed(2)}</span></div>)}
+          {(isIGST?[['Item Discount:',itemDiscountTotal],['Subtotal (taxable):',sub],[igstH+':',gt],['Total Tax:',gt],['Extra Discount:',inv.additionalDiscount||0],['Adjustment:',inv.adjustment||0]]:[['Item Discount:',itemDiscountTotal],['Subtotal (taxable):',sub],[cgstH+':',gt/2],[sgstH+':',gt/2],['Total Tax:',gt],['Extra Discount:',inv.additionalDiscount||0],['Adjustment:',inv.adjustment||0]]).map(([l,v])=><div key={l} style={{display:'flex',justifyContent:'space-between',padding:'3px 0'}}><span>{l}</span><span style={{fontWeight:700}}>₹{Number(v).toFixed(2)}</span></div>)}
         </td>
       </tr></tbody>
     </table>
@@ -542,7 +542,7 @@ function PrintDoc({inv,settings,onClose}){
 
 /* ─── INVOICE EDITOR (all fields editable) ──────────── */
 function InvEditor({initial,data,onSave,onClose}){
-  const blank={type:'invoice',date:today(),dueDate:'',jobCardId:'',customerId:'',vehicleId:'',customerName:'',companyName:'',customerPhone:'',customerAddress:'',customerGstin:'',customerEmail:'',vehicleReg:'',vehicleDetails:'',odometer:'',vinNo:'',engineNo:'',vehicleColor:'',vehicleFuel:'',items:[],notes:'',termsConditions:'',paymentStatus:'pending',paymentMethod:'',amountPaid:0,additionalDiscount:0,adjustment:0}
+  const blank={type:'invoice',gstType:'cgst_sgst',date:today(),dueDate:'',jobCardId:'',customerId:'',vehicleId:'',customerName:'',companyName:'',customerPhone:'',customerAddress:'',customerGstin:'',customerEmail:'',vehicleReg:'',vehicleDetails:'',odometer:'',vinNo:'',engineNo:'',vehicleColor:'',vehicleFuel:'',items:[],notes:'',termsConditions:'',paymentStatus:'pending',paymentMethod:'',amountPaid:0,additionalDiscount:0,adjustment:0}
   const[form,setForm]=useState(initial?{...blank,...initial}:blank)
   const[items,setItems]=useState(initial?.items||[])
   const[aiLoading,setAiLoading]=useState(false)
@@ -607,6 +607,7 @@ function InvEditor({initial,data,onSave,onClose}){
     <div style={sec}><div style={stl}>📄 Document Type &amp; Dates</div>
       <FR>
         <F label="Type" third><select value={form.type} onChange={e=>f('type',e.target.value)} style={IS}><option value="estimate">Estimate</option><option value="invoice">Tax Invoice</option><option value="final-invoice">Final Invoice</option></select></F>
+        <F label="Tax Type" third><select value={form.gstType||'cgst_sgst'} onChange={e=>f('gstType',e.target.value)} style={IS}><option value="cgst_sgst">CGST + SGST (Intra-state)</option><option value="igst">IGST (Inter-state)</option></select></F>
         <F label="Date" third><In type="date" value={form.date} onChange={e=>f('date',e.target.value)}/></F>
         <F label="Due Date" third><In type="date" value={form.dueDate||''} onChange={e=>f('dueDate',e.target.value)}/></F>
         <F label="Linked Job Card # (optional)" third><In value={form.jobCardId||''} onChange={e=>f('jobCardId',e.target.value)} placeholder="e.g. 1001"/></F>
