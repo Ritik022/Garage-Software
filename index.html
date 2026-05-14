@@ -215,21 +215,31 @@ function useDB(){
       const{data:d,error:e}=await sb.from('invoices').update(row).eq('id',form.id).select().single(); if(e)throw e
       const r=toCamel(d); setD(p=>({...p,invoices:p.invoices.map(i=>i.id===r.id?r:i)})); return r
     }else{
-      // Auto-create customer if typed manually (no customerId selected from dropdown)
+      // Resolve customer — use selected id, else match by phone, else create new
       let custId=form.customerId?+form.customerId:null
       let vehId=form.vehicleId?+form.vehicleId:null
       if(!custId&&form.customerName){
-        const cRow=toSnake({name:form.customerName,companyName:form.companyName||'',phone:form.customerPhone||'',email:form.customerEmail||'',address:form.customerAddress||'',gstin:form.customerGstin||'',type:form.companyName?'company':'individual'})
-        delete cRow.id
-        const{data:cd,error:ce}=await sb.from('customers').insert(cRow).select().single(); if(ce)throw ce
-        const nc=toCamel(cd); setD(p=>({...p,customers:[nc,...p.customers]})); custId=nc.id
+        if(form.customerPhone){
+          const{data:found}=await sb.from('customers').select('id').eq('phone',form.customerPhone).limit(1)
+          if(found?.length) custId=found[0].id
+        }
+        if(!custId){
+          const cRow=toSnake({name:form.customerName,companyName:form.companyName||'',phone:form.customerPhone||'',email:form.customerEmail||'',address:form.customerAddress||'',gstin:form.customerGstin||'',type:form.companyName?'company':'individual'})
+          delete cRow.id
+          const{data:cd,error:ce}=await sb.from('customers').insert(cRow).select().single(); if(ce)throw ce
+          const nc=toCamel(cd); setD(p=>({...p,customers:[nc,...p.customers]})); custId=nc.id
+        }
       }
-      // Auto-create vehicle if typed manually (no vehicleId selected from dropdown)
-      if(!vehId&&form.vehicleReg&&custId){
-        const vRow=toSnake({customerId:custId,regNo:form.vehicleReg,make:form.vehicleDetails||'',odometer:+form.odometer||0,vin:form.vinNo||'',engineNo:form.engineNo||'',color:form.vehicleColor||'',fuelType:form.vehicleFuel||''})
-        delete vRow.id
-        const{data:vd,error:ve}=await sb.from('vehicles').insert(vRow).select().single(); if(ve)throw ve
-        const nv=toCamel(vd); setD(p=>({...p,vehicles:[nv,...p.vehicles]})); vehId=nv.id
+      // Resolve vehicle — use selected id, else match by reg no, else create new
+      if(!vehId&&form.vehicleReg){
+        const{data:found}=await sb.from('vehicles').select('id').eq('reg_no',form.vehicleReg).limit(1)
+        if(found?.length) vehId=found[0].id
+        else if(custId){
+          const vRow=toSnake({customerId:custId,regNo:form.vehicleReg,make:form.vehicleDetails||'',odometer:+form.odometer||0,vin:form.vinNo||'',engineNo:form.engineNo||'',color:form.vehicleColor||'',fuelType:form.vehicleFuel||''})
+          delete vRow.id
+          const{data:vd,error:ve}=await sb.from('vehicles').insert(vRow).select().single(); if(ve)throw ve
+          const nv=toCamel(vd); setD(p=>({...p,vehicles:[nv,...p.vehicles]})); vehId=nv.id
+        }
       }
       row.customer_id=custId; row.vehicle_id=vehId
       let serial=null
