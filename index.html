@@ -215,14 +215,29 @@ function useDB(){
       const{data:d,error:e}=await sb.from('invoices').update(row).eq('id',form.id).select().single(); if(e)throw e
       const r=toCamel(d); setD(p=>({...p,invoices:p.invoices.map(i=>i.id===r.id?r:i)})); return r
     }else{
+      // Auto-create customer if typed manually (no customerId selected from dropdown)
+      let custId=form.customerId?+form.customerId:null
+      let vehId=form.vehicleId?+form.vehicleId:null
+      if(!custId&&form.customerName){
+        const cRow=toSnake({name:form.customerName,companyName:form.companyName||'',phone:form.customerPhone||'',email:form.customerEmail||'',address:form.customerAddress||'',gstin:form.customerGstin||'',type:form.companyName?'company':'individual'})
+        delete cRow.id
+        const{data:cd,error:ce}=await sb.from('customers').insert(cRow).select().single(); if(ce)throw ce
+        const nc=toCamel(cd); setD(p=>({...p,customers:[nc,...p.customers]})); custId=nc.id
+      }
+      // Auto-create vehicle if typed manually (no vehicleId selected from dropdown)
+      if(!vehId&&form.vehicleReg&&custId){
+        const vRow=toSnake({customerId:custId,regNo:form.vehicleReg,make:form.vehicleDetails||'',odometer:+form.odometer||0,vin:form.vinNo||'',engineNo:form.engineNo||'',color:form.vehicleColor||'',fuelType:form.vehicleFuel||''})
+        delete vRow.id
+        const{data:vd,error:ve}=await sb.from('vehicles').insert(vRow).select().single(); if(ve)throw ve
+        const nv=toCamel(vd); setD(p=>({...p,vehicles:[nv,...p.vehicles]})); vehId=nv.id
+      }
+      row.customer_id=custId; row.vehicle_id=vehId
       let serial=null
-      // If linked to a job card, reuse the serial already assigned to that job card's invoices
       if(form.jobCardId){
         const{data:linked}=await sb.from('invoices').select('inv_serial').eq('job_card_id',+form.jobCardId).not('inv_serial','is',null).limit(1)
         if(linked&&linked.length>0) serial=linked[0].inv_serial
       }
       if(!serial){
-        // Assign next gap-filling serial for this financial year
         const fy=fyOf(form.date)
         const fyStartD=`${fy.start}-04-01`, fyEndD=`${fy.start+1}-03-31`
         const{data:ex}=await sb.from('invoices').select('inv_serial').gte('date',fyStartD).lte('date',fyEndD).not('inv_serial','is',null)
@@ -534,7 +549,7 @@ function InvEditor({initial,data,onSave,onClose}){
           model:'claude-haiku-4-5-20251001',max_tokens:1500,
           messages:[{role:'user',content:[
             {type:'document',source:{type:'base64',media_type:'application/pdf',data:base64}},
-            {type:'text',text:`Extract details from this invoice/document. Return ONLY a JSON object, no explanation:\n{"customerName":"","customerPhone":"","customerEmail":"","customerAddress":"","customerGstin":"","vehicleReg":"","vehicleDetails":"","odometer":null,"date":"YYYY-MM-DD","notes":"","items":[{"name":"","qty":1,"rate":0,"gst":18,"hsnSac":"","discount":0,"isService":false}]}\nUse null for missing numbers, empty string for missing text. isService=true for labour/service items.`}
+            {type:'text',text:`Extract details from this invoice/document. Return ONLY a JSON object, no explanation:\n{"customerName":"","companyName":"","customerPhone":"","customerEmail":"","customerAddress":"","customerGstin":"","vehicleReg":"","vehicleDetails":"","vinNo":"","engineNo":"","vehicleColor":"","vehicleFuel":"petrol","odometer":null,"date":"YYYY-MM-DD","notes":"","items":[{"name":"","qty":1,"rate":0,"gst":18,"hsnSac":"","discount":0,"isService":false}]}\nUse null for missing numbers, empty string for missing text. isService=true for labour/service items. vehicleFuel must be one of: petrol, diesel, cng, electric, hybrid.`}
           ]}]
         }
       })
@@ -542,7 +557,7 @@ function InvEditor({initial,data,onSave,onClose}){
       if(!data?.content?.length) throw new Error(data?.error?.message||data?.error?.type||'Unexpected AI response — make sure your Edge Function includes the anthropic-beta: pdfs-2024-09-25 header (see Settings → AI Setup).')
       const text=data.content[0].text
       const json=JSON.parse(text.match(/\{[\s\S]*\}/)[0])
-      const upd={};['customerName','customerPhone','customerEmail','customerAddress','customerGstin','vehicleReg','vehicleDetails','notes'].forEach(k=>{if(json[k])upd[k]=json[k]})
+      const upd={};['customerName','companyName','customerPhone','customerEmail','customerAddress','customerGstin','vehicleReg','vehicleDetails','vinNo','engineNo','vehicleColor','vehicleFuel','notes'].forEach(k=>{if(json[k])upd[k]=json[k]})
       if(json.odometer) upd.odometer=json.odometer
       if(json.date&&json.date.match(/^\d{4}-\d{2}-\d{2}$/)) upd.date=json.date
       setForm(p=>({...p,...upd}))
