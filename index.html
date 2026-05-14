@@ -457,8 +457,10 @@ function PrintDoc({inv,settings,onClose}){
         <td style={{...cell,width:'50%',verticalAlign:'top'}}>
           <div style={{fontWeight:800,fontSize:11,color:'#1a1a2e',marginBottom:5,borderBottom:'1px solid #e8eaf0',paddingBottom:3}}>Vehicle</div>
           <div style={{lineHeight:1.9}}>
-            <div><b>Make / Model:</b> {inv.vehicleDetails||'—'}</div>
+            <div><b>Make / Model:</b> {(()=>{let s=inv.vehicleDetails||'';[inv.vehicleColor,inv.vehicleFuel].forEach(v=>{if(v)s=s.replace(new RegExp('[,\\s]*'+v.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'[,\\s]*','gi'),' ').trim()});return s||'—'})()}</div>
             <div><b>Odometer:</b> {inv.odometer||'—'} km</div>
+            {inv.vehicleColor&&<div><b>Color:</b> {inv.vehicleColor}</div>}
+            {inv.vehicleFuel&&<div><b>Fuel:</b> {inv.vehicleFuel.toUpperCase()}</div>}
           </div>
           <div style={{borderTop:'1px solid #e8eaf0',marginTop:7,paddingTop:5}}>
             <b>Place of Supply:</b> Haryana (06)
