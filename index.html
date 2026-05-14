@@ -551,7 +551,7 @@ function InvEditor({initial,data,onSave,onClose}){
 
   function pickC(id){
     const c=data.customers.find(x=>x.id==id); if(!c)return
-    setForm(p=>({...p,customerId:id,customerName:c.name||p.customerName,companyName:(c.type!=='individual'?c.name:'')||p.companyName,customerPhone:c.phone||p.customerPhone,customerAddress:c.address||p.customerAddress,customerGstin:c.gstin||p.customerGstin,customerEmail:c.email||p.customerEmail}))
+    setForm(p=>({...p,customerId:id,customerName:c.name||p.customerName,companyName:c.companyName||'',customerPhone:c.phone||p.customerPhone,customerAddress:c.address||p.customerAddress,customerGstin:c.gstin||p.customerGstin,customerEmail:c.email||p.customerEmail}))
   }
   function pickV(id){
     const v=data.vehicles.find(x=>x.id==id); if(!v)return
@@ -881,7 +881,7 @@ function JobCards({data,db,setTab}){
   function genInv(job,type){
     const cust=data.customers.find(c=>c.id==job.customerId)
     const veh=data.vehicles.find(v=>v.id==job.vehicleId)
-    setNewInv({type,jobCardId:job.id,customerId:job.customerId,vehicleId:job.vehicleId,customerName:job.customerName||'',vehicleReg:job.vehicleReg||'',companyName:(cust?.type!=='individual'?cust?.name:'')||'',customerPhone:cust?.phone||'',customerAddress:cust?.address||'',customerGstin:cust?.gstin||'',customerEmail:cust?.email||'',vehicleDetails:veh?`${veh.make} ${veh.model} ${veh.year||''}`.trim():'',odometer:job.odometer||veh?.odometer||'',vinNo:veh?.vin||'',engineNo:veh?.engineNo||'',vehicleColor:veh?.color||'',vehicleFuel:veh?.fuelType||'',items:job.items||[],date:today(),paymentStatus:'pending',additionalDiscount:0,adjustment:0,amountPaid:0})
+    setNewInv({type,jobCardId:job.id,customerId:job.customerId,vehicleId:job.vehicleId,customerName:job.customerName||'',vehicleReg:job.vehicleReg||'',companyName:cust?.companyName||'',customerPhone:cust?.phone||'',customerAddress:cust?.address||'',customerGstin:cust?.gstin||'',customerEmail:cust?.email||'',vehicleDetails:veh?`${veh.make} ${veh.model} ${veh.year||''}`.trim():'',odometer:job.odometer||veh?.odometer||'',vinNo:veh?.vin||'',engineNo:veh?.engineNo||'',vehicleColor:veh?.color||'',vehicleFuel:veh?.fuelType||'',items:job.items||[],date:today(),paymentStatus:'pending',additionalDiscount:0,adjustment:0,amountPaid:0})
   }
   async function saveNewInv(form){await db.saveInvoice(form);setNewInv(null);setTab('Invoices')}
   const list=data.jobCards.filter(j=>(!q||j.customerName?.toLowerCase().includes(q.toLowerCase())||j.vehicleReg?.toLowerCase().includes(q.toLowerCase())||String(j.id).includes(q))&&(!sf||j.status===sf))
