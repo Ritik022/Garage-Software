@@ -208,12 +208,30 @@ function useDB(){
     setD(p=>({...p,jobCards:p.jobCards.filter(j=>j.id!==id)}))
   }),[])
 
+  // ── Inventory adjustment when parts are issued via invoices
+  async function adjParts(oldItems,newItems){
+    const delta={}
+    const acc=(it,sign)=>{if(it.isService||!it.name)return;const k=it.partId?'id:'+it.partId:'n:'+it.name;if(!delta[k])delta[k]={partId:it.partId||null,name:it.name,qty:0};delta[k].qty+=sign*(+it.qty||0)}
+    ;(oldItems||[]).forEach(it=>acc(it,-1));(newItems||[]).forEach(it=>acc(it,+1))
+    for(const{partId,name,qty}of Object.values(delta)){
+      if(!qty)continue
+      const q=partId?sb.from('parts').select('id,qty').eq('id',partId):sb.from('parts').select('id,qty').eq('name',name).limit(1)
+      const{data:found}=await q
+      if(!found?.length)continue
+      const p=found[0],nq=Math.max(0,(+p.qty||0)-qty)
+      await sb.from('parts').update({qty:nq}).eq('id',p.id)
+      setD(prev=>({...prev,parts:prev.parts.map(pt=>pt.id===p.id?{...pt,qty:nq}:pt)}))
+    }
+  }
+
   // ── Invoices
   const saveInvoice=useCallback(async form=>op(async()=>{
     const row=toSnake(form); row.items=form.items||[]
     if(form.id){
+      const{data:old}=await sb.from('invoices').select('items').eq('id',form.id).single()
+      const oldItems=old?.items||[]
       const{data:d,error:e}=await sb.from('invoices').update(row).eq('id',form.id).select().single(); if(e)throw e
-      const r=toCamel(d); setD(p=>({...p,invoices:p.invoices.map(i=>i.id===r.id?r:i)})); return r
+      const r=toCamel(d); setD(p=>({...p,invoices:p.invoices.map(i=>i.id===r.id?r:i)})); await adjParts(oldItems,form.items||[]); return r
     }else{
       // Resolve customer — selected id > match name+phone and update > create new
       let custId=form.customerId?+form.customerId:null
@@ -265,7 +283,7 @@ function useDB(){
       }
       row.inv_serial=serial
       delete row.id; const{data:d,error:e}=await sb.from('invoices').insert(row).select().single(); if(e)throw e
-      const r=toCamel(d); setD(p=>({...p,invoices:[r,...p.invoices]})); return r
+      const r=toCamel(d); setD(p=>({...p,invoices:[r,...p.invoices]})); await adjParts([],form.items||[]); return r
     }
   }),[])
   const markPay=useCallback(async(id,ps)=>op(async()=>{
@@ -273,8 +291,10 @@ function useDB(){
     const r=toCamel(d); setD(p=>({...p,invoices:p.invoices.map(i=>i.id===id?r:i)}))
   }),[])
   const delInvoice=useCallback(async id=>op(async()=>{
+    const{data:old}=await sb.from('invoices').select('items').eq('id',id).single()
     const{error:e}=await sb.from('invoices').delete().eq('id',id); if(e)throw e
     setD(p=>({...p,invoices:p.invoices.filter(i=>i.id!==id)}))
+    await adjParts(old?.items||[],[])
   }),[])
 
   // ── Settings
@@ -296,7 +316,7 @@ const TH={padding:'9px 10px',textAlign:'left',fontWeight:700,fontSize:11,borderB
 const TD={padding:'8px 10px',fontSize:12,borderBottom:'1px solid #f0f4f8',verticalAlign:'middle'}
 
 function Modal({title,onClose,wide,children}){
-  return <div onClick={e=>{if(e.target===e.currentTarget)onClose()}} style={{position:'fixed',inset:0,background:'rgba(0,0,0,.55)',zIndex:999,display:'flex',alignItems:'flex-start',justifyContent:'center',overflowY:'auto',padding:'20px 10px'}}>
+  return <div style={{position:'fixed',inset:0,background:'rgba(0,0,0,.55)',zIndex:999,display:'flex',alignItems:'flex-start',justifyContent:'center',overflowY:'auto',padding:'20px 10px'}}>
     <div style={{background:'#fff',borderRadius:12,width:wide?940:620,maxWidth:'99vw',boxShadow:'0 24px 64px rgba(0,0,0,.28)',animation:'fadein .2s ease',display:'flex',flexDirection:'column',maxHeight:'92vh'}}>
       <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'14px 20px',borderBottom:'1px solid #e8ecf0',flexShrink:0}}>
         <strong style={{fontSize:15}}>{title}</strong>
@@ -322,7 +342,7 @@ function LineEd({items,setItems,parts,gstType}){
   const upd=(id,k,v)=>setItems(p=>p.map(x=>x.id===id?{...x,[k]:v}:x))
   function fill(id,name){
     const p2=parts.find(p=>p.name===name)
-    if(p2){setItems(pr=>pr.map(x=>x.id===id?{...x,name,rate:+p2.sellingPrice||0,gst:+p2.gst||18,hsnSac:p2.hsnCode||''}:x));return}
+    if(p2){setItems(pr=>pr.map(x=>x.id===id?{...x,name,partId:p2.id,rate:+p2.sellingPrice||0,gst:+p2.gst||18,hsnSac:p2.hsnCode||''}:x));return}
     const sv=SERVICES.find(s=>s.n===name)
     if(sv){setItems(pr=>pr.map(x=>x.id===id?{...x,name,rate:sv.r,gst:sv.g,hsnSac:sv.s}:x));return}
     upd(id,'name',name)
@@ -807,7 +827,7 @@ function Vehicles({data,db}){
 
 /* ─── INVENTORY ─────────────────────────────────────── */
 function Inventory({data,db}){
-  const[show,setShow]=useState(false);const[ed,setEd]=useState(null);const[q,setQ]=useState('');const[cat,setCat]=useState('')
+  const[show,setShow]=useState(false);const[ed,setEd]=useState(null);const[q,setQ]=useState('');const[cat,setCat]=useState('');const[usage,setUsage]=useState(null)
   const blank={name:'',partNo:'',hsnCode:'',gst:18,purchasePrice:'',sellingPrice:'',qty:0,minQty:2,unit:'nos',category:'spare',rack:'',notes:''}
   const[form,setForm]=useState(blank);const f=(k,v)=>setForm(p=>({...p,[k]:v}))
   function open(p){setEd(p||null);setForm(p?{...p}:blank);setShow(true)}
@@ -818,7 +838,7 @@ function Inventory({data,db}){
     if(m){setForm(p=>({...p,hsnCode:m[1].h,gst:m[1].g}));alert(`✓ Found!\nHSN: ${m[1].h}  |  GST: ${m[1].g}%`)}
     else alert('Not in HSN database.\n\nCommon codes:\n• Brakes/Suspension: 87083000 @ 28%\n• Filters: 84212300 @ 18%\n• Battery: 85072000 @ 28%\n• Engine parts: 84099200 @ 28%\n• Tyres: 40111000 @ 28%\n• Engine Oil/Fluids: 27101980 @ 18%')
   }
-  async function doSave(){if(!form.name||!form.sellingPrice){alert('Name and selling price required.');return}await db.savePart(form);setShow(false)}
+  async function doSave(){if(!form.name){alert('Part name is required.');return}await db.savePart(form);setShow(false)}
   const list=data.parts.filter(p=>(!q||p.name?.toLowerCase().includes(q.toLowerCase())||p.partNo?.includes(q))&&(!cat||p.category===cat))
   const low=data.parts.filter(p=>(+p.qty||0)<=(+p.minQty||2)).length
   return <div>
@@ -845,12 +865,39 @@ function Inventory({data,db}){
         <td style={{...TD,fontWeight:900,color:(+p.qty||0)<=(+p.minQty||2)?'#c62828':'#2e7d32'}}>{p.qty||0} {p.unit}</td>
         <td style={{...TD,color:'#aaa'}}>{p.minQty||2}</td>
         <td style={TD}>
+          <button onClick={()=>setUsage(p)} style={{marginRight:4,padding:'3px 9px',border:'1px solid #c5cae9',borderRadius:5,cursor:'pointer',fontSize:11,color:'#3949ab'}}>📊</button>
           <button onClick={()=>open(p)} style={{marginRight:4,padding:'3px 9px',border:'1px solid #d0d7de',borderRadius:5,cursor:'pointer',fontSize:11}}>✏</button>
           <button onClick={async()=>{if(confirm('Delete?'))await db.delPart(p.id)}} style={{padding:'3px 9px',border:'1px solid #ffcdd2',borderRadius:5,cursor:'pointer',fontSize:11,color:'#c62828'}}>🗑</button>
         </td>
       </tr>)}</tbody></table>
     </div>
     {list.length===0&&<p style={{textAlign:'center',color:'#aaa',padding:36}}>No parts yet.</p>}
+    {usage&&<Modal title={`Usage History — ${usage.name}`} onClose={()=>setUsage(null)}>
+      {(()=>{
+        const rows=(data.invoices||[]).flatMap(inv=>{
+          const its=(inv.items||[]).filter(it=>!it.isService&&(it.partId===usage.id||it.name===usage.name))
+          return its.map(it=>({invNo:buildInvNo(data.settings||{},inv),date:inv.date,customer:inv.customerName||'—',qty:+it.qty||0,rate:+it.rate||0}))
+        }).sort((a,b)=>(b.date||'').localeCompare(a.date||''))
+        const totalQty=rows.reduce((s,r)=>s+r.qty,0)
+        if(!rows.length)return <p style={{color:'#aaa',textAlign:'center',padding:20}}>No usage found in any invoice.</p>
+        return <div>
+          <div style={{background:'#e8f5e9',border:'1px solid #a5d6a7',borderRadius:7,padding:'8px 14px',marginBottom:14,fontSize:12}}>
+            Total issued: <b>{totalQty} {usage.unit}</b> across <b>{rows.length}</b> invoice(s) &nbsp;|&nbsp; Current stock: <b>{usage.qty||0} {usage.unit}</b>
+          </div>
+          <table style={{width:'100%',borderCollapse:'collapse',fontSize:12}}>
+            <thead><tr>{['Invoice No.','Date','Customer','Qty','Rate','Amount'].map(h=><th key={h} style={TH}>{h}</th>)}</tr></thead>
+            <tbody>{rows.map((r,i)=><tr key={i} style={{background:i%2?'#f9f9f9':'#fff'}}>
+              <td style={{...TD,fontWeight:700,color:'#1565c0'}}>{r.invNo}</td>
+              <td style={TD}>{fmtD(r.date)}</td>
+              <td style={TD}>{r.customer}</td>
+              <td style={{...TD,textAlign:'center'}}>{r.qty} {usage.unit}</td>
+              <td style={TD}>{fmt(r.rate)}</td>
+              <td style={{...TD,fontWeight:700}}>{fmt(r.qty*r.rate)}</td>
+            </tr>)}</tbody>
+          </table>
+        </div>
+      })()}
+    </Modal>}
     {show&&<Modal title={ed?'Edit Part':'Add Part'} onClose={()=>setShow(false)}>
       <FR>
         <F label="Part Name *" half><In value={form.name||''} onChange={e=>f('name',e.target.value)} placeholder="e.g. Brake Pad, Oil Filter"/></F>
@@ -864,7 +911,7 @@ function Inventory({data,db}){
           </div>
         </F>
         <F label="GST Rate" half><select value={form.gst||18} onChange={e=>f('gst',+e.target.value)} style={IS}>{[0,5,12,18,28].map(r=><option key={r} value={r}>{r}%</option>)}</select></F>
-        <F label="Selling Price (₹) *" half><In type="number" value={form.sellingPrice||''} onChange={e=>f('sellingPrice',e.target.value)}/></F>
+        <F label="Selling Price (₹)" half><In type="number" value={form.sellingPrice||''} onChange={e=>f('sellingPrice',e.target.value)}/></F>
         <F label="Purchase Price (₹)" half><In type="number" value={form.purchasePrice||''} onChange={e=>f('purchasePrice',e.target.value)}/></F>
         <F label="Current Stock" half><In type="number" value={form.qty||0} onChange={e=>f('qty',+e.target.value)}/></F>
         <F label="Min Stock Alert" half><In type="number" value={form.minQty||2} onChange={e=>f('minQty',+e.target.value)}/></F>
