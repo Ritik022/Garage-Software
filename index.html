@@ -63,7 +63,7 @@ const C2S = Object.fromEntries(Object.entries(S2C).map(([k,v])=>[v,k]))
 C2S.gstTot='gst_total'; C2S.cgstTot='cgst_total'; C2S.sgstTot='sgst_total'; C2S.grand='grand_total'; C2S.subtotal='subtotal'
 
 const toCamel = obj => { const r={}; for(const[k,v] of Object.entries(obj)) r[S2C[k]||k]=v; return r }
-const toSnake = obj => { const r={}; for(const[k,v] of Object.entries(obj)) r[C2S[k]||k]=v; return r }
+const toSnake = obj => { const r={}; for(const[k,v] of Object.entries(obj)) r[C2S[k]||k]=v===''?null:v; return r }
 
 /* ─── HELPERS ───────────────────────────────────────── */
 const fmt = n => '₹'+Number(n||0).toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2})
