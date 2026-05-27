@@ -838,7 +838,12 @@ function Inventory({data,db}){
     if(m){setForm(p=>({...p,hsnCode:m[1].h,gst:m[1].g}));alert(`✓ Found!\nHSN: ${m[1].h}  |  GST: ${m[1].g}%`)}
     else alert('Not in HSN database.\n\nCommon codes:\n• Brakes/Suspension: 87083000 @ 28%\n• Filters: 84212300 @ 18%\n• Battery: 85072000 @ 28%\n• Engine parts: 84099200 @ 28%\n• Tyres: 40111000 @ 28%\n• Engine Oil/Fluids: 27101980 @ 18%')
   }
-  async function doSave(){if(!form.name){alert('Part name is required.');return}await db.savePart(form);setShow(false)}
+  async function doSave(){
+    if(!form.name){alert('Part name is required.');return}
+    const n0=v=>v===''||v==null?0:+v
+    await db.savePart({...form,sellingPrice:n0(form.sellingPrice),purchasePrice:n0(form.purchasePrice),gst:n0(form.gst)||18,qty:n0(form.qty),minQty:n0(form.minQty)||2})
+    setShow(false)
+  }
   const list=data.parts.filter(p=>(!q||p.name?.toLowerCase().includes(q.toLowerCase())||p.partNo?.includes(q))&&(!cat||p.category===cat))
   const low=data.parts.filter(p=>(+p.qty||0)<=(+p.minQty||2)).length
   return <div>
