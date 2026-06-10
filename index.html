@@ -408,8 +408,16 @@ function PrintDoc({inv,settings,onClose}){
   const sgstH=uRate!=null?`SGST (${uRate/2}%)`:'SGST'
   const isIGST=inv.gstType==='igst'
   const igstH=uRate!=null?`IGST (${uRate}%)`:'IGST'
+  function doPrint(){
+    const el=document.getElementById('pd'); if(!el) return
+    const clone=el.cloneNode(true)
+    clone.querySelectorAll('style,script').forEach(s=>s.remove())
+    const w=window.open('','_blank')
+    w.document.write(`<!DOCTYPE html><html><head><meta charset="utf-8"><title>Invoice</title><style>*{box-sizing:border-box;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}body{margin:0;padding:0;font-family:Helvetica,Arial,sans-serif;font-size:10px;color:#111}@page{size:A4;margin:8mm}img{max-width:100%}table{border-collapse:collapse}</style></head><body>${clone.innerHTML}</body></html>`)
+    w.document.close()
+    setTimeout(()=>{w.focus();w.print()},400)
+  }
   return <div style={{fontFamily:F,fontSize:10,color:'#111',background:'#fff',maxWidth:840,margin:'0 auto'}}>
-    <style>{`@media print{body *{visibility:hidden!important}#pd,#pd *{visibility:visible!important}#pd{position:fixed;top:0;left:0;width:100%;margin:0;padding:0;background:#fff}*{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}}@page{size:A4;margin:8mm}`}</style>
     <div id="pd">
     {/* HEADER */}
     <table style={{width:'100%',borderCollapse:'collapse',border:'1px solid #1565c0'}}>
@@ -564,7 +572,7 @@ function PrintDoc({inv,settings,onClose}){
     </div>
     <div className="np" style={{display:'flex',gap:8,justifyContent:'center',marginTop:16}}>
       <GBtn onClick={onClose}>Close</GBtn>
-      <PBtn onClick={()=>window.print()}>🖨 Print / Save PDF</PBtn>
+      <PBtn onClick={doPrint}>🖨 Print / Save PDF</PBtn>
     </div>
   </div>
 }
