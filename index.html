@@ -836,8 +836,43 @@ function Vehicles({data,db}){
 /* ─── INVENTORY ─────────────────────────────────────── */
 function Inventory({data,db}){
   const[show,setShow]=useState(false);const[ed,setEd]=useState(null);const[q,setQ]=useState('');const[cat,setCat]=useState('');const[usage,setUsage]=useState(null)
+  const[aiLoading,setAiLoading]=useState(false);const pdfRef=useRef(null)
   const blank={name:'',partNo:'',hsnCode:'',gst:18,purchasePrice:'',sellingPrice:'',qty:0,minQty:2,unit:'nos',category:'spare',rack:'',notes:''}
   const[form,setForm]=useState(blank);const f=(k,v)=>setForm(p=>({...p,[k]:v}))
+  async function importFromPDF(file){
+    setAiLoading(true)
+    try{
+      const base64=await new Promise((res,rej)=>{const r=new FileReader();r.onload=e=>res(e.target.result.split(',')[1]);r.onerror=rej;r.readAsDataURL(file)})
+      const{data:resp,error}=await sb.functions.invoke('anthropic-proxy',{
+        body:{
+          model:'claude-haiku-4-5-20251001',max_tokens:2000,
+          messages:[{role:'user',content:[
+            {type:'document',source:{type:'base64',media_type:'application/pdf',data:base64}},
+            {type:'text',text:`Extract all line items from this purchase/inventory invoice. Return ONLY a JSON array, no explanation:\n[{"name":"","partNo":"","hsnCode":"","gst":18,"qty":1,"unit":"nos","category":"spare","sellingPrice":0,"purchasePrice":0}]\nRules:\n- sellingPrice = taxable value PER UNIT (before GST). If total taxable for a line is given, divide by qty.\n- purchasePrice = total amount PER UNIT (taxable + GST). If total is given, divide by qty.\n- category must be one of: spare,consumable,accessory,lubricant,tyre,electrical,body,other\n- unit must be one of: nos,litre,set,pair,kg,ml,mtr,box`}
+          ]}]
+        }
+      })
+      if(error) throw new Error(error.message||'Edge Function not set up. See Settings → AI Setup.')
+      if(!resp?.content?.length) throw new Error(resp?.error?.message||'Unexpected AI response — check Edge Function includes anthropic-beta: pdfs-2024-09-25 header.')
+      const text=resp.content[0].text
+      const json=JSON.parse(text.match(/\[[\s\S]*\]/)[0])
+      const n0=v=>v===''||v==null?0:+v
+      let created=0,updated=0
+      for(const it of json){
+        if(!it.name?.trim()) continue
+        const existing=data.parts.find(p=>p.name.toLowerCase().trim()===it.name.toLowerCase().trim())
+        if(existing){
+          await db.savePart({...existing,qty:(+existing.qty||0)+(n0(it.qty)||1),sellingPrice:n0(it.sellingPrice)||+existing.sellingPrice||0,purchasePrice:n0(it.purchasePrice)||+existing.purchasePrice||0,partNo:it.partNo||existing.partNo||'',hsnCode:it.hsnCode||existing.hsnCode||'',gst:n0(it.gst)||+existing.gst||18})
+          updated++
+        }else{
+          await db.savePart({name:it.name.trim(),partNo:it.partNo||'',hsnCode:it.hsnCode||'',gst:n0(it.gst)||18,qty:n0(it.qty)||0,minQty:2,unit:it.unit||'nos',category:it.category||'spare',rack:'',notes:'',sellingPrice:n0(it.sellingPrice),purchasePrice:n0(it.purchasePrice)})
+          created++
+        }
+      }
+      alert(`✓ AI imported ${json.length} item(s):\n• ${created} new part(s) added\n• ${updated} existing part(s) updated (qty added)`)
+    }catch(e){alert('AI import failed: '+e.message)}
+    setAiLoading(false)
+  }
   function open(p){setEd(p||null);setForm(p?{...p}:blank);setShow(true)}
   function autoHSN(){
     const n=form.name.toLowerCase()
@@ -862,6 +897,8 @@ function Inventory({data,db}){
         <option value="">All Categories</option>
         {['spare','consumable','accessory','lubricant','tyre','electrical','body','other'].map(c=><option key={c} value={c}>{c.charAt(0).toUpperCase()+c.slice(1)}</option>)}
       </select>
+      <input ref={pdfRef} type="file" accept=".pdf" style={{display:'none'}} onChange={e=>{if(e.target.files[0])importFromPDF(e.target.files[0]);e.target.value=''}}/>
+      <PBtn onClick={()=>pdfRef.current?.click()} col={aiLoading?'#999':'#1b5e20'} style={{whiteSpace:'nowrap'}}>{aiLoading?'⏳ AI Processing…':'📎 Import from PDF'}</PBtn>
       <PBtn onClick={()=>open(null)}>+ Add Part</PBtn>
     </div>
     {low>0&&<div style={{background:'#fff3e0',border:'1px solid #ffb74d',borderRadius:8,padding:'9px 16px',marginBottom:14,fontSize:12,color:'#e65100'}}>⚠ <b>{low} part{low>1?'s':''}</b> at or below minimum stock level.</div>}
