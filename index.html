@@ -58,7 +58,7 @@ const SERVICES = [
 const MAKES = ["Maruti Suzuki","Hyundai","Tata","Mahindra","Honda","Toyota","Kia","Renault","Nissan","Volkswagen","Skoda","MG","Mercedes-Benz","BMW","Audi","Volvo","Ford","Jeep","Fiat","Isuzu","Other"]
 
 /* ─── SNAKE ↔ CAMEL ─────────────────────────────────── */
-const S2C = {shop_name:'shopName',bank_name:'bankName',account_no:'accountNo',bank_branch:'bankBranch',upi_id:'upiId',labor_rate:'laborRate',invoice_prefix:'invoicePrefix',invoice_terms:'invoiceTerms',company_name:'companyName',customer_name:'customerName',customer_id:'customerId',vehicle_id:'vehicleId',reg_no:'regNo',engine_no:'engineNo',fuel_type:'fuelType',insurance_expiry:'insuranceExpiry',last_service:'lastService',part_no:'partNo',hsn_code:'hsnCode',purchase_price:'purchasePrice',selling_price:'sellingPrice',min_qty:'minQty',job_card_id:'jobCardId',vehicle_reg:'vehicleReg',technician_name:'technicianName',estimated_delivery:'estimatedDelivery',gst_total:'gstTot',cgst_total:'cgstTot',sgst_total:'sgstTot',grand_total:'grand',logo_url:'logoUrl',customer_phone:'customerPhone',customer_address:'customerAddress',customer_gstin:'customerGstin',customer_email:'customerEmail',vehicle_details:'vehicleDetails',vin_no:'vinNo',vehicle_color:'vehicleColor',vehicle_fuel:'vehicleFuel',additional_discount:'additionalDiscount',payment_status:'paymentStatus',payment_method:'paymentMethod',amount_paid:'amountPaid',due_date:'dueDate',terms_conditions:'termsConditions',inv_serial:'invSerial',gst_type:'gstType',created_at:'createdAt',updated_at:'updatedAt'}
+const S2C = {shop_name:'shopName',bank_name:'bankName',account_no:'accountNo',bank_branch:'bankBranch',upi_id:'upiId',labor_rate:'laborRate',invoice_prefix:'invoicePrefix',invoice_terms:'invoiceTerms',company_name:'companyName',customer_name:'customerName',customer_id:'customerId',vehicle_id:'vehicleId',reg_no:'regNo',engine_no:'engineNo',fuel_type:'fuelType',insurance_expiry:'insuranceExpiry',last_service:'lastService',part_no:'partNo',hsn_code:'hsnCode',purchase_price:'purchasePrice',selling_price:'sellingPrice',min_qty:'minQty',vehicle_make:'vehicleMake',vehicle_model:'vehicleModel',job_card_id:'jobCardId',vehicle_reg:'vehicleReg',technician_name:'technicianName',estimated_delivery:'estimatedDelivery',gst_total:'gstTot',cgst_total:'cgstTot',sgst_total:'sgstTot',grand_total:'grand',logo_url:'logoUrl',customer_phone:'customerPhone',customer_address:'customerAddress',customer_gstin:'customerGstin',customer_email:'customerEmail',vehicle_details:'vehicleDetails',vin_no:'vinNo',vehicle_color:'vehicleColor',vehicle_fuel:'vehicleFuel',additional_discount:'additionalDiscount',payment_status:'paymentStatus',payment_method:'paymentMethod',amount_paid:'amountPaid',due_date:'dueDate',terms_conditions:'termsConditions',inv_serial:'invSerial',gst_type:'gstType',created_at:'createdAt',updated_at:'updatedAt'}
 const C2S = Object.fromEntries(Object.entries(S2C).map(([k,v])=>[v,k]))
 C2S.gstTot='gst_total'; C2S.cgstTot='cgst_total'; C2S.sgstTot='sgst_total'; C2S.grand='grand_total'; C2S.subtotal='subtotal'
 
@@ -837,7 +837,7 @@ function Vehicles({data,db}){
 function Inventory({data,db}){
   const[show,setShow]=useState(false);const[ed,setEd]=useState(null);const[q,setQ]=useState('');const[cat,setCat]=useState('');const[usage,setUsage]=useState(null)
   const[aiLoading,setAiLoading]=useState(false);const pdfRef=useRef(null)
-  const blank={name:'',partNo:'',hsnCode:'',gst:18,purchasePrice:'',sellingPrice:'',qty:0,minQty:2,unit:'nos',category:'spare',rack:'',notes:''}
+  const blank={name:'',partNo:'',hsnCode:'',gst:18,purchasePrice:'',sellingPrice:'',qty:0,minQty:2,unit:'nos',category:'spare',rack:'',vehicleMake:'',vehicleModel:'',notes:''}
   const[form,setForm]=useState(blank);const f=(k,v)=>setForm(p=>({...p,[k]:v}))
   async function importFromPDF(file){
     setAiLoading(true)
@@ -848,7 +848,7 @@ function Inventory({data,db}){
           model:'claude-haiku-4-5-20251001',max_tokens:2000,
           messages:[{role:'user',content:[
             {type:'document',source:{type:'base64',media_type:'application/pdf',data:base64}},
-            {type:'text',text:`Extract all line items from this purchase/inventory invoice. Return ONLY a JSON array, no explanation:\n[{"name":"","partNo":"","hsnCode":"","gst":18,"qty":1,"unit":"nos","category":"spare","sellingPrice":0,"purchasePrice":0}]\nRules:\n- sellingPrice = taxable value PER UNIT (before GST). If total taxable for a line is given, divide by qty.\n- purchasePrice = total amount PER UNIT (taxable + GST). If total is given, divide by qty.\n- category must be one of: spare,consumable,accessory,lubricant,tyre,electrical,body,other\n- unit must be one of: nos,litre,set,pair,kg,ml,mtr,box`}
+            {type:'text',text:`Extract all line items from this purchase/inventory invoice. Return ONLY a JSON array, no explanation:\n[{"name":"","partNo":"","hsnCode":"","gst":18,"qty":1,"unit":"nos","category":"spare","vehicleMake":"","vehicleModel":"","sellingPrice":0,"purchasePrice":0}]\nRules:\n- sellingPrice = taxable value PER UNIT (before GST). If total taxable for a line is given, divide by qty.\n- purchasePrice = total amount PER UNIT (taxable + GST). If total is given, divide by qty.\n- vehicleMake = car brand this part fits (e.g. "Maruti Suzuki", "Hyundai"), empty string if universal\n- vehicleModel = car model this part fits (e.g. "Swift", "i20"), empty string if universal or multi-model\n- category must be one of: spare,consumable,accessory,lubricant,tyre,electrical,body,other\n- unit must be one of: nos,litre,set,pair,kg,ml,mtr,box`}
           ]}]
         }
       })
@@ -862,10 +862,10 @@ function Inventory({data,db}){
         if(!it.name?.trim()) continue
         const existing=data.parts.find(p=>p.name.toLowerCase().trim()===it.name.toLowerCase().trim())
         if(existing){
-          await db.savePart({...existing,qty:(+existing.qty||0)+(n0(it.qty)||1),sellingPrice:n0(it.sellingPrice)||+existing.sellingPrice||0,purchasePrice:n0(it.purchasePrice)||+existing.purchasePrice||0,partNo:it.partNo||existing.partNo||'',hsnCode:it.hsnCode||existing.hsnCode||'',gst:n0(it.gst)||+existing.gst||18})
+          await db.savePart({...existing,qty:(+existing.qty||0)+(n0(it.qty)||1),sellingPrice:n0(it.sellingPrice)||+existing.sellingPrice||0,purchasePrice:n0(it.purchasePrice)||+existing.purchasePrice||0,partNo:it.partNo||existing.partNo||'',hsnCode:it.hsnCode||existing.hsnCode||'',gst:n0(it.gst)||+existing.gst||18,vehicleMake:it.vehicleMake||existing.vehicleMake||'',vehicleModel:it.vehicleModel||existing.vehicleModel||''})
           updated++
         }else{
-          await db.savePart({name:it.name.trim(),partNo:it.partNo||'',hsnCode:it.hsnCode||'',gst:n0(it.gst)||18,qty:n0(it.qty)||0,minQty:2,unit:it.unit||'nos',category:it.category||'spare',rack:'',notes:'',sellingPrice:n0(it.sellingPrice),purchasePrice:n0(it.purchasePrice)})
+          await db.savePart({name:it.name.trim(),partNo:it.partNo||'',hsnCode:it.hsnCode||'',gst:n0(it.gst)||18,qty:n0(it.qty)||0,minQty:2,unit:it.unit||'nos',category:it.category||'spare',rack:'',vehicleMake:it.vehicleMake||'',vehicleModel:it.vehicleModel||'',notes:'',sellingPrice:n0(it.sellingPrice),purchasePrice:n0(it.purchasePrice)})
           created++
         }
       }
@@ -903,10 +903,11 @@ function Inventory({data,db}){
     </div>
     {low>0&&<div style={{background:'#fff3e0',border:'1px solid #ffb74d',borderRadius:8,padding:'9px 16px',marginBottom:14,fontSize:12,color:'#e65100'}}>⚠ <b>{low} part{low>1?'s':''}</b> at or below minimum stock level.</div>}
     <div style={{overflowX:'auto'}}>
-      <table style={{minWidth:860}}><thead><tr>{['Part Name','Part No.','Category','HSN Code','GST','Sell Price','Buy Price','Stock','Min','Actions'].map(h=><th key={h} style={TH}>{h}</th>)}</tr></thead>
+      <table style={{minWidth:960}}><thead><tr>{['Part Name','Part No.','Make / Model','Category','HSN Code','GST','Sell Price','Buy Price','Stock','Min','Actions'].map(h=><th key={h} style={TH}>{h}</th>)}</tr></thead>
       <tbody>{list.map(p=><tr key={p.id} style={{background:(+p.qty||0)<=(+p.minQty||2)?'#fff8e1':'#fff'}}>
         <td style={{...TD,fontWeight:700}}>{p.name}</td>
         <td style={{...TD,fontFamily:'monospace',fontSize:10,color:'#888'}}>{p.partNo||'—'}</td>
+        <td style={{...TD,fontSize:11,color:'#555'}}>{[p.vehicleMake,p.vehicleModel].filter(Boolean).join(' ')||'—'}</td>
         <td style={TD}><Bdg s={p.category||'spare'}/></td>
         <td style={{...TD,fontFamily:'monospace',fontSize:10}}>{p.hsnCode}</td>
         <td style={TD}>{p.gst}%</td>
@@ -966,6 +967,8 @@ function Inventory({data,db}){
         <F label="Current Stock" half><In type="number" value={form.qty||0} onChange={e=>f('qty',+e.target.value)}/></F>
         <F label="Min Stock Alert" half><In type="number" value={form.minQty||2} onChange={e=>f('minQty',+e.target.value)}/></F>
         <F label="Rack / Location" half><In value={form.rack||''} onChange={e=>f('rack',e.target.value)} placeholder="e.g. A3-Row2"/></F>
+        <F label="Compatible Make" half><In value={form.vehicleMake||''} onChange={e=>f('vehicleMake',e.target.value)} placeholder="e.g. Maruti Suzuki, Hyundai"/></F>
+        <F label="Compatible Model" half><In value={form.vehicleModel||''} onChange={e=>f('vehicleModel',e.target.value)} placeholder="e.g. Swift, i20 (all if blank)"/></F>
         <F label="Notes"><Tx value={form.notes||''} onChange={e=>f('notes',e.target.value)} style={{minHeight:48}}/></F>
       </FR>
       <Btns onCancel={()=>setShow(false)} onSave={doSave} label={ed?'Update Part':'Save Part'}/>

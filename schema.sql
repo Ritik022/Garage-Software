@@ -74,6 +74,8 @@ CREATE TABLE IF NOT EXISTS parts (
   unit           TEXT DEFAULT 'nos',
   category       TEXT DEFAULT 'spare',
   rack           TEXT DEFAULT '',
+  vehicle_make   TEXT DEFAULT '',
+  vehicle_model  TEXT DEFAULT '',
   notes          TEXT DEFAULT '',
   created_at     TIMESTAMPTZ DEFAULT NOW(),
   updated_at     TIMESTAMPTZ DEFAULT NOW()
@@ -175,6 +177,8 @@ ALTER TABLE invoices ADD COLUMN IF NOT EXISTS sgst_total NUMERIC(10,2) DEFAULT 0
 ALTER TABLE settings ADD COLUMN IF NOT EXISTS logo_url TEXT DEFAULT '';
 ALTER TABLE invoices ADD COLUMN IF NOT EXISTS inv_serial INTEGER DEFAULT NULL;
 ALTER TABLE invoices ADD COLUMN IF NOT EXISTS gst_type TEXT DEFAULT 'cgst_sgst';
+ALTER TABLE parts ADD COLUMN IF NOT EXISTS vehicle_make TEXT DEFAULT '';
+ALTER TABLE parts ADD COLUMN IF NOT EXISTS vehicle_model TEXT DEFAULT '';
 
 -- Done!
 
