@@ -213,7 +213,9 @@ function useDB(){
     const delta={}
     const acc=(it,sign)=>{if(it.isService||!it.name)return;const k=it.partId?'id:'+it.partId:'n:'+it.name;if(!delta[k])delta[k]={partId:it.partId||null,name:it.name,qty:0};delta[k].qty+=sign*(+it.qty||0)}
     ;(oldItems||[]).forEach(it=>acc(it,-1));(newItems||[]).forEach(it=>acc(it,+1))
-    for(const{partId,name,qty}of Object.values(delta)){
+    const _dv=Object.values(delta)
+    for(let _i=0;_i<_dv.length;_i++){
+      const{partId,name,qty}=_dv[_i]
       if(!qty)continue
       const q=partId?sb.from('parts').select('id,qty').eq('id',partId):sb.from('parts').select('id,qty').eq('name',name).limit(1)
       const{data:found}=await q
@@ -866,8 +868,9 @@ function Inventory({data,db}){
       const json=JSON.parse(text.match(/\[[\s\S]*\]/)[0])
       const n0=v=>v===''||v==null?0:+v
       let created=0,updated=0
-      for(const it of json){
-        if(!it.name?.trim()) continue
+      for(let _j=0;_j<json.length;_j++){
+        const it=json[_j]
+        if(!it.name||!it.name.trim()) continue
         const existing=data.parts.find(p=>p.name.toLowerCase().trim()===it.name.toLowerCase().trim())
         if(existing){
           await db.savePart({...existing,qty:(+existing.qty||0)+(n0(it.qty)||1),sellingPrice:n0(it.sellingPrice)||+existing.sellingPrice||0,purchasePrice:n0(it.purchasePrice)||+existing.purchasePrice||0,partNo:it.partNo||existing.partNo||'',hsnCode:it.hsnCode||existing.hsnCode||'',gst:n0(it.gst)||+existing.gst||18,vehicleMake:it.vehicleMake||existing.vehicleMake||'',vehicleModel:it.vehicleModel||existing.vehicleModel||''})
