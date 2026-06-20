@@ -412,10 +412,18 @@ function PrintDoc({inv,settings,onClose}){
     const el=document.getElementById('pd'); if(!el) return
     const clone=el.cloneNode(true)
     clone.querySelectorAll('style,script').forEach(s=>s.remove())
-    const w=window.open('','_blank')
-    w.document.write(`<!DOCTYPE html><html><head><meta charset="utf-8"><title>Invoice</title><style>*{box-sizing:border-box;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}body{margin:0;padding:0;font-family:Helvetica,Arial,sans-serif;font-size:10px;color:#111}@page{size:A4;margin:8mm}img{max-width:100%}table{border-collapse:collapse}</style></head><body>${clone.innerHTML}</body></html>`)
-    w.document.close()
-    setTimeout(()=>{w.focus();w.print()},400)
+    clone.id='pd-print'
+    const sty=document.createElement('style')
+    sty.textContent='@media print{body>*:not(#pd-print){display:none!important}#pd-print{display:block;margin:0;padding:0}*{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}}@page{size:A4;margin:8mm}'
+    document.head.appendChild(sty)
+    document.body.appendChild(clone)
+    const cleanup=()=>{
+      if(document.body.contains(clone))document.body.removeChild(clone)
+      if(document.head.contains(sty))document.head.removeChild(sty)
+      window.removeEventListener('afterprint',cleanup)
+    }
+    window.addEventListener('afterprint',cleanup)
+    window.print()
   }
   return <div style={{fontFamily:F,fontSize:10,color:'#111',background:'#fff',maxWidth:840,margin:'0 auto'}}>
     <div id="pd">
