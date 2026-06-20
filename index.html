@@ -7,7 +7,7 @@
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔧</text></svg>"/>
 <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
 <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone@7.21.4/babel.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -62,8 +62,8 @@ const S2C = {shop_name:'shopName',bank_name:'bankName',account_no:'accountNo',ba
 const C2S = Object.fromEntries(Object.entries(S2C).map(([k,v])=>[v,k]))
 C2S.gstTot='gst_total'; C2S.cgstTot='cgst_total'; C2S.sgstTot='sgst_total'; C2S.grand='grand_total'; C2S.subtotal='subtotal'
 
-const toCamel = obj => { const r={}; for(const[k,v] of Object.entries(obj)) r[S2C[k]||k]=v; return r }
-const toSnake = obj => { const r={}; for(const[k,v] of Object.entries(obj)) r[C2S[k]||k]=v===''?null:v; return r }
+const toCamel = obj => { const r={}; Object.entries(obj).forEach(function(e){r[S2C[e[0]]||e[0]]=e[1]}); return r }
+const toSnake = obj => { const r={}; Object.entries(obj).forEach(function(e){r[C2S[e[0]]||e[0]]=e[1]===''?null:e[1]}); return r }
 
 /* ─── HELPERS ───────────────────────────────────────── */
 const fmt = n => '₹'+Number(n||0).toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2})
