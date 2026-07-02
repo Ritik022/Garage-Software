@@ -20,7 +20,7 @@ table{border-collapse:collapse;width:100%}
 ::-webkit-scrollbar{width:5px;height:5px}::-webkit-scrollbar-thumb{background:#c8d0da;border-radius:3px}
 @keyframes spin{to{transform:rotate(360deg)}}
 @keyframes fadein{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
-@media print{.np{display:none!important}body{background:#fff}}
+@media print{.np{display:none!important}body{background:#fff}body.printing>*:not(#pd-print){display:none!important}#pd-print{display:block!important;margin:0;padding:0}*{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}}@page{size:A4;margin:8mm}
 </style>
 </head>
 <body><div id="root"></div>
@@ -411,17 +411,15 @@ function PrintDoc({inv,settings,onClose}){
   const isIGST=inv.gstType==='igst'
   const igstH=uRate!=null?`IGST (${uRate}%)`:'IGST'
   function doPrint(){
-    const el=document.getElementById('pd'); if(!el) return
+    const el=document.getElementById('pd');if(!el)return
     const clone=el.cloneNode(true)
-    clone.querySelectorAll('style,script').forEach(s=>s.remove())
+    clone.querySelectorAll('style,script').forEach(function(s){s.remove()})
     clone.id='pd-print'
-    const sty=document.createElement('style')
-    sty.textContent='@media print{body>*:not(#pd-print){display:none!important}#pd-print{display:block;margin:0;padding:0}*{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}}@page{size:A4;margin:8mm}'
-    document.head.appendChild(sty)
     document.body.appendChild(clone)
-    const cleanup=()=>{
+    document.body.classList.add('printing')
+    function cleanup(){
+      document.body.classList.remove('printing')
       if(document.body.contains(clone))document.body.removeChild(clone)
-      if(document.head.contains(sty))document.head.removeChild(sty)
       window.removeEventListener('afterprint',cleanup)
     }
     window.addEventListener('afterprint',cleanup)
