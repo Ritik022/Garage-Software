@@ -318,7 +318,7 @@ const TH={padding:'9px 10px',textAlign:'left',fontWeight:700,fontSize:11,borderB
 const TD={padding:'8px 10px',fontSize:12,borderBottom:'1px solid #f0f4f8',verticalAlign:'middle'}
 
 function Modal({title,onClose,wide,children}){
-  return <div style={{position:'fixed',inset:0,background:'rgba(0,0,0,.55)',zIndex:999,display:'flex',alignItems:'flex-start',justifyContent:'center',overflowY:'auto',padding:'20px 10px'}}>
+  return <div className="np" style={{position:'fixed',inset:0,background:'rgba(0,0,0,.55)',zIndex:999,display:'flex',alignItems:'flex-start',justifyContent:'center',overflowY:'auto',padding:'20px 10px'}}>
     <div style={{background:'#fff',borderRadius:12,width:wide?940:620,maxWidth:'99vw',boxShadow:'0 24px 64px rgba(0,0,0,.28)',animation:'fadein .2s ease',display:'flex',flexDirection:'column',maxHeight:'92vh'}}>
       <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'14px 20px',borderBottom:'1px solid #e8ecf0',flexShrink:0}}>
         <strong style={{fontSize:15}}>{title}</strong>
