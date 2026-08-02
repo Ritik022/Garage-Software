@@ -1065,7 +1065,7 @@ function JobCards({data,db,setTab}){
 function Invoices({data,db}){
   const[sub,setSub]=useState('all')
   const[showNew,setShowNew]=useState(false);const[editI,setEditI]=useState(null);const[printI,setPrintI]=useState(null)
-  const[q,setQ]=useState('');const[fType,setFType]=useState('all');const[fStatus,setFStatus]=useState('all')
+  const[q,setQ]=useState('');const[fType,setFType]=useState('all');const[fStatus,setFStatus]=useState('all');const[sort,setSort]=useState('serial-asc')
   const TABS=[{k:'all',l:'All Invoices'},{k:'estimate',l:'Estimates'},{k:'invoice',l:'Tax Invoices'},{k:'final-invoice',l:'Final Invoices'}]
   const pC={paid:'#e8f5e9|#1b5e20',partial:'#fff3e0|#bf360c',pending:'#fff8e1|#f57f17',cancelled:'#fce4ec|#880e4f'}
   const docInfo=i=>{
@@ -1082,6 +1082,15 @@ function Invoices({data,db}){
   const list=sub==='all'
     ?data.invoices.filter(i=>matches(i)&&(fType==='all'||i.type===fType)&&(fStatus==='all'||i.paymentStatus===fStatus))
     :data.invoices.filter(i=>i.type===sub&&matches(i))
+  const sortedList=[...list].sort(function(a,b){
+    var va,vb
+    if(sort==='serial-asc'||sort==='serial-desc'){va=(+a.invSerial||+a.id||0);vb=(+b.invSerial||+b.id||0)}
+    else if(sort==='date-asc'||sort==='date-desc'){va=a.date||'';vb=b.date||''}
+    else if(sort==='amount-asc'||sort==='amount-desc'){va=+a.grand||0;vb=+b.grand||0}
+    else{va=(a.customerName||'').toLowerCase();vb=(b.customerName||'').toLowerCase()}
+    var dir=(sort.endsWith('desc'))?-1:1
+    return va<vb?-dir:va>vb?dir:0
+  })
   const active=list.filter(i=>i.paymentStatus!=='cancelled')
   const total=active.reduce((s,i)=>s+(+i.grand||0),0)
   const collected=active.filter(i=>i.paymentStatus==='paid').reduce((s,i)=>s+(+i.grand||0),0)
@@ -1100,23 +1109,33 @@ function Invoices({data,db}){
     <div style={{display:'flex',gap:2,marginBottom:14,background:'#f0f4f8',borderRadius:8,padding:3,width:'fit-content',flexWrap:'wrap'}}>
       {TABS.map(t=><button key={t.k} onClick={()=>{setSub(t.k);setFType('all');setFStatus('all')}} style={{padding:'7px 16px',border:'none',borderRadius:6,cursor:'pointer',background:sub===t.k?'#1565c0':'transparent',color:sub===t.k?'#fff':'#555',fontWeight:sub===t.k?800:500,fontSize:12}}>{t.l} <span style={{fontSize:10,opacity:.7}}>({tabCount(t.k)})</span></button>)}
     </div>
-    {sub==='all'&&<div style={{display:'flex',gap:8,marginBottom:14,flexWrap:'wrap',alignItems:'center'}}>
-      <span style={{fontSize:12,color:'#666',fontWeight:600}}>Filter:</span>
-      <select value={fType} onChange={e=>setFType(e.target.value)} style={{...IS,width:'auto',fontSize:12,padding:'5px 8px'}}>
+    <div style={{display:'flex',gap:8,marginBottom:14,flexWrap:'wrap',alignItems:'center'}}>
+      {sub==='all'&&<span style={{fontSize:12,color:'#666',fontWeight:600}}>Filter:</span>}
+      {sub==='all'&&<select value={fType} onChange={e=>setFType(e.target.value)} style={{...IS,width:'auto',fontSize:12,padding:'5px 8px'}}>
         <option value="all">All Types</option>
         <option value="estimate">Estimate</option>
         <option value="invoice">Tax Invoice</option>
         <option value="final-invoice">Final Invoice</option>
-      </select>
-      <select value={fStatus} onChange={e=>setFStatus(e.target.value)} style={{...IS,width:'auto',fontSize:12,padding:'5px 8px'}}>
+      </select>}
+      {sub==='all'&&<select value={fStatus} onChange={e=>setFStatus(e.target.value)} style={{...IS,width:'auto',fontSize:12,padding:'5px 8px'}}>
         <option value="all">All Statuses</option>
         <option value="pending">Pending</option>
         <option value="partial">Partial</option>
         <option value="paid">Paid</option>
         <option value="cancelled">Cancelled</option>
+      </select>}
+      {sub==='all'&&(fType!=='all'||fStatus!=='all')&&<button onClick={()=>{setFType('all');setFStatus('all')}} style={{fontSize:11,color:'#c62828',background:'none',border:'1px solid #ffcdd2',borderRadius:5,padding:'4px 8px',cursor:'pointer'}}>✕ Clear</button>}
+      <span style={{fontSize:12,color:'#666',fontWeight:600,marginLeft:sub==='all'?8:0}}>Sort:</span>
+      <select value={sort} onChange={e=>setSort(e.target.value)} style={{...IS,width:'auto',fontSize:12,padding:'5px 8px'}}>
+        <option value="serial-asc">Invoice # ↑ (oldest first)</option>
+        <option value="serial-desc">Invoice # ↓ (newest first)</option>
+        <option value="date-desc">Date: Newest first</option>
+        <option value="date-asc">Date: Oldest first</option>
+        <option value="amount-desc">Amount: High to Low</option>
+        <option value="amount-asc">Amount: Low to High</option>
+        <option value="customer-asc">Customer: A → Z</option>
       </select>
-      {(fType!=='all'||fStatus!=='all')&&<button onClick={()=>{setFType('all');setFStatus('all')}} style={{fontSize:11,color:'#c62828',background:'none',border:'1px solid #ffcdd2',borderRadius:5,padding:'4px 8px',cursor:'pointer'}}>✕ Clear</button>}
-    </div>}
+    </div>
     {list.length>0&&<div style={{display:'flex',gap:10,marginBottom:14,flexWrap:'wrap'}}>
       {[['Active Billed',total,'#dbeafe','#1e40af'],['Collected',collected,'#dcfce7','#166534'],['Outstanding',total-collected,'#fef3c7','#92400e']].map(([l,v,bg,fg])=><div key={l} style={{background:bg,borderRadius:8,padding:'7px 16px',fontSize:12}}><span style={{color:'#888'}}>{l}: </span><b style={{color:fg,fontSize:13}}>{fmt(v)}</b></div>)}
       {list.filter(i=>i.paymentStatus==='cancelled').length>0&&<div style={{background:'#fce4ec',borderRadius:8,padding:'7px 16px',fontSize:12}}><span style={{color:'#888'}}>Cancelled: </span><b style={{color:'#880e4f',fontSize:13}}>{list.filter(i=>i.paymentStatus==='cancelled').length}</b></div>}
@@ -1125,8 +1144,9 @@ function Invoices({data,db}){
     <table style={{minWidth:sub==='all'?880:740}}><thead><tr>
       {['#','Customer','Vehicle','Date','Amount','Payment','Method',sub==='all'?'Doc Type':null,'Actions'].filter(Boolean).map(h=><th key={h} style={TH}>{h}</th>)}
     </tr></thead>
-    <tbody>{list.map(inv=>{
+    <tbody>{sortedList.map(inv=>{
       const cancelled=inv.paymentStatus==='cancelled'
+      const paid=inv.paymentStatus==='paid'
       const[pbg,pfg]=(pC[inv.paymentStatus]||'#f5f5f5|#777').split('|')
       const di=docInfo(inv)
       return <tr key={inv.id} style={cancelled?{opacity:.65,background:'#fff5f5'}:{}}>
@@ -1143,8 +1163,8 @@ function Invoices({data,db}){
         {sub==='all'&&<td style={TD}><span style={{fontSize:11,fontWeight:700,color:di.fg,background:di.bg,padding:'3px 8px',borderRadius:4,whiteSpace:'nowrap'}}>{di.label}</span></td>}
         <td style={TD}><div style={{display:'flex',gap:4,flexWrap:'wrap'}}>
           <button onClick={()=>setPrintI(inv)} style={{padding:'4px 10px',background:'#1565c0',color:'#fff',border:'none',borderRadius:5,cursor:'pointer',fontSize:11,fontWeight:700}}>🖨</button>
-          {!cancelled&&<button onClick={()=>setEditI(inv)} style={{padding:'3px 8px',border:'1px solid #d0d7de',borderRadius:5,cursor:'pointer',fontSize:11}}>✏</button>}
-          {!cancelled&&<button onClick={()=>doCancel(inv)} title="Cancel invoice" style={{padding:'3px 8px',border:'1px solid #ffcdd2',borderRadius:5,cursor:'pointer',fontSize:11,color:'#c62828'}}>⊘</button>}
+          {!cancelled&&!paid&&<button onClick={()=>setEditI(inv)} style={{padding:'3px 8px',border:'1px solid #d0d7de',borderRadius:5,cursor:'pointer',fontSize:11}}>✏</button>}
+          {!cancelled&&!paid&&<button onClick={()=>doCancel(inv)} title="Cancel invoice" style={{padding:'3px 8px',border:'1px solid #ffcdd2',borderRadius:5,cursor:'pointer',fontSize:11,color:'#c62828'}}>⊘</button>}
         </div></td>
       </tr>
     })}</tbody></table>
