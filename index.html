@@ -292,11 +292,9 @@ function useDB(){
     const{data:d,error:e}=await sb.from('invoices').update({payment_status:ps}).eq('id',id).select().single(); if(e)throw e
     const r=toCamel(d); setD(p=>({...p,invoices:p.invoices.map(i=>i.id===id?r:i)}))
   }),[])
-  const delInvoice=useCallback(async id=>op(async()=>{
-    const{data:old}=await sb.from('invoices').select('items').eq('id',id).single()
-    const{error:e}=await sb.from('invoices').delete().eq('id',id); if(e)throw e
-    setD(p=>({...p,invoices:p.invoices.filter(i=>i.id!==id)}))
-    await adjParts(old?.items||[],[])
+  const cancelInvoice=useCallback(async id=>op(async()=>{
+    const{data:d,error:e}=await sb.from('invoices').update({payment_status:'cancelled'}).eq('id',id).select().single(); if(e)throw e
+    const r=toCamel(d); setD(p=>({...p,invoices:p.invoices.map(i=>i.id===id?r:i)}))
   }),[])
 
   // ── Settings
@@ -306,7 +304,7 @@ function useDB(){
     const r=toCamel(d); setD(p=>({...p,settings:r})); return r
   }),[])
 
-  return{D,ready,busy,err,reload:load,saveCustomer,delCustomer,saveVehicle,delVehicle,savePart,delPart,saveJob,delJob,saveInvoice,markPay,delInvoice,saveSettings}
+  return{D,ready,busy,err,reload:load,saveCustomer,delCustomer,saveVehicle,delVehicle,savePart,delPart,saveJob,delJob,saveInvoice,markPay,cancelInvoice,saveSettings}
 }
 
 /* ─── UI PRIMITIVES ─────────────────────────────────── */
@@ -1065,47 +1063,95 @@ function JobCards({data,db,setTab}){
 
 /* ─── INVOICES ──────────────────────────────────────── */
 function Invoices({data,db}){
-  const[sub,setSub]=useState('invoice');const[showNew,setShowNew]=useState(false);const[editI,setEditI]=useState(null);const[printI,setPrintI]=useState(null);const[q,setQ]=useState('')
-  const TABS=[{k:'estimate',l:'Estimates'},{k:'invoice',l:'Invoices'},{k:'final-invoice',l:'Final Invoices'}]
-  const pre=sub==='estimate'?'EST':sub==='final-invoice'?'FINV':'INV'
-  const list=data.invoices.filter(i=>i.type===sub&&(!q||i.customerName?.toLowerCase().includes(q.toLowerCase())||i.vehicleReg?.toLowerCase().includes(q.toLowerCase())||String(i.id).includes(q)))
-  const total=list.reduce((s,i)=>s+(+i.grand||0),0)
-  const paid=list.filter(i=>i.paymentStatus==='paid').reduce((s,i)=>s+(+i.grand||0),0)
-  const partP=list.filter(i=>i.paymentStatus==='partial').reduce((s,i)=>s+(+i.amountPaid||0),0)
-  const pC={paid:'#e8f5e9|#1b5e20',partial:'#fff3e0|#bf360c',pending:'#fff8e1|#f57f17'}
+  const[sub,setSub]=useState('all')
+  const[showNew,setShowNew]=useState(false);const[editI,setEditI]=useState(null);const[printI,setPrintI]=useState(null)
+  const[q,setQ]=useState('');const[fType,setFType]=useState('all');const[fStatus,setFStatus]=useState('all')
+  const TABS=[{k:'all',l:'All Invoices'},{k:'estimate',l:'Estimates'},{k:'invoice',l:'Tax Invoices'},{k:'final-invoice',l:'Final Invoices'}]
+  const pC={paid:'#e8f5e9|#1b5e20',partial:'#fff3e0|#bf360c',pending:'#fff8e1|#f57f17',cancelled:'#fce4ec|#880e4f'}
+  const docInfo=i=>{
+    if(i.paymentStatus==='cancelled') return {label:'Cancelled',bg:'#fce4ec',fg:'#880e4f'}
+    if(i.type==='estimate') return {label:'Estimate',bg:'#e3f2fd',fg:'#0d47a1'}
+    if(i.type==='final-invoice') return {label:'Final Invoice',bg:'#ede7f6',fg:'#4527a0'}
+    return {label:'Tax Invoice',bg:'#e8f5e9',fg:'#1b5e20'}
+  }
+  const matches=i=>{
+    if(!q) return true
+    const ql=q.toLowerCase()
+    return (i.customerName||'').toLowerCase().includes(ql)||(i.vehicleReg||'').toLowerCase().includes(ql)||String(i.id).includes(q)||buildInvNo(data.settings||DEF,i).toLowerCase().includes(ql)
+  }
+  const list=sub==='all'
+    ?data.invoices.filter(i=>matches(i)&&(fType==='all'||i.type===fType)&&(fStatus==='all'||i.paymentStatus===fStatus))
+    :data.invoices.filter(i=>i.type===sub&&matches(i))
+  const active=list.filter(i=>i.paymentStatus!=='cancelled')
+  const total=active.reduce((s,i)=>s+(+i.grand||0),0)
+  const collected=active.filter(i=>i.paymentStatus==='paid').reduce((s,i)=>s+(+i.grand||0),0)
+    +active.filter(i=>i.paymentStatus==='partial').reduce((s,i)=>s+(+i.amountPaid||0),0)
+  async function doCancel(inv){
+    if(!confirm('Cancel invoice '+buildInvNo(data.settings||DEF,inv)+'? The invoice number will be preserved.')) return
+    await db.cancelInvoice(inv.id)
+  }
+  const tabCount=t=>t==='all'?data.invoices.length:data.invoices.filter(i=>i.type===t).length
   return <div>
     <div style={{display:'flex',alignItems:'center',gap:10,marginBottom:16,flexWrap:'wrap'}}>
       <h2 style={{fontSize:19,fontWeight:800,margin:0,flex:1}}>Billing &amp; Invoices</h2>
-      <input value={q} onChange={e=>setQ(e.target.value)} placeholder="Search…" style={{...IS,width:180}}/>
+      <input value={q} onChange={e=>setQ(e.target.value)} placeholder="Search customer / vehicle / #…" style={{...IS,width:200}}/>
       <PBtn onClick={()=>setShowNew(true)}>+ New Invoice / Estimate</PBtn>
     </div>
-    <div style={{display:'flex',gap:2,marginBottom:16,background:'#f0f4f8',borderRadius:8,padding:3,width:'fit-content'}}>
-      {TABS.map(t=><button key={t.k} onClick={()=>setSub(t.k)} style={{padding:'7px 18px',border:'none',borderRadius:6,cursor:'pointer',background:sub===t.k?'#1565c0':'transparent',color:sub===t.k?'#fff':'#555',fontWeight:sub===t.k?800:500,fontSize:12}}>{t.l} <span style={{fontSize:10,opacity:.7}}>({data.invoices.filter(i=>i.type===t.k).length})</span></button>)}
+    <div style={{display:'flex',gap:2,marginBottom:14,background:'#f0f4f8',borderRadius:8,padding:3,width:'fit-content',flexWrap:'wrap'}}>
+      {TABS.map(t=><button key={t.k} onClick={()=>{setSub(t.k);setFType('all');setFStatus('all')}} style={{padding:'7px 16px',border:'none',borderRadius:6,cursor:'pointer',background:sub===t.k?'#1565c0':'transparent',color:sub===t.k?'#fff':'#555',fontWeight:sub===t.k?800:500,fontSize:12}}>{t.l} <span style={{fontSize:10,opacity:.7}}>({tabCount(t.k)})</span></button>)}
     </div>
-    {list.length>0&&<div style={{display:'flex',gap:10,marginBottom:14,flexWrap:'wrap'}}>
-      {[['Total Billed',total,'#dbeafe','#1e40af'],['Collected',paid+partP,'#dcfce7','#166534'],['Outstanding',total-paid-partP,'#fef3c7','#92400e']].map(([l,v,bg,fg])=><div key={l} style={{background:bg,borderRadius:8,padding:'7px 16px',fontSize:12}}><span style={{color:'#888'}}>{l}: </span><b style={{color:fg,fontSize:13}}>{fmt(v)}</b></div>)}
+    {sub==='all'&&<div style={{display:'flex',gap:8,marginBottom:14,flexWrap:'wrap',alignItems:'center'}}>
+      <span style={{fontSize:12,color:'#666',fontWeight:600}}>Filter:</span>
+      <select value={fType} onChange={e=>setFType(e.target.value)} style={{...IS,width:'auto',fontSize:12,padding:'5px 8px'}}>
+        <option value="all">All Types</option>
+        <option value="estimate">Estimate</option>
+        <option value="invoice">Tax Invoice</option>
+        <option value="final-invoice">Final Invoice</option>
+      </select>
+      <select value={fStatus} onChange={e=>setFStatus(e.target.value)} style={{...IS,width:'auto',fontSize:12,padding:'5px 8px'}}>
+        <option value="all">All Statuses</option>
+        <option value="pending">Pending</option>
+        <option value="partial">Partial</option>
+        <option value="paid">Paid</option>
+        <option value="cancelled">Cancelled</option>
+      </select>
+      {(fType!=='all'||fStatus!=='all')&&<button onClick={()=>{setFType('all');setFStatus('all')}} style={{fontSize:11,color:'#c62828',background:'none',border:'1px solid #ffcdd2',borderRadius:5,padding:'4px 8px',cursor:'pointer'}}>✕ Clear</button>}
     </div>}
-    <table><thead><tr>{['#','Customer','Vehicle','Date','Amount','Payment','Method','Actions'].map(h=><th key={h} style={TH}>{h}</th>)}</tr></thead>
+    {list.length>0&&<div style={{display:'flex',gap:10,marginBottom:14,flexWrap:'wrap'}}>
+      {[['Active Billed',total,'#dbeafe','#1e40af'],['Collected',collected,'#dcfce7','#166534'],['Outstanding',total-collected,'#fef3c7','#92400e']].map(([l,v,bg,fg])=><div key={l} style={{background:bg,borderRadius:8,padding:'7px 16px',fontSize:12}}><span style={{color:'#888'}}>{l}: </span><b style={{color:fg,fontSize:13}}>{fmt(v)}</b></div>)}
+      {list.filter(i=>i.paymentStatus==='cancelled').length>0&&<div style={{background:'#fce4ec',borderRadius:8,padding:'7px 16px',fontSize:12}}><span style={{color:'#888'}}>Cancelled: </span><b style={{color:'#880e4f',fontSize:13}}>{list.filter(i=>i.paymentStatus==='cancelled').length}</b></div>}
+    </div>}
+    <div style={{overflowX:'auto'}}>
+    <table style={{minWidth:sub==='all'?880:740}}><thead><tr>
+      {['#','Customer','Vehicle','Date','Amount','Payment','Method',sub==='all'?'Doc Type':null,'Actions'].filter(Boolean).map(h=><th key={h} style={TH}>{h}</th>)}
+    </tr></thead>
     <tbody>{list.map(inv=>{
+      const cancelled=inv.paymentStatus==='cancelled'
       const[pbg,pfg]=(pC[inv.paymentStatus]||'#f5f5f5|#777').split('|')
-      return <tr key={inv.id}>
+      const di=docInfo(inv)
+      return <tr key={inv.id} style={cancelled?{opacity:.65,background:'#fff5f5'}:{}}>
         <td style={{...TD,color:'#1565c0',fontWeight:800}}>{buildInvNo(data.settings||DEF,inv)}</td>
         <td style={TD}>{inv.customerName}{inv.companyName&&<div style={{fontSize:10,color:'#888'}}>{inv.companyName}</div>}</td>
         <td style={{...TD,fontWeight:700}}>{inv.vehicleReg||'—'}</td>
         <td style={{...TD,color:'#6b7280'}}>{fmtD(inv.date)}</td>
         <td style={{...TD,fontWeight:800}}>{fmt(inv.grand)}</td>
-        <td style={TD}><select value={inv.paymentStatus||'pending'} onChange={e=>db.markPay(inv.id,e.target.value)} style={{padding:'4px 6px',border:'1px solid #d0d7de',borderRadius:5,fontSize:11,background:pbg,color:pfg,fontWeight:700,cursor:'pointer',width:'auto'}}><option value="pending">Pending</option><option value="partial">Partial</option><option value="paid">Paid</option></select></td>
+        <td style={TD}>{cancelled
+          ?<span style={{fontSize:11,fontWeight:700,color:'#880e4f',background:'#fce4ec',padding:'3px 8px',borderRadius:4}}>Cancelled</span>
+          :<select value={inv.paymentStatus||'pending'} onChange={e=>db.markPay(inv.id,e.target.value)} style={{padding:'4px 6px',border:'1px solid #d0d7de',borderRadius:5,fontSize:11,background:pbg,color:pfg,fontWeight:700,cursor:'pointer',width:'auto'}}><option value="pending">Pending</option><option value="partial">Partial</option><option value="paid">Paid</option></select>
+        }</td>
         <td style={{...TD,color:'#6b7280',fontSize:11}}>{inv.paymentMethod||'—'}</td>
-        <td style={TD}><div style={{display:'flex',gap:4}}>
-          <button onClick={()=>setPrintI(inv)} style={{padding:'4px 10px',background:'#1565c0',color:'#fff',border:'none',borderRadius:5,cursor:'pointer',fontSize:11,fontWeight:700}}>🖨 Print</button>
-          <button onClick={()=>setEditI(inv)} style={{padding:'3px 8px',border:'1px solid #d0d7de',borderRadius:5,cursor:'pointer',fontSize:11}}>✏</button>
-          <button onClick={async()=>{if(confirm('Delete?'))await db.delInvoice(inv.id)}} style={{padding:'3px 8px',border:'1px solid #ffcdd2',borderRadius:5,cursor:'pointer',fontSize:11,color:'#c62828'}}>🗑</button>
+        {sub==='all'&&<td style={TD}><span style={{fontSize:11,fontWeight:700,color:di.fg,background:di.bg,padding:'3px 8px',borderRadius:4,whiteSpace:'nowrap'}}>{di.label}</span></td>}
+        <td style={TD}><div style={{display:'flex',gap:4,flexWrap:'wrap'}}>
+          <button onClick={()=>setPrintI(inv)} style={{padding:'4px 10px',background:'#1565c0',color:'#fff',border:'none',borderRadius:5,cursor:'pointer',fontSize:11,fontWeight:700}}>🖨</button>
+          {!cancelled&&<button onClick={()=>setEditI(inv)} style={{padding:'3px 8px',border:'1px solid #d0d7de',borderRadius:5,cursor:'pointer',fontSize:11}}>✏</button>}
+          {!cancelled&&<button onClick={()=>doCancel(inv)} title="Cancel invoice" style={{padding:'3px 8px',border:'1px solid #ffcdd2',borderRadius:5,cursor:'pointer',fontSize:11,color:'#c62828'}}>⊘</button>}
         </div></td>
       </tr>
     })}</tbody></table>
-    {list.length===0&&<p style={{textAlign:'center',color:'#aaa',padding:36}}>No {TABS.find(t=>t.k===sub)?.l.toLowerCase()} yet. <button onClick={()=>setShowNew(true)} style={{color:'#1565c0',background:'none',border:'none',cursor:'pointer',textDecoration:'underline'}}>Create one →</button></p>}
+    </div>
+    {list.length===0&&<p style={{textAlign:'center',color:'#aaa',padding:36}}>No records found. {sub!=='all'&&<button onClick={()=>setShowNew(true)} style={{color:'#1565c0',background:'none',border:'none',cursor:'pointer',textDecoration:'underline'}}>Create one →</button>}</p>}
     {showNew&&<Modal title="New Invoice / Estimate" onClose={()=>setShowNew(false)} wide><InvEditor data={data} onSave={async f=>{await db.saveInvoice(f);setShowNew(false)}} onClose={()=>setShowNew(false)}/></Modal>}
-    {editI&&<Modal title={`Edit — ${buildInvNo(data.settings||DEF,editI)}`} onClose={()=>setEditI(null)} wide><InvEditor initial={editI} data={data} onSave={async f=>{await db.saveInvoice(f);setEditI(null)}} onClose={()=>setEditI(null)}/></Modal>}
+    {editI&&<Modal title={'Edit — '+buildInvNo(data.settings||DEF,editI)} onClose={()=>setEditI(null)} wide><InvEditor initial={editI} data={data} onSave={async f=>{await db.saveInvoice(f);setEditI(null)}} onClose={()=>setEditI(null)}/></Modal>}
     {printI&&<Modal title="Invoice Preview" onClose={()=>setPrintI(null)} wide><PrintDoc inv={printI} settings={data.D?.settings||data.settings} onClose={()=>setPrintI(null)}/></Modal>}
   </div>
 }
