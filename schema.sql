@@ -163,13 +163,28 @@ CREATE INDEX IF NOT EXISTS idx_inv_date ON invoices(date DESC);
 CREATE INDEX IF NOT EXISTS idx_inv_cust ON invoices(customer_id);
 CREATE INDEX IF NOT EXISTS idx_p_cat    ON parts(category);
 
--- Disable RLS (single-workshop app with anon key)
-ALTER TABLE settings  DISABLE ROW LEVEL SECURITY;
-ALTER TABLE customers DISABLE ROW LEVEL SECURITY;
-ALTER TABLE vehicles  DISABLE ROW LEVEL SECURITY;
-ALTER TABLE parts     DISABLE ROW LEVEL SECURITY;
-ALTER TABLE job_cards DISABLE ROW LEVEL SECURITY;
-ALTER TABLE invoices  DISABLE ROW LEVEL SECURITY;
+-- RLS: enabled on all tables; only authenticated users (logged-in admin) can access data.
+-- The anon key in index.html is intentionally public — RLS makes it harmless without a login.
+ALTER TABLE settings  ENABLE ROW LEVEL SECURITY;
+ALTER TABLE customers ENABLE ROW LEVEL SECURITY;
+ALTER TABLE vehicles  ENABLE ROW LEVEL SECURITY;
+ALTER TABLE parts     ENABLE ROW LEVEL SECURITY;
+ALTER TABLE job_cards ENABLE ROW LEVEL SECURITY;
+ALTER TABLE invoices  ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "auth_all" ON settings;
+DROP POLICY IF EXISTS "auth_all" ON customers;
+DROP POLICY IF EXISTS "auth_all" ON vehicles;
+DROP POLICY IF EXISTS "auth_all" ON parts;
+DROP POLICY IF EXISTS "auth_all" ON job_cards;
+DROP POLICY IF EXISTS "auth_all" ON invoices;
+
+CREATE POLICY "auth_all" ON settings  FOR ALL TO authenticated USING (true) WITH CHECK (true);
+CREATE POLICY "auth_all" ON customers FOR ALL TO authenticated USING (true) WITH CHECK (true);
+CREATE POLICY "auth_all" ON vehicles  FOR ALL TO authenticated USING (true) WITH CHECK (true);
+CREATE POLICY "auth_all" ON parts     FOR ALL TO authenticated USING (true) WITH CHECK (true);
+CREATE POLICY "auth_all" ON job_cards FOR ALL TO authenticated USING (true) WITH CHECK (true);
+CREATE POLICY "auth_all" ON invoices  FOR ALL TO authenticated USING (true) WITH CHECK (true);
 
 -- ── Migrations: run these if you applied schema before these updates ──
 ALTER TABLE invoices ADD COLUMN IF NOT EXISTS cgst_total NUMERIC(10,2) DEFAULT 0;
