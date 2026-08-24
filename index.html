@@ -340,6 +340,11 @@ const SC=({label,val,em,col})=><div style={{background:'#fff',border:'1px solid 
 function LineEd({items,setItems,parts,gstType}){
   const add=svc=>setItems(p=>[...p,{id:Date.now()+Math.random(),name:'',qty:1,rate:0,gst:18,discount:0,hsnSac:'',isService:svc}])
   const upd=(id,k,v)=>setItems(p=>p.map(x=>x.id===id?{...x,[k]:v}:x))
+  const updTot=(id,tot)=>setItems(p=>p.map(x=>{
+    if(x.id!==id)return x
+    const f=(+x.qty||0)*(1-(+x.discount||0)/100)*(1+(+x.gst||0)/100)
+    return f?{...x,rate:Math.round(tot/f*100)/100}:x
+  }))
   function fill(id,name){
     const p2=parts.find(p=>p.name===name)
     if(p2){setItems(pr=>pr.map(x=>x.id===id?{...x,name,partId:p2.id,rate:+p2.sellingPrice||0,gst:+p2.gst||18,hsnSac:p2.hsnCode||''}:x));return}
@@ -358,7 +363,7 @@ function LineEd({items,setItems,parts,gstType}){
     </div>
     {items.length>0&&<div style={{overflowX:'auto',marginBottom:8}}>
       <table style={{minWidth:740,borderCollapse:'collapse',width:'100%'}}>
-        <thead><tr>{['#','Description','HSN/SAC','Qty','Rate (₹)','Disc %','GST %','Taxable','CGST','SGST','Total',''].map((h,i)=><th key={i} style={ith}>{h}</th>)}</tr></thead>
+        <thead><tr>{['#','Description','HSN/SAC','Qty','Rate (₹)','Disc %','GST %','Taxable','CGST','SGST','Total (₹) ↕',''].map((h,i)=><th key={i} style={ith}>{h}</th>)}</tr></thead>
         <tbody>{lines.map((it,i)=><tr key={it.id} style={{background:it.isService?'#f8fff8':'#fff'}}>
           <td style={{...itd,color:'#aaa',width:22,textAlign:'center'}}>{i+1}</td>
           <td style={{...itd,minWidth:160}}>
@@ -373,7 +378,7 @@ function LineEd({items,setItems,parts,gstType}){
           <td style={{...itd,textAlign:'right',color:'#555'}}>{fmt(it.tax)}</td>
           <td style={{...itd,textAlign:'right',color:'#388e3c'}}>{fmt(it.ga/2)}</td>
           <td style={{...itd,textAlign:'right',color:'#388e3c'}}>{fmt(it.ga/2)}</td>
-          <td style={{...itd,fontWeight:800,textAlign:'right',color:'#1565c0'}}>{fmt(it.tot)}</td>
+          <td style={itd}><input type="number" value={parseFloat(it.tot.toFixed(2))} onChange={e=>updTot(it.id,+e.target.value)} min={0} step="0.01" style={{...ii,width:82,fontWeight:800,color:'#1565c0',textAlign:'right'}}/></td>
           <td style={itd}><button onClick={()=>setItems(p=>p.filter(x=>x.id!==it.id))} style={{border:'none',background:'none',color:'#e53935',cursor:'pointer',fontSize:18,padding:'0 4px'}}>×</button></td>
         </tr>)}</tbody>
       </table>
