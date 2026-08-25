@@ -12,14 +12,15 @@
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 html,body,#root{height:100%}
-body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;font-size:13px;background:#f0f4f8;color:#111;-webkit-font-smoothing:antialiased}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;font-size:13px;background:#f1f5f9;color:#0f172a;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
 input,select,textarea,button{font-family:inherit;font-size:12px}
-input,select,textarea{padding:7px 9px;border:1px solid #d0d7de;border-radius:6px;background:#fff;color:#111;outline:none;width:100%;transition:border-color .15s,box-shadow .15s}
-input:focus,select:focus,textarea:focus{border-color:#1565c0;box-shadow:0 0 0 3px rgba(21,101,192,.12)}
+input,select,textarea{padding:8px 10px;border:1px solid #e2e8f0;border-radius:7px;background:#fff;color:#0f172a;outline:none;width:100%;transition:border-color .15s,box-shadow .15s}
+input:focus,select:focus,textarea:focus{border-color:#1565c0;box-shadow:0 0 0 3px rgba(21,101,192,.1)}
 table{border-collapse:collapse;width:100%}
-::-webkit-scrollbar{width:5px;height:5px}::-webkit-scrollbar-thumb{background:#c8d0da;border-radius:3px}
+tbody tr:hover td{background:#f8fafc!important}
+::-webkit-scrollbar{width:5px;height:5px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:3px}
 @keyframes spin{to{transform:rotate(360deg)}}
-@keyframes fadein{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+@keyframes fadein{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
 @media print{.np{display:none!important}body{background:#fff}body.printing>*:not(#pd-print){display:none!important}#pd-print{display:block!important;margin:0;padding:0}*{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}}@page{size:A4;margin:8mm}
 </style>
 </head>
@@ -311,30 +312,30 @@ function useDB(){
 const BM={draft:"#e3f2fd|#0d47a1",open:"#fff3e0|#e65100","in-progress":"#e8f5e9|#2e7d32",completed:"#ede7f6|#4527a0",delivered:"#e0f2f1|#00695c",cancelled:"#fce4ec|#880e4f",pending:"#fff8e1|#f57f17",paid:"#e8f5e9|#1b5e20",partial:"#fff3e0|#bf360c",normal:"#f5f5f5|#777",high:"#fff3e0|#e65100",urgent:"#fce4ec|#c62828",individual:"#e8eaf6|#283593",corporate:"#e1f5fe|#01579b",fleet:"#f3e5f5|#6a1b9a",petrol:"#e3f2fd|#0d47a1",diesel:"#fbe9e7|#bf360c",cng:"#e8f5e9|#1b5e20",electric:"#e0f2f1|#004d40",hybrid:"#f1f8e9|#33691e",spare:"#e3f2fd|#0d47a1",consumable:"#e8f5e9|#1b5e20",lubricant:"#fff8e1|#f57f17",tyre:"#fce4ec|#880e4f",electrical:"#fff3e0|#e65100",body:"#e0f2f1|#004d40",accessory:"#f1f8e9|#33691e",other:"#f5f5f5|#666"}
 const Bdg=({s})=>{const c=BM[s]||'#f5f5f5|#666';const[bg,fg]=c.split('|');return<span style={{fontSize:10,padding:'2px 8px',borderRadius:20,background:bg,color:fg,fontWeight:700,whiteSpace:'nowrap'}}>{(s||'').replace(/-/g,' ').toUpperCase()}</span>}
 
-const IS={width:'100%',boxSizing:'border-box',padding:'7px 9px',border:'1px solid #d0d7de',borderRadius:6,fontSize:12,fontFamily:'inherit'}
-const TH={padding:'9px 10px',textAlign:'left',fontWeight:700,fontSize:11,borderBottom:'2px solid #e8ecf0',background:'#f6f8fa',color:'#555'}
-const TD={padding:'8px 10px',fontSize:12,borderBottom:'1px solid #f0f4f8',verticalAlign:'middle'}
+const IS={width:'100%',boxSizing:'border-box',padding:'8px 10px',border:'1px solid #e2e8f0',borderRadius:7,fontSize:12,fontFamily:'inherit',background:'#fff',color:'#0f172a',transition:'border-color .15s,box-shadow .15s'}
+const TH={padding:'10px 12px',textAlign:'left',fontWeight:700,fontSize:10.5,borderBottom:'2px solid #e2e8f0',background:'#f8fafc',color:'#64748b',letterSpacing:'.5px',textTransform:'uppercase',whiteSpace:'nowrap'}
+const TD={padding:'9px 12px',fontSize:12.5,borderBottom:'1px solid #f1f5f9',verticalAlign:'middle',color:'#1e293b'}
 
 function Modal({title,onClose,wide,children}){
-  return <div className="np" style={{position:'fixed',inset:0,background:'rgba(0,0,0,.55)',zIndex:999,display:'flex',alignItems:'flex-start',justifyContent:'center',overflowY:'auto',padding:'20px 10px'}}>
-    <div style={{background:'#fff',borderRadius:12,width:wide?940:620,maxWidth:'99vw',boxShadow:'0 24px 64px rgba(0,0,0,.28)',animation:'fadein .2s ease',display:'flex',flexDirection:'column',maxHeight:'92vh'}}>
-      <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'14px 20px',borderBottom:'1px solid #e8ecf0',flexShrink:0}}>
-        <strong style={{fontSize:15}}>{title}</strong>
-        <button onClick={onClose} style={{border:'none',background:'none',cursor:'pointer',fontSize:24,color:'#999',padding:'0 4px',lineHeight:1}}>×</button>
+  return <div className="np" style={{position:'fixed',inset:0,background:'rgba(15,23,42,.55)',zIndex:999,display:'flex',alignItems:'flex-start',justifyContent:'center',overflowY:'auto',padding:'24px 12px',backdropFilter:'blur(3px)'}}>
+    <div style={{background:'#fff',borderRadius:14,width:wide?940:620,maxWidth:'99vw',boxShadow:'0 24px 64px rgba(0,0,0,.22)',animation:'fadein .18s ease',display:'flex',flexDirection:'column',maxHeight:'92vh'}}>
+      <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'15px 22px',borderBottom:'1px solid #f1f5f9',flexShrink:0,background:'#f8fafc',borderRadius:'14px 14px 0 0'}}>
+        <strong style={{fontSize:14,color:'#0f172a',fontWeight:800,letterSpacing:'.1px'}}>{title}</strong>
+        <button onClick={onClose} style={{border:'none',background:'#e2e8f0',cursor:'pointer',fontSize:18,color:'#64748b',width:28,height:28,borderRadius:7,display:'flex',alignItems:'center',justifyContent:'center',lineHeight:1,fontWeight:400}}>×</button>
       </div>
-      <div style={{padding:20,overflowY:'auto',flex:1}}>{children}</div>
+      <div style={{padding:22,overflowY:'auto',flex:1}}>{children}</div>
     </div>
   </div>
 }
-const F=({label,half,third,children})=>{const w=third?'calc(33.33% - 9px)':half?'calc(50% - 6px)':'100%';return<div style={{marginBottom:12,width:w,flexShrink:0}}><div style={{fontSize:11,color:'#6b7280',marginBottom:3,fontWeight:600}}>{label}</div>{children}</div>}
+const F=({label,half,third,children})=>{const w=third?'calc(33.33% - 9px)':half?'calc(50% - 6px)':'100%';return<div style={{marginBottom:13,width:w,flexShrink:0}}><div style={{fontSize:11,color:'#64748b',marginBottom:4,fontWeight:700,letterSpacing:'.3px',textTransform:'uppercase'}}>{label}</div>{children}</div>}
 const FR=({children})=><div style={{display:'flex',flexWrap:'wrap',gap:12}}>{children}</div>
 const In=p=><input {...p} style={{...IS,...p.style}}/>
 const Tx=p=><textarea {...p} style={{...IS,minHeight:60,...p.style}}/>
 const Sl=({opts=[],...p})=><select {...p} style={{...IS,...p.style}}><option value="">— Select —</option>{opts.map(o=><option key={o.v??o} value={o.v??o}>{o.l??o}</option>)}</select>
-const PBtn=({onClick,children,col='#1565c0',style:s})=><button onClick={onClick} style={{padding:'8px 18px',background:col,color:'#fff',border:'none',borderRadius:7,cursor:'pointer',fontSize:12,fontWeight:700,display:'inline-flex',alignItems:'center',gap:5,whiteSpace:'nowrap',...s}}>{children}</button>
-const GBtn=({onClick,children,col,style:s})=><button onClick={onClick} style={{padding:'7px 13px',background:'#fff',border:'1px solid #d0d7de',borderRadius:7,cursor:'pointer',fontSize:12,color:col||'#444',fontWeight:500,whiteSpace:'nowrap',...s}}>{children}</button>
-const Btns=({onCancel,onSave,label='Save'})=><div style={{display:'flex',gap:8,justifyContent:'flex-end',marginTop:16,paddingTop:14,borderTop:'1px solid #f0f0f0'}}><GBtn onClick={onCancel}>Cancel</GBtn><PBtn onClick={onSave}>{label}</PBtn></div>
-const SC=({label,val,em,col})=><div style={{background:'#fff',border:'1px solid #e8ecf0',borderRadius:10,padding:'14px 16px',borderTop:`3px solid ${col}`}}><div style={{display:'flex',alignItems:'center',gap:7,marginBottom:6}}><span style={{fontSize:18}}>{em}</span><span style={{fontSize:11,color:'#6b7280',fontWeight:600}}>{label}</span></div><div style={{fontSize:20,fontWeight:800}}>{val}</div></div>
+const PBtn=({onClick,children,col='#1565c0',style:s})=><button onClick={onClick} style={{padding:'8px 20px',background:col,color:'#fff',border:'none',borderRadius:8,cursor:'pointer',fontSize:12,fontWeight:700,display:'inline-flex',alignItems:'center',gap:6,whiteSpace:'nowrap',boxShadow:'0 1px 3px rgba(0,0,0,.15)',letterSpacing:'.1px',...s}}>{children}</button>
+const GBtn=({onClick,children,col,style:s})=><button onClick={onClick} style={{padding:'8px 14px',background:'#fff',border:'1px solid #e2e8f0',borderRadius:8,cursor:'pointer',fontSize:12,color:col||'#374151',fontWeight:600,whiteSpace:'nowrap',boxShadow:'0 1px 2px rgba(0,0,0,.05)',...s}}>{children}</button>
+const Btns=({onCancel,onSave,label='Save'})=><div style={{display:'flex',gap:8,justifyContent:'flex-end',marginTop:16,paddingTop:14,borderTop:'1px solid #f1f5f9'}}><GBtn onClick={onCancel}>Cancel</GBtn><PBtn onClick={onSave}>{label}</PBtn></div>
+const SC=({label,val,em,col})=><div style={{background:'#fff',border:'1px solid #e2e8f0',borderRadius:12,padding:'16px 20px',borderTop:`3px solid ${col}`,boxShadow:'0 1px 3px rgba(0,0,0,.05)'}}><div style={{display:'flex',alignItems:'center',gap:8,marginBottom:8}}><span style={{fontSize:20}}>{em}</span><span style={{fontSize:10.5,color:'#64748b',fontWeight:700,letterSpacing:'.4px',textTransform:'uppercase'}}>{label}</span></div><div style={{fontSize:22,fontWeight:800,color:'#0f172a'}}>{val}</div></div>
 
 /* ─── LINE ITEM EDITOR ──────────────────────────────── */
 function LineEd({items,setItems,parts,gstType}){
@@ -1364,46 +1365,46 @@ function AppShell({onLogout}){
   const[col,setCol]=useState(false)
 
   if(ready&&err)return <ErrScreen msg={err} onRetry={reload}/>
-  if(!ready)return <div style={{display:'flex',alignItems:'center',justifyContent:'center',height:'100vh',flexDirection:'column',gap:16,background:'#f0f4f8'}}>
-    <div style={{width:44,height:44,border:'4px solid #dbeafe',borderTop:'4px solid #1565c0',borderRadius:'50%',animation:'spin .8s linear infinite'}}/>
-    <div style={{fontSize:15,fontWeight:800,color:'#1565c0'}}>Friends Automotive</div>
-    <div style={{fontSize:12,color:'#888'}}>Loading data…</div>
+  if(!ready)return <div style={{display:'flex',alignItems:'center',justifyContent:'center',height:'100vh',flexDirection:'column',gap:14,background:'#f1f5f9'}}>
+    <div style={{width:48,height:48,border:'4px solid #e2e8f0',borderTop:'4px solid #1565c0',borderRadius:'50%',animation:'spin .8s linear infinite'}}/>
+    <div style={{fontSize:15,fontWeight:800,color:'#0f172a',letterSpacing:'.2px'}}>Friends Automotive</div>
+    <div style={{fontSize:12,color:'#94a3b8'}}>Loading data…</div>
   </div>
 
   const data={...D}
 
-  return <div style={{display:'flex',height:'100vh',overflow:'hidden',background:'#f0f4f8'}}>
+  return <div style={{display:'flex',height:'100vh',overflow:'hidden',background:'#f1f5f9'}}>
     {/* SIDEBAR */}
-    <div style={{width:col?54:198,background:'linear-gradient(175deg,#0d2137,#0f3460)',flexShrink:0,display:'flex',flexDirection:'column',transition:'width .2s',overflow:'hidden',boxShadow:'2px 0 12px rgba(0,0,0,.2)'}}>
-      <div style={{padding:col?'14px 10px':'14px 16px',borderBottom:'1px solid rgba(255,255,255,.08)',display:'flex',alignItems:'center',gap:10,minHeight:58}}>
-        <div style={{width:32,height:32,background:'linear-gradient(135deg,#1976d2,#1565c0)',borderRadius:8,display:'flex',alignItems:'center',justifyContent:'center',color:'#fff',fontSize:14,fontWeight:900,flexShrink:0,boxShadow:'0 2px 8px rgba(21,101,192,.4)'}}>FA</div>
+    <div style={{width:col?56:200,background:'linear-gradient(175deg,#0c1d30,#0f3460)',flexShrink:0,display:'flex',flexDirection:'column',transition:'width .22s',overflow:'hidden',boxShadow:'2px 0 16px rgba(0,0,0,.22)'}}>
+      <div style={{padding:col?'14px 10px':'14px 16px',borderBottom:'1px solid rgba(255,255,255,.07)',display:'flex',alignItems:'center',gap:10,minHeight:60}}>
+        <div style={{width:34,height:34,background:'linear-gradient(135deg,#2563eb,#1d4ed8)',borderRadius:9,display:'flex',alignItems:'center',justifyContent:'center',color:'#fff',fontSize:13,fontWeight:900,flexShrink:0,boxShadow:'0 3px 10px rgba(37,99,235,.5)',letterSpacing:'.5px'}}>FA</div>
         {!col&&<div style={{overflow:'hidden'}}>
-          <div style={{color:'#fff',fontSize:13,fontWeight:800,whiteSpace:'nowrap'}}>Friends Automotive</div>
-          <div style={{color:'rgba(255,255,255,.4)',fontSize:10,whiteSpace:'nowrap'}}>Garage Management</div>
+          <div style={{color:'#fff',fontSize:12.5,fontWeight:800,whiteSpace:'nowrap',letterSpacing:'.1px'}}>Friends Automotive</div>
+          <div style={{color:'rgba(255,255,255,.35)',fontSize:9.5,whiteSpace:'nowrap',letterSpacing:'.3px',textTransform:'uppercase',marginTop:1}}>Garage Management</div>
         </div>}
       </div>
-      <nav style={{flex:1,padding:'8px 0',overflowY:'auto'}}>
-        {NAV.map(t=><button key={t.k} onClick={()=>setTab(t.k)} title={t.k} style={{width:'100%',textAlign:'left',padding:col?'10px 0':'10px 16px',border:'none',cursor:'pointer',display:'flex',alignItems:'center',gap:10,background:tab===t.k?'rgba(25,118,210,.35)':'transparent',color:tab===t.k?'#90caf9':'rgba(255,255,255,.65)',fontWeight:tab===t.k?800:500,fontSize:12,justifyContent:col?'center':'flex-start',borderLeft:tab===t.k?'3px solid #42a5f5':'3px solid transparent',transition:'all .15s'}}><span style={{fontSize:17,flexShrink:0}}>{t.e}</span>{!col&&t.k}</button>)}
+      <nav style={{flex:1,padding:'10px 6px',overflowY:'auto'}}>
+        {NAV.map(t=>{const active=tab===t.k;return<button key={t.k} onClick={()=>setTab(t.k)} title={t.k} style={{width:'100%',textAlign:'left',padding:col?'10px 0':'9px 12px',border:'none',cursor:'pointer',display:'flex',alignItems:'center',gap:9,background:active?'rgba(37,99,235,.28)':'transparent',color:active?'#93c5fd':'rgba(255,255,255,.58)',fontWeight:active?700:400,fontSize:12,justifyContent:col?'center':'flex-start',borderRadius:8,margin:'1px 0',borderLeft:active?'3px solid #60a5fa':'3px solid transparent',transition:'all .15s'}}><span style={{fontSize:16,flexShrink:0}}>{t.e}</span>{!col&&t.k}</button>})}
       </nav>
-      {!col&&<div style={{padding:'10px 14px',borderTop:'1px solid rgba(255,255,255,.08)',fontSize:10,color:'rgba(255,255,255,.3)',lineHeight:1.8}}>
+      {!col&&<div style={{padding:'10px 16px',borderTop:'1px solid rgba(255,255,255,.07)',fontSize:10,color:'rgba(255,255,255,.28)',lineHeight:2}}>
         <div>{data.customers.length} customers · {data.vehicles.length} vehicles</div>
-        <div>{data.parts.length} parts · {data.jobCards.length} jobs</div>
-        <div>{data.invoices.length} invoices{busy&&<span style={{color:'#90caf9'}}> · saving…</span>}</div>
+        <div>{data.parts.length} parts · {data.invoices.length} invoices</div>
+        {busy&&<div style={{color:'#60a5fa',fontWeight:600}}>⟳ Saving…</div>}
       </div>}
-      <button onClick={onLogout} title="Logout" style={{margin:col?'8px auto':'8px 10px',width:col?36:undefined,padding:col?'7px 0':'8px 14px',background:'rgba(255,255,255,.07)',border:'1px solid rgba(255,255,255,.12)',borderRadius:7,cursor:'pointer',color:'rgba(255,255,255,.6)',fontSize:11,display:'flex',alignItems:'center',gap:6,justifyContent:col?'center':'flex-start',flexShrink:0}}>
-        <span style={{fontSize:15}}>🚪</span>{!col&&'Logout'}
+      <button onClick={onLogout} title="Logout" style={{margin:col?'8px auto':'8px 8px',width:col?38:undefined,padding:col?'8px 0':'8px 12px',background:'rgba(255,255,255,.06)',border:'1px solid rgba(255,255,255,.1)',borderRadius:8,cursor:'pointer',color:'rgba(255,255,255,.5)',fontSize:11,display:'flex',alignItems:'center',gap:6,justifyContent:col?'center':'flex-start',flexShrink:0,transition:'background .15s'}}>
+        <span style={{fontSize:14}}>🚪</span>{!col&&'Logout'}
       </button>
     </div>
 
     {/* MAIN */}
     <div style={{flex:1,display:'flex',flexDirection:'column',minWidth:0,overflow:'hidden'}}>
-      <div style={{height:50,background:'#fff',borderBottom:'1px solid #e8ecf0',display:'flex',alignItems:'center',padding:'0 20px',gap:12,flexShrink:0,boxShadow:'0 1px 4px rgba(0,0,0,.06)'}}>
-        <button onClick={()=>setCol(p=>!p)} style={{border:'none',background:'none',cursor:'pointer',color:'#888',fontSize:22,padding:'2px 4px',lineHeight:1}}>☰</button>
-        <span style={{fontSize:16,fontWeight:800,flex:1}}>{tab}</span>
-        {busy&&<span style={{fontSize:11,color:'#1565c0',fontWeight:600}}>⟳ Saving to database…</span>}
-        <div style={{background:'#dbeafe',color:'#1e40af',fontSize:10,padding:'4px 12px',borderRadius:20,fontWeight:800,fontFamily:'monospace'}}>{data.settings?.gstin}</div>
+      <div style={{height:52,background:'#fff',borderBottom:'1px solid #e2e8f0',display:'flex',alignItems:'center',padding:'0 20px',gap:12,flexShrink:0,boxShadow:'0 1px 0 rgba(0,0,0,.06)'}}>
+        <button onClick={()=>setCol(p=>!p)} style={{border:'none',background:'#f1f5f9',cursor:'pointer',color:'#64748b',fontSize:16,padding:'6px 9px',lineHeight:1,borderRadius:7}}>☰</button>
+        <span style={{fontSize:15,fontWeight:800,flex:1,color:'#0f172a',letterSpacing:'.1px'}}>{tab}</span>
+        {busy&&<span style={{fontSize:11,color:'#1565c0',fontWeight:700,background:'#eff6ff',padding:'4px 10px',borderRadius:20,border:'1px solid #bfdbfe'}}>⟳ Saving…</span>}
+        <div style={{background:'#f0f9ff',color:'#0369a1',fontSize:10,padding:'5px 12px',borderRadius:20,fontWeight:700,fontFamily:'monospace',border:'1px solid #bae6fd',letterSpacing:'.5px'}}>{data.settings?.gstin}</div>
       </div>
-      <div style={{flex:1,overflowY:'auto',padding:20,background:'#f0f4f8'}}>
+      <div style={{flex:1,overflowY:'auto',padding:20,background:'#f1f5f9'}}>
         {tab==='Dashboard'&&<Dashboard data={data} setTab={setTab}/>}
         {tab==='Job Cards'&&<JobCards data={data} db={db} setTab={setTab}/>}
         {tab==='Invoices'&&<Invoices data={data} db={db}/>}
