@@ -71,6 +71,13 @@ const fmt = n => '₹'+Number(n||0).toLocaleString('en-IN',{minimumFractionDigit
 const fmtD = d => { try{return new Date(d).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'})}catch{return d||''} }
 const today = () => new Date().toISOString().split('T')[0]
 
+function downloadCSV(filename, headers, rows){
+  const esc=v=>{const s=String(v==null?'':v);return s.includes(',')||s.includes('"')||s.includes('\n')?'"'+s.replace(/"/g,'""')+'"':s}
+  const lines=[headers.map(esc).join(','),...rows.map(r=>r.map(esc).join(','))]
+  const blob=new Blob(['﻿'+lines.join('\r\n')],{type:'text/csv;charset=utf-8'})
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=filename;a.click();URL.revokeObjectURL(a.href)
+}
+
 function calcItems(items){
   let sub=0, gt=0
   const lines=(items||[]).map(it=>{
@@ -1071,7 +1078,7 @@ function JobCards({data,db,setTab}){
 function Invoices({data,db}){
   const[sub,setSub]=useState('all')
   const[showNew,setShowNew]=useState(false);const[editI,setEditI]=useState(null);const[printI,setPrintI]=useState(null)
-  const[q,setQ]=useState('');const[fType,setFType]=useState('all');const[fStatus,setFStatus]=useState('all');const[sort,setSort]=useState('serial-asc')
+  const[q,setQ]=useState('');const[fType,setFType]=useState('all');const[fStatus,setFStatus]=useState('all');const[sort,setSort]=useState('serial-asc');const[fCust,setFCust]=useState('all')
   const TABS=[{k:'all',l:'All Invoices'},{k:'estimate',l:'Estimates'},{k:'invoice',l:'Tax Invoices'},{k:'final-invoice',l:'Final Invoices'}]
   const pC={paid:'#e8f5e9|#1b5e20',partial:'#fff3e0|#bf360c',pending:'#fff8e1|#f57f17',cancelled:'#fce4ec|#880e4f'}
   const docInfo=i=>{
@@ -1081,9 +1088,11 @@ function Invoices({data,db}){
     return {label:'Tax Invoice',bg:'#e8f5e9',fg:'#1b5e20'}
   }
   const matches=i=>{
+    const custOk=fCust==='all'||(i.customerName||'')===(fCust)
+    if(!custOk) return false
     if(!q) return true
     const ql=q.toLowerCase()
-    return (i.customerName||'').toLowerCase().includes(ql)||(i.vehicleReg||'').toLowerCase().includes(ql)||String(i.id).includes(q)||buildInvNo(data.settings||DEF,i).toLowerCase().includes(ql)
+    return (i.customerName||'').toLowerCase().includes(ql)||(i.vehicleReg||'').toLowerCase().includes(ql)||String(i.id).includes(q)||buildInvNo(data.settings||DEF,i).toLowerCase().includes(ql)||(i.customerPhone||'').includes(q)
   }
   const list=sub==='all'
     ?data.invoices.filter(i=>matches(i)&&(fType==='all'||i.type===fType)&&(fStatus==='all'||i.paymentStatus===fStatus))
@@ -1106,17 +1115,41 @@ function Invoices({data,db}){
     await db.cancelInvoice(inv.id)
   }
   const tabCount=t=>t==='all'?data.invoices.length:data.invoices.filter(i=>i.type===t).length
+  const custNames=[...new Set(data.invoices.map(i=>i.customerName).filter(Boolean))].sort()
+  function doExport(){
+    const headers=['Invoice No','Date','Customer','Phone','Vehicle Reg','Doc Type','Amount (₹)','Payment Status','Payment Method','Amount Paid (₹)']
+    const rows=sortedList.map(i=>[
+      buildInvNo(data.settings||DEF,i),
+      i.date||'',
+      i.customerName||'',
+      i.customerPhone||'',
+      i.vehicleReg||'',
+      docInfo(i).label,
+      Number(i.grand||0).toFixed(2),
+      i.paymentStatus||'',
+      i.paymentMethod||'',
+      Number(i.amountPaid||0).toFixed(2)
+    ])
+    const tag=fCust!=='all'?fCust.replace(/\s+/g,'_'):'All'
+    downloadCSV('Invoices_'+tag+'_'+today()+'.csv',headers,rows)
+  }
   return <div>
     <div style={{display:'flex',alignItems:'center',gap:10,marginBottom:16,flexWrap:'wrap'}}>
       <h2 style={{fontSize:19,fontWeight:800,margin:0,flex:1}}>Billing &amp; Invoices</h2>
-      <input value={q} onChange={e=>setQ(e.target.value)} placeholder="Search customer / vehicle / #…" style={{...IS,width:200}}/>
+      <input value={q} onChange={e=>setQ(e.target.value)} placeholder="Search customer / vehicle / phone / #…" style={{...IS,width:220}}/>
+      <button onClick={doExport} title="Export current view as CSV (opens in Excel)" style={{padding:'7px 14px',background:'#f0fdf4',color:'#15803d',border:'1px solid #bbf7d0',borderRadius:7,cursor:'pointer',fontSize:12,fontWeight:700,display:'flex',alignItems:'center',gap:5,whiteSpace:'nowrap'}}>⬇ Export CSV</button>
       <PBtn onClick={()=>setShowNew(true)}>+ New Invoice / Estimate</PBtn>
     </div>
     <div style={{display:'flex',gap:2,marginBottom:14,background:'#f0f4f8',borderRadius:8,padding:3,width:'fit-content',flexWrap:'wrap'}}>
       {TABS.map(t=><button key={t.k} onClick={()=>{setSub(t.k);setFType('all');setFStatus('all')}} style={{padding:'7px 16px',border:'none',borderRadius:6,cursor:'pointer',background:sub===t.k?'#1565c0':'transparent',color:sub===t.k?'#fff':'#555',fontWeight:sub===t.k?800:500,fontSize:12}}>{t.l} <span style={{fontSize:10,opacity:.7}}>({tabCount(t.k)})</span></button>)}
     </div>
     <div style={{display:'flex',gap:8,marginBottom:14,flexWrap:'wrap',alignItems:'center'}}>
-      {sub==='all'&&<span style={{fontSize:12,color:'#666',fontWeight:600}}>Filter:</span>}
+      <span style={{fontSize:12,color:'#666',fontWeight:600}}>Customer:</span>
+      <select value={fCust} onChange={e=>setFCust(e.target.value)} style={{...IS,width:'auto',fontSize:12,padding:'5px 8px',maxWidth:200}}>
+        <option value="all">All Customers</option>
+        {custNames.map(n=><option key={n} value={n}>{n}</option>)}
+      </select>
+      {sub==='all'&&<span style={{fontSize:12,color:'#666',fontWeight:600,marginLeft:4}}>Filter:</span>}
       {sub==='all'&&<select value={fType} onChange={e=>setFType(e.target.value)} style={{...IS,width:'auto',fontSize:12,padding:'5px 8px'}}>
         <option value="all">All Types</option>
         <option value="estimate">Estimate</option>
@@ -1130,8 +1163,8 @@ function Invoices({data,db}){
         <option value="paid">Paid</option>
         <option value="cancelled">Cancelled</option>
       </select>}
-      {sub==='all'&&(fType!=='all'||fStatus!=='all')&&<button onClick={()=>{setFType('all');setFStatus('all')}} style={{fontSize:11,color:'#c62828',background:'none',border:'1px solid #ffcdd2',borderRadius:5,padding:'4px 8px',cursor:'pointer'}}>✕ Clear</button>}
-      <span style={{fontSize:12,color:'#666',fontWeight:600,marginLeft:sub==='all'?8:0}}>Sort:</span>
+      {(fCust!=='all'||fType!=='all'||fStatus!=='all')&&<button onClick={()=>{setFCust('all');setFType('all');setFStatus('all')}} style={{fontSize:11,color:'#c62828',background:'none',border:'1px solid #ffcdd2',borderRadius:5,padding:'4px 8px',cursor:'pointer'}}>✕ Clear</button>}
+      <span style={{fontSize:12,color:'#666',fontWeight:600,marginLeft:4}}>Sort:</span>
       <select value={sort} onChange={e=>setSort(e.target.value)} style={{...IS,width:'auto',fontSize:12,padding:'5px 8px'}}>
         <option value="serial-asc">Invoice # ↑ (oldest first)</option>
         <option value="serial-desc">Invoice # ↓ (newest first)</option>
@@ -1142,7 +1175,8 @@ function Invoices({data,db}){
         <option value="customer-asc">Customer: A → Z</option>
       </select>
     </div>
-    {list.length>0&&<div style={{display:'flex',gap:10,marginBottom:14,flexWrap:'wrap'}}>
+    {list.length>0&&<div style={{display:'flex',gap:10,marginBottom:14,flexWrap:'wrap',alignItems:'center'}}>
+      {fCust!=='all'&&<div style={{background:'#eff6ff',border:'1px solid #bfdbfe',borderRadius:8,padding:'7px 16px',fontSize:12,fontWeight:700,color:'#1e40af'}}>👤 {fCust} — {list.length} invoice{list.length!==1?'s':''}</div>}
       {[['Active Billed',total,'#dbeafe','#1e40af'],['Collected',collected,'#dcfce7','#166534'],['Outstanding',total-collected,'#fef3c7','#92400e']].map(([l,v,bg,fg])=><div key={l} style={{background:bg,borderRadius:8,padding:'7px 16px',fontSize:12}}><span style={{color:'#888'}}>{l}: </span><b style={{color:fg,fontSize:13}}>{fmt(v)}</b></div>)}
       {list.filter(i=>i.paymentStatus==='cancelled').length>0&&<div style={{background:'#fce4ec',borderRadius:8,padding:'7px 16px',fontSize:12}}><span style={{color:'#888'}}>Cancelled: </span><b style={{color:'#880e4f',fontSize:13}}>{list.filter(i=>i.paymentStatus==='cancelled').length}</b></div>}
     </div>}
