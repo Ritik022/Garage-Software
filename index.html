@@ -344,6 +344,39 @@ const GBtn=({onClick,children,col,style:s})=><button onClick={onClick} style={{p
 const Btns=({onCancel,onSave,label='Save',saving})=><div style={{display:'flex',gap:8,justifyContent:'flex-end',marginTop:16,paddingTop:14,borderTop:'1px solid #f1f5f9'}}><GBtn onClick={onCancel} style={{opacity:saving?.5:1,pointerEvents:saving?'none':'auto'}}>Cancel</GBtn><PBtn onClick={onSave} col={saving?'#6b7280':'#1565c0'} style={{minWidth:130,cursor:saving?'not-allowed':'pointer',opacity:saving?.85:1}}>{saving?<>⏳ Saving…</>:label}</PBtn></div>
 const SC=({label,val,em,col})=><div style={{background:'#fff',border:'1px solid #e2e8f0',borderRadius:12,padding:'16px 20px',borderTop:`3px solid ${col}`,boxShadow:'0 1px 3px rgba(0,0,0,.05)'}}><div style={{display:'flex',alignItems:'center',gap:8,marginBottom:8}}><span style={{fontSize:20}}>{em}</span><span style={{fontSize:10.5,color:'#64748b',fontWeight:700,letterSpacing:'.4px',textTransform:'uppercase'}}>{label}</span></div><div style={{fontSize:22,fontWeight:800,color:'#0f172a'}}>{val}</div></div>
 
+/* ─── NUMERIC INPUT (no stuck-zero, free typing) ───── */
+function NumInput({value,onChange,min,max,style:s,...rest}){
+  const[v,setV]=useState('')
+  const[focused,setFocused]=useState(false)
+  return <input {...rest} type="text" inputMode="decimal"
+    value={focused?v:String(value??0)}
+    onChange={e=>setV(e.target.value)}
+    onFocus={()=>{setV(+value===0?'':String(value??''));setFocused(true)}}
+    onBlur={()=>{
+      setFocused(false)
+      let n=parseFloat(v)
+      if(isNaN(n))n=0
+      if(min!=null)n=Math.max(+min,n)
+      if(max!=null)n=Math.min(+max,n)
+      onChange({target:{value:n}})
+    }}
+    style={s}
+  />
+}
+/* ─── TOTAL CELL (reverse-calc only on blur) ────────── */
+function TotCell({tot,id,updTot,ii,itd}){
+  const[v,setV]=useState('')
+  const[focused,setFocused]=useState(false)
+  const display=focused?v:parseFloat((tot||0).toFixed(2)).toString()
+  return <td style={itd}><input type="text" inputMode="decimal"
+    value={display}
+    onChange={e=>setV(e.target.value)}
+    onFocus={()=>{setV(+tot===0?'':parseFloat((tot||0).toFixed(2)).toString());setFocused(true)}}
+    onBlur={()=>{setFocused(false);const n=parseFloat(v);if(!isNaN(n)&&n>=0)updTot(id,n)}}
+    style={{...ii,width:82,fontWeight:800,color:'#1565c0',textAlign:'right'}}
+  /></td>
+}
+
 /* ─── LINE ITEM EDITOR ──────────────────────────────── */
 function LineEd({items,setItems,parts,gstType}){
   const add=svc=>setItems(p=>[...p,{id:Date.now()+Math.random(),name:'',qty:1,rate:0,gst:18,discount:0,hsnSac:'',isService:svc}])
@@ -379,14 +412,14 @@ function LineEd({items,setItems,parts,gstType}){
             <datalist id={`dl${it.id}`}>{(it.isService?SERVICES.map(s=>({n:s.n})):[...parts.map(p=>({n:p.name})),...SERVICES]).map(p=><option key={p.n} value={p.n}/>)}</datalist>
           </td>
           <td style={itd}><input value={it.hsnSac||''} onChange={e=>upd(it.id,'hsnSac',e.target.value)} style={{...ii,width:80,fontFamily:'monospace',fontSize:10}}/></td>
-          <td style={itd}><input type="number" value={it.qty} onChange={e=>upd(it.id,'qty',+e.target.value)} min={0} style={{...ii,width:50}}/></td>
-          <td style={itd}><input type="number" value={it.rate} onChange={e=>upd(it.id,'rate',+e.target.value)} min={0} style={{...ii,width:76}}/></td>
-          <td style={itd}><input type="number" value={it.discount||0} onChange={e=>upd(it.id,'discount',+e.target.value)} min={0} max={100} style={{...ii,width:44}}/></td>
+          <td style={itd}><NumInput value={it.qty} onChange={e=>upd(it.id,'qty',e.target.value)} min={0} style={{...ii,width:50}}/></td>
+          <td style={itd}><NumInput value={it.rate} onChange={e=>upd(it.id,'rate',e.target.value)} min={0} style={{...ii,width:76}}/></td>
+          <td style={itd}><NumInput value={it.discount||0} onChange={e=>upd(it.id,'discount',e.target.value)} min={0} max={100} style={{...ii,width:44}}/></td>
           <td style={itd}><select value={it.gst} onChange={e=>upd(it.id,'gst',+e.target.value)} style={{...ii,width:56}}>{[0,5,12,18,28].map(r=><option key={r} value={r}>{r}%</option>)}</select></td>
           <td style={{...itd,textAlign:'right',color:'#555'}}>{fmt(it.tax)}</td>
           <td style={{...itd,textAlign:'right',color:'#388e3c'}}>{fmt(it.ga/2)}</td>
           <td style={{...itd,textAlign:'right',color:'#388e3c'}}>{fmt(it.ga/2)}</td>
-          <td style={itd}><input type="number" value={parseFloat(it.tot.toFixed(2))} onChange={e=>updTot(it.id,+e.target.value)} min={0} step="0.01" style={{...ii,width:82,fontWeight:800,color:'#1565c0',textAlign:'right'}}/></td>
+          <TotCell tot={it.tot} id={it.id} updTot={updTot} ii={ii} itd={itd}/>
           <td style={itd}><button onClick={()=>setItems(p=>p.filter(x=>x.id!==it.id))} style={{border:'none',background:'none',color:'#e53935',cursor:'pointer',fontSize:18,padding:'0 4px'}}>×</button></td>
         </tr>)}</tbody>
       </table>
