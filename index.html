@@ -12,7 +12,7 @@
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 html,body,#root{height:100%}
-body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;font-size:13px;background:#f1f5f9;color:#0f172a;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;font-size:13px;background:#f8fafc;color:#0f172a;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
 input,select,textarea,button{font-family:inherit;font-size:12px}
 input,select,textarea{padding:8px 10px;border:1px solid #e2e8f0;border-radius:7px;background:#fff;color:#0f172a;outline:none;width:100%;transition:border-color .15s,box-shadow .15s}
 input:focus,select:focus,textarea:focus{border-color:#1565c0;box-shadow:0 0 0 3px rgba(21,101,192,.1)}
@@ -767,35 +767,175 @@ function InvEditor({initial,data,onSave,onClose}){
 
 /* ─── DASHBOARD ─────────────────────────────────────── */
 function Dashboard({data,setTab}){
-  const m=new Date().toISOString().slice(0,7)
+  const now=new Date()
+  const m=now.toISOString().slice(0,7)
+  const todayStr=now.toISOString().slice(0,10)
+
+  const active=data.invoices.filter(i=>i.paymentStatus!=='cancelled')
   const openJ=data.jobCards.filter(j=>['open','in-progress'].includes(j.status)).length
-  const mRev=data.invoices.filter(i=>i.date?.startsWith&&i.date.startsWith(m)).reduce((s,i)=>s+(+i.grand||0),0)
-  const pDue=data.invoices.filter(i=>i.paymentStatus!=='paid').reduce((s,i)=>s+(+i.grand||0),0)
+  const mRev=data.invoices.filter(i=>i.date?.startsWith(m)&&i.paymentStatus!=='cancelled').reduce((s,i)=>s+(+i.grand||0),0)
+  const mCollected=data.invoices.filter(i=>i.date?.startsWith(m)&&i.paymentStatus==='paid').reduce((s,i)=>s+(+i.grand||0),0)
+    +data.invoices.filter(i=>i.date?.startsWith(m)&&i.paymentStatus==='partial').reduce((s,i)=>s+(+i.amountPaid||0),0)
+  const pendingDue=active.filter(i=>i.paymentStatus!=='paid').reduce((s,i)=>s+(+i.grand||0),0)
+  const overdueInvs=data.invoices.filter(i=>i.paymentStatus==='pending'&&i.dueDate&&i.dueDate<todayStr)
   const lowS=data.parts.filter(p=>(+p.qty||0)<=(+p.minQty||2)).length
-  return <div>
-    <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16}}>
-      <h2 style={{fontSize:19,fontWeight:800,margin:0}}>Dashboard</h2>
-      <span style={{fontSize:11,color:'#6b7280'}}>{new Date().toLocaleDateString('en-IN',{weekday:'long',year:'numeric',month:'long',day:'numeric'})}</span>
-    </div>
-    <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(145px,1fr))',gap:12,marginBottom:20}}>
-      <SC label="Open Jobs" val={openJ} em="🔧" col="#1565c0"/>
-      <SC label="Month Revenue" val={fmt(mRev)} em="💰" col="#6a1b9a"/>
-      <SC label="Pending Dues" val={fmt(pDue)} em="⏳" col="#e65100"/>
-      <SC label="Customers" val={data.customers.length} em="👥" col="#01579b"/>
-      <SC label="Vehicles" val={data.vehicles.length} em="🚗" col="#004d40"/>
-      <SC label="Parts" val={data.parts.length} em="📦" col="#4e342e"/>
-      <SC label="Low Stock" val={lowS} em="⚠️" col={lowS>0?"#c62828":"#2e7d32"}/>
-      <SC label="Total Jobs" val={data.jobCards.length} em="📋" col="#37474f"/>
-    </div>
-    {lowS>0&&<div style={{background:'#fff3e0',border:'1px solid #ffb74d',borderRadius:8,padding:'10px 16px',marginBottom:16,fontSize:12,color:'#e65100'}}>⚠ <b>{lowS} part{lowS>1?'s':''}</b> at or below minimum stock. <button onClick={()=>setTab('Inventory')} style={{color:'#e65100',background:'none',border:'none',cursor:'pointer',textDecoration:'underline',fontSize:12}}>View →</button></div>}
-    <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:16}}>
-      <div style={{background:'#fff',border:'1px solid #e8ecf0',borderRadius:10,padding:16}}>
-        <div style={{display:'flex',justifyContent:'space-between',marginBottom:12}}><b style={{fontSize:14}}>Recent Job Cards</b><button onClick={()=>setTab('Job Cards')} style={{fontSize:12,color:'#1565c0',background:'none',border:'none',cursor:'pointer'}}>View all →</button></div>
-        {data.jobCards.length===0?<p style={{color:'#aaa',textAlign:'center',padding:20,fontSize:12}}>No job cards yet.</p>:<table style={{fontSize:12}}><thead><tr>{['Job #','Customer','Vehicle','Status','Amount'].map(h=><th key={h} style={TH}>{h}</th>)}</tr></thead><tbody>{data.jobCards.slice(0,8).map(j=><tr key={j.id}><td style={{...TD,color:'#1565c0',fontWeight:800}}>JC-{j.id}</td><td style={TD}>{j.customerName}</td><td style={{...TD,fontWeight:700}}>{j.vehicleReg}</td><td style={TD}><Bdg s={j.status}/></td><td style={{...TD,fontWeight:700}}>{fmt(j.grand)}</td></tr>)}</tbody></table>}
+
+  // Last 6 months revenue chart data
+  const months=[]
+  for(let i=5;i>=0;i--){
+    const d=new Date(now.getFullYear(),now.getMonth()-i,1)
+    const key=d.toISOString().slice(0,7)
+    const label=d.toLocaleDateString('en-IN',{month:'short'})
+    const rev=data.invoices.filter(inv=>inv.date?.startsWith(key)&&inv.paymentStatus!=='cancelled').reduce((s,inv)=>s+(+inv.grand||0),0)
+    const col=data.invoices.filter(inv=>inv.date?.startsWith(key)&&inv.paymentStatus==='paid').reduce((s,inv)=>s+(+inv.grand||0),0)
+      +data.invoices.filter(inv=>inv.date?.startsWith(key)&&inv.paymentStatus==='partial').reduce((s,inv)=>s+(+inv.amountPaid||0),0)
+    months.push({key,label,rev,col})
+  }
+  const maxRev=Math.max(...months.map(m=>m.rev),1)
+
+  // Top customers by revenue
+  const custMap={}
+  active.forEach(i=>{if(i.customerName)custMap[i.customerName]=(custMap[i.customerName]||0)+(+i.grand||0)})
+  const topCusts=Object.entries(custMap).sort((a,b)=>b[1]-a[1]).slice(0,5)
+
+  const card={background:'#fff',borderRadius:12,padding:'18px 20px',boxShadow:'0 1px 4px rgba(0,0,0,.07)',border:'1px solid #e2e8f0'}
+  const ctitle={fontSize:11,fontWeight:700,color:'#94a3b8',letterSpacing:'.6px',textTransform:'uppercase',marginBottom:14}
+  const pC={paid:'#16a34a',partial:'#d97706',pending:'#f59e0b',cancelled:'#94a3b8'}
+
+  return <div style={{animation:'fadein .2s ease'}}>
+    {/* Page header */}
+    <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-end',marginBottom:20}}>
+      <div>
+        <h2 style={{fontSize:21,fontWeight:900,margin:0,color:'#0f172a',letterSpacing:'-.3px'}}>Overview</h2>
+        <div style={{fontSize:11,color:'#94a3b8',marginTop:3}}>{now.toLocaleDateString('en-IN',{weekday:'long',year:'numeric',month:'long',day:'numeric'})}</div>
       </div>
-      <div style={{background:'#fff',border:'1px solid #e8ecf0',borderRadius:10,padding:16}}>
-        <div style={{display:'flex',justifyContent:'space-between',marginBottom:12}}><b style={{fontSize:14}}>Recent Invoices</b><button onClick={()=>setTab('Invoices')} style={{fontSize:12,color:'#1565c0',background:'none',border:'none',cursor:'pointer'}}>View all →</button></div>
-        {data.invoices.length===0?<p style={{color:'#aaa',textAlign:'center',padding:20,fontSize:12}}>No invoices yet.</p>:<table style={{fontSize:12}}><thead><tr>{['#','Customer','Amount','Status'].map(h=><th key={h} style={TH}>{h}</th>)}</tr></thead><tbody>{data.invoices.slice(0,5).map(i=><tr key={i.id}><td style={{...TD,color:'#1565c0',fontWeight:800}}>{i.type==='estimate'?'EST':i.type==='final-invoice'?'FINV':'INV'}-{i.id}</td><td style={TD}>{i.customerName}</td><td style={{...TD,fontWeight:700}}>{fmt(i.grand)}</td><td style={TD}><Bdg s={i.paymentStatus||'pending'}/></td></tr>)}</tbody></table>}
+      <PBtn onClick={()=>setTab('Invoices')} style={{fontSize:11}}>＋ New Invoice</PBtn>
+    </div>
+
+    {/* 6 Stat Cards */}
+    <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(155px,1fr))',gap:12,marginBottom:20}}>
+      {[
+        {l:'Revenue This Month', v:fmt(mRev),        c:'#2563eb', s:'All invoices issued'},
+        {l:'Collected This Month',v:fmt(mCollected),  c:'#16a34a', s:'Paid & partial'},
+        {l:'Pending Dues',        v:fmt(pendingDue),  c:'#d97706', s:'Across all invoices'},
+        {l:'Open Job Cards',      v:openJ,            c:'#7c3aed', s:'Active in workshop'},
+        {l:'Overdue',             v:overdueInvs.length,c:overdueInvs.length>0?'#dc2626':'#16a34a',s:'Past due date'},
+        {l:'Low Stock Parts',     v:lowS,             c:lowS>0?'#dc2626':'#16a34a',            s:'Below minimum qty'},
+      ].map(({l,v,c,s})=><div key={l} style={{...card,borderTop:`3px solid ${c}`,cursor:'default'}}>
+        <div style={{fontSize:10,fontWeight:700,color:'#94a3b8',letterSpacing:'.5px',textTransform:'uppercase',marginBottom:6}}>{l}</div>
+        <div style={{fontSize:26,fontWeight:900,color:'#0f172a',lineHeight:1,marginBottom:5}}>{v}</div>
+        <div style={{fontSize:10,color:'#cbd5e1'}}>{s}</div>
+      </div>)}
+    </div>
+
+    {/* Chart + Top Customers */}
+    <div style={{display:'grid',gridTemplateColumns:'2fr 1fr',gap:16,marginBottom:16}}>
+
+      {/* Monthly Revenue Bar Chart */}
+      <div style={card}>
+        <div style={ctitle}>Monthly Revenue — Last 6 Months</div>
+        <div style={{display:'flex',alignItems:'flex-end',gap:8,height:110,marginBottom:8}}>
+          {months.map(({label,rev,col})=>{
+            const pct=Math.max(rev/maxRev*100,rev>0?4:0)
+            const cpct=rev>0?Math.round(col/rev*100):0
+            return <div key={label} style={{flex:1,display:'flex',flexDirection:'column',alignItems:'center',gap:0,height:'100%',justifyContent:'flex-end'}}>
+              <div title={`Billed: ${fmt(rev)}\nCollected: ${fmt(col)}`} style={{width:'100%',background:'#dbeafe',borderRadius:'4px 4px 0 0',height:pct+'%',position:'relative',minHeight:rev>0?4:0}}>
+                <div style={{position:'absolute',bottom:0,left:0,right:0,background:'#2563eb',borderRadius:'4px 4px 0 0',height:cpct+'%',minHeight:col>0?2:0,transition:'height .3s'}}/>
+              </div>
+            </div>
+          })}
+        </div>
+        <div style={{display:'flex',gap:8,marginBottom:8}}>
+          {months.map(({label,key})=><div key={key} style={{flex:1,textAlign:'center',fontSize:9,color:'#94a3b8',fontWeight:600}}>{label}</div>)}
+        </div>
+        <div style={{display:'flex',gap:14,paddingTop:6,borderTop:'1px solid #f1f5f9'}}>
+          <div style={{display:'flex',alignItems:'center',gap:5,fontSize:10,color:'#64748b'}}><div style={{width:10,height:10,borderRadius:2,background:'#dbeafe',border:'1px solid #93c5fd'}}/> Billed</div>
+          <div style={{display:'flex',alignItems:'center',gap:5,fontSize:10,color:'#64748b'}}><div style={{width:10,height:10,borderRadius:2,background:'#2563eb'}}/> Collected</div>
+          <div style={{marginLeft:'auto',fontSize:10,color:'#94a3b8'}}>This month: <b style={{color:'#2563eb'}}>{fmt(mRev)}</b></div>
+        </div>
+      </div>
+
+      {/* Top Customers */}
+      <div style={card}>
+        <div style={ctitle}>Top Customers</div>
+        {topCusts.length===0
+          ?<p style={{color:'#94a3b8',fontSize:11,textAlign:'center',padding:'20px 0'}}>No invoices yet</p>
+          :topCusts.map(([name,rev],i)=><div key={name} style={{marginBottom:12}}>
+            <div style={{display:'flex',justifyContent:'space-between',marginBottom:4}}>
+              <span style={{fontSize:11,fontWeight:600,color:'#1e293b',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',maxWidth:'60%'}}>{name}</span>
+              <span style={{fontSize:11,fontWeight:700,color:'#2563eb',flexShrink:0}}>{fmt(rev)}</span>
+            </div>
+            <div style={{height:3,background:'#f1f5f9',borderRadius:2}}>
+              <div style={{height:'100%',background: i===0?'#2563eb':i===1?'#7c3aed':'#94a3b8',borderRadius:2,width:(rev/topCusts[0][1]*100)+'%',transition:'width .4s'}}/>
+            </div>
+          </div>)
+        }
+      </div>
+    </div>
+
+    {/* Needs Attention + Recent Invoices + Recent Jobs */}
+    <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:16}}>
+
+      {/* Needs Attention */}
+      <div style={card}>
+        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:14}}>
+          <div style={ctitle}>Needs Attention</div>
+        </div>
+        {lowS>0&&<div onClick={()=>setTab('Inventory')} style={{background:'#fef3c7',border:'1px solid #fcd34d',borderRadius:8,padding:'8px 12px',marginBottom:8,fontSize:11,color:'#92400e',cursor:'pointer',display:'flex',justifyContent:'space-between'}}>
+          <span>⚠ {lowS} part{lowS>1?'s':''} low stock</span><span style={{fontWeight:700}}>Fix →</span>
+        </div>}
+        {overdueInvs.length===0&&lowS===0
+          ?<div style={{textAlign:'center',padding:'20px 0',color:'#94a3b8',fontSize:11}}>✓ Everything looks good</div>
+          :overdueInvs.slice(0,4).map(i=><div key={i.id} style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'8px 0',borderBottom:'1px solid #f1f5f9'}}>
+            <div style={{flex:1,minWidth:0}}>
+              <div style={{fontSize:12,fontWeight:700,color:'#1e293b',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{i.customerName||'—'}</div>
+              <div style={{fontSize:10,color:'#94a3b8'}}>Due {fmtD(i.dueDate)}</div>
+            </div>
+            <span style={{fontSize:12,fontWeight:800,color:'#dc2626',flexShrink:0,marginLeft:8}}>{fmt(i.grand)}</span>
+          </div>)
+        }
+        {overdueInvs.length>4&&<button onClick={()=>setTab('Invoices')} style={{fontSize:11,color:'#2563eb',background:'none',border:'none',cursor:'pointer',marginTop:6}}>+{overdueInvs.length-4} more overdue →</button>}
+      </div>
+
+      {/* Recent Invoices */}
+      <div style={card}>
+        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:14}}>
+          <div style={ctitle}>Recent Invoices</div>
+          <button onClick={()=>setTab('Invoices')} style={{fontSize:11,color:'#2563eb',background:'none',border:'none',cursor:'pointer',fontWeight:600}}>All →</button>
+        </div>
+        {data.invoices.length===0
+          ?<p style={{color:'#94a3b8',fontSize:11,textAlign:'center',padding:'16px 0'}}>No invoices yet</p>
+          :[...data.invoices].sort((a,b)=>(+b.invSerial||+b.id)-(+a.invSerial||+a.id)).slice(0,5).map(i=><div key={i.id} style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'8px 0',borderBottom:'1px solid #f1f5f9'}}>
+            <div style={{flex:1,minWidth:0}}>
+              <div style={{fontSize:12,fontWeight:700,color:'#1e293b',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{i.customerName||'—'}</div>
+              <div style={{fontSize:10,color:'#94a3b8'}}>{fmtD(i.date)}{i.vehicleReg?` · ${i.vehicleReg}`:''}</div>
+            </div>
+            <div style={{textAlign:'right',flexShrink:0,marginLeft:8}}>
+              <div style={{fontSize:12,fontWeight:800,color:'#0f172a'}}>{fmt(i.grand)}</div>
+              <div style={{fontSize:9,fontWeight:700,color:pC[i.paymentStatus]||'#888',textTransform:'uppercase'}}>{i.paymentStatus||'pending'}</div>
+            </div>
+          </div>)
+        }
+      </div>
+
+      {/* Recent Job Cards */}
+      <div style={card}>
+        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:14}}>
+          <div style={ctitle}>Recent Job Cards</div>
+          <button onClick={()=>setTab('Job Cards')} style={{fontSize:11,color:'#2563eb',background:'none',border:'none',cursor:'pointer',fontWeight:600}}>All →</button>
+        </div>
+        {data.jobCards.length===0
+          ?<p style={{color:'#94a3b8',fontSize:11,textAlign:'center',padding:'16px 0'}}>No job cards yet</p>
+          :data.jobCards.slice(0,5).map(j=><div key={j.id} style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'8px 0',borderBottom:'1px solid #f1f5f9'}}>
+            <div style={{flex:1,minWidth:0}}>
+              <div style={{fontSize:12,fontWeight:700,color:'#1e293b',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{j.customerName||'—'}</div>
+              <div style={{fontSize:10,color:'#94a3b8'}}>{j.vehicleReg||'no vehicle'}</div>
+            </div>
+            <div style={{textAlign:'right',flexShrink:0,marginLeft:8}}>
+              <Bdg s={j.status}/>
+            </div>
+          </div>)
+        }
       </div>
     </div>
   </div>
@@ -1436,7 +1576,13 @@ function LoginScreen(){
 }
 
 /* ─── APP SHELL ─────────────────────────────────────── */
-const NAV=[{k:'Dashboard',e:'📊'},{k:'Job Cards',e:'🔧'},{k:'Invoices',e:'🧾'},{k:'Customers',e:'👥'},{k:'Vehicles',e:'🚗'},{k:'Inventory',e:'📦'},{k:'Settings',e:'⚙️'}]
+const NAV_GROUPS=[
+  {g:'',     items:[{k:'Dashboard',e:'📊'}]},
+  {g:'WORKSHOP', items:[{k:'Job Cards',e:'🔧'},{k:'Invoices',e:'🧾'}]},
+  {g:'MANAGE',   items:[{k:'Customers',e:'👥'},{k:'Vehicles',e:'🚗'},{k:'Inventory',e:'📦'}]},
+  {g:'SYSTEM',   items:[{k:'Settings',e:'⚙️'}]},
+]
+const NAV=NAV_GROUPS.flatMap(g=>g.items)
 
 function AppShell({onLogout}){
   const db=useDB()
@@ -1445,7 +1591,7 @@ function AppShell({onLogout}){
   const[col,setCol]=useState(false)
 
   if(ready&&err)return <ErrScreen msg={err} onRetry={reload}/>
-  if(!ready)return <div style={{display:'flex',alignItems:'center',justifyContent:'center',height:'100vh',flexDirection:'column',gap:14,background:'#f1f5f9'}}>
+  if(!ready)return <div style={{display:'flex',alignItems:'center',justifyContent:'center',height:'100vh',flexDirection:'column',gap:14,background:'#f8fafc'}}>
     <div style={{width:48,height:48,border:'4px solid #e2e8f0',borderTop:'4px solid #1565c0',borderRadius:'50%',animation:'spin .8s linear infinite'}}/>
     <div style={{fontSize:15,fontWeight:800,color:'#0f172a',letterSpacing:'.2px'}}>Friends Automotive</div>
     <div style={{fontSize:12,color:'#94a3b8'}}>Loading data…</div>
@@ -1453,7 +1599,7 @@ function AppShell({onLogout}){
 
   const data={...D}
 
-  return <div style={{display:'flex',height:'100vh',overflow:'hidden',background:'#f1f5f9'}}>
+  return <div style={{display:'flex',height:'100vh',overflow:'hidden',background:'#f8fafc'}}>
     {/* SIDEBAR */}
     <div style={{width:col?56:200,background:'linear-gradient(175deg,#0c1d30,#0f3460)',flexShrink:0,display:'flex',flexDirection:'column',transition:'width .22s',overflow:'hidden',boxShadow:'2px 0 16px rgba(0,0,0,.22)'}}>
       <div style={{padding:col?'14px 10px':'14px 16px',borderBottom:'1px solid rgba(255,255,255,.07)',display:'flex',alignItems:'center',gap:10,minHeight:60}}>
@@ -1463,8 +1609,11 @@ function AppShell({onLogout}){
           <div style={{color:'rgba(255,255,255,.35)',fontSize:9.5,whiteSpace:'nowrap',letterSpacing:'.3px',textTransform:'uppercase',marginTop:1}}>Garage Management</div>
         </div>}
       </div>
-      <nav style={{flex:1,padding:'10px 6px',overflowY:'auto'}}>
-        {NAV.map(t=>{const active=tab===t.k;return<button key={t.k} onClick={()=>setTab(t.k)} title={t.k} style={{width:'100%',textAlign:'left',padding:col?'10px 0':'9px 12px',border:'none',cursor:'pointer',display:'flex',alignItems:'center',gap:9,background:active?'rgba(37,99,235,.28)':'transparent',color:active?'#93c5fd':'rgba(255,255,255,.58)',fontWeight:active?700:400,fontSize:12,justifyContent:col?'center':'flex-start',borderRadius:8,margin:'1px 0',borderLeft:active?'3px solid #60a5fa':'3px solid transparent',transition:'all .15s'}}><span style={{fontSize:16,flexShrink:0}}>{t.e}</span>{!col&&t.k}</button>})}
+      <nav style={{flex:1,padding:'8px 6px',overflowY:'auto'}}>
+        {NAV_GROUPS.map(g=><React.Fragment key={g.g||'main'}>
+          {!col&&g.g&&<div style={{padding:'12px 12px 4px',fontSize:9,color:'rgba(255,255,255,.22)',fontWeight:700,letterSpacing:'1.2px',textTransform:'uppercase',userSelect:'none'}}>{g.g}</div>}
+          {g.items.map(t=>{const active=tab===t.k;return<button key={t.k} onClick={()=>setTab(t.k)} title={t.k} style={{width:'100%',textAlign:'left',padding:col?'10px 0':'8px 12px',border:'none',cursor:'pointer',display:'flex',alignItems:'center',gap:9,background:active?'rgba(37,99,235,.3)':'transparent',color:active?'#bfdbfe':'rgba(255,255,255,.55)',fontWeight:active?700:400,fontSize:12,justifyContent:col?'center':'flex-start',borderRadius:8,margin:'1px 0',borderLeft:active?'3px solid #60a5fa':'3px solid transparent',transition:'all .15s'}}><span style={{fontSize:15,flexShrink:0}}>{t.e}</span>{!col&&t.k}</button>})}
+        </React.Fragment>)}
       </nav>
       {!col&&<div style={{padding:'10px 16px',borderTop:'1px solid rgba(255,255,255,.07)',fontSize:10,color:'rgba(255,255,255,.28)',lineHeight:2}}>
         <div>{data.customers.length} customers · {data.vehicles.length} vehicles</div>
@@ -1484,7 +1633,7 @@ function AppShell({onLogout}){
         {busy&&<span style={{fontSize:11,color:'#1565c0',fontWeight:700,background:'#eff6ff',padding:'4px 10px',borderRadius:20,border:'1px solid #bfdbfe'}}>⟳ Saving…</span>}
         <div style={{background:'#f0f9ff',color:'#0369a1',fontSize:10,padding:'5px 12px',borderRadius:20,fontWeight:700,fontFamily:'monospace',border:'1px solid #bae6fd',letterSpacing:'.5px'}}>{data.settings?.gstin}</div>
       </div>
-      <div style={{flex:1,overflowY:'auto',padding:20,background:'#f1f5f9'}}>
+      <div style={{flex:1,overflowY:'auto',padding:20,background:'#f8fafc'}}>
         {tab==='Dashboard'&&<Dashboard data={data} setTab={setTab}/>}
         {tab==='Job Cards'&&<JobCards data={data} db={db} setTab={setTab}/>}
         {tab==='Invoices'&&<Invoices data={data} db={db}/>}
