@@ -1124,7 +1124,7 @@ function JobCards({data,db,setTab}){
 function Invoices({data,db}){
   const[sub,setSub]=useState('all')
   const[showNew,setShowNew]=useState(false);const[editI,setEditI]=useState(null);const[printI,setPrintI]=useState(null)
-  const[q,setQ]=useState('');const[fType,setFType]=useState('all');const[fStatus,setFStatus]=useState('all');const[sort,setSort]=useState('serial-asc');const[fCust,setFCust]=useState('all')
+  const[q,setQ]=useState('');const[fType,setFType]=useState('all');const[fStatus,setFStatus]=useState('all');const[sort,setSort]=useState('serial-desc');const[fCust,setFCust]=useState('all')
   const TABS=[{k:'all',l:'All Invoices'},{k:'estimate',l:'Estimates'},{k:'invoice',l:'Tax Invoices'},{k:'final-invoice',l:'Final Invoices'}]
   const pC={paid:'#e8f5e9|#1b5e20',partial:'#fff3e0|#bf360c',pending:'#fff8e1|#f57f17',cancelled:'#fce4ec|#880e4f'}
   const docInfo=i=>{
