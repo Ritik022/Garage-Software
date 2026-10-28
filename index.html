@@ -458,6 +458,7 @@ function PrintDoc({inv,settings,onClose}){
   const F='Helvetica,Arial,sans-serif'
   const cell={border:'1px solid #1565c0',padding:'5px 7px',fontSize:10,verticalAlign:'top',fontFamily:F}
   const hcell={...cell,background:'#1565c0',color:'#fff',fontWeight:700}
+  const fcell={...cell,color:'#fff'}
   const ic={border:'none',padding:'6px 8px',fontFamily:F,fontSize:10,verticalAlign:'middle'}
   const emptyRows=Math.max(0,5-lines.length)
   const totalQty=lines.reduce((a,it)=>a+(+it.qty||0),0)
@@ -587,13 +588,13 @@ function PrintDoc({inv,settings,onClose}){
       <tfoot>
         <tr style={{background:'#0d1a30'}}>
           <td colSpan={4} style={{...hcell,textAlign:'right',background:'#1565c0'}}>TOTALS</td>
-          <td style={cell}></td>
-          <td style={{...cell,textAlign:'center',fontWeight:700}}>{totalQty}</td>
-          <td style={cell}></td>
-          <td style={{...cell,textAlign:'right',fontWeight:700}}>₹{totalPreDisc.toFixed(2)}</td>
-          <td style={{...cell,textAlign:'right',fontWeight:700}}>₹{itemDiscountTotal.toFixed(2)}</td>
-          {isIGST?<td style={{...cell,textAlign:'right',fontWeight:700}}>₹{gt.toFixed(2)}</td>:<React.Fragment><td style={{...cell,textAlign:'right',fontWeight:700}}>₹{(gt/2).toFixed(2)}</td><td style={{...cell,textAlign:'right',fontWeight:700}}>₹{(gt/2).toFixed(2)}</td></React.Fragment>}
-          <td style={{...cell,textAlign:'right',fontWeight:800,color:'#1565c0'}}>₹{sub.toFixed(2)}</td>
+          <td style={fcell}></td>
+          <td style={{...fcell,textAlign:'center',fontWeight:700}}>{totalQty}</td>
+          <td style={fcell}></td>
+          <td style={{...fcell,textAlign:'right',fontWeight:700}}>₹{totalPreDisc.toFixed(2)}</td>
+          <td style={{...fcell,textAlign:'right',fontWeight:700}}>₹{itemDiscountTotal.toFixed(2)}</td>
+          {isIGST?<td style={{...fcell,textAlign:'right',fontWeight:700}}>₹{gt.toFixed(2)}</td>:<React.Fragment><td style={{...fcell,textAlign:'right',fontWeight:700}}>₹{(gt/2).toFixed(2)}</td><td style={{...fcell,textAlign:'right',fontWeight:700}}>₹{(gt/2).toFixed(2)}</td></React.Fragment>}
+          <td style={{...fcell,textAlign:'right',fontWeight:800}}>₹{sub.toFixed(2)}</td>
         </tr>
       </tfoot>
     </table>
