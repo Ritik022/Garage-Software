@@ -22,7 +22,7 @@ input,select,textarea{padding:8px 11px;border:1px solid #252d3d;border-radius:8p
 input:focus,select:focus,textarea:focus{border-color:#2453c7;box-shadow:0 0 0 3px rgba(36,83,199,.12)}
 table{border-collapse:collapse;width:100%}
 tbody tr:hover td{background:#1e2235!important}
-#pd-print tbody tr:hover td{background:transparent!important}
+#pd tbody tr:hover td,#pd-print tbody tr:hover td{background:transparent!important}
 .inv-form input,.inv-form select,.inv-form textarea{background:#fff!important;color:#111!important;border-color:#d0d7de!important}
 .inv-form input:focus,.inv-form select:focus,.inv-form textarea:focus{border-color:#4f63d2!important;box-shadow:0 0 0 3px rgba(79,99,210,.15)!important}
 .inv-form .fi-sep{border-top-color:#e8ecef!important}
@@ -393,7 +393,7 @@ function TotCell({tot,id,updTot,ii,itd}){
 }
 
 /* ─── LINE ITEM EDITOR ──────────────────────────────── */
-function LineEd({items,setItems,parts,gstType}){
+function LineEd({items,setItems,parts,gstType,light}){
   const add=svc=>setItems(p=>[...p,{id:Date.now()+Math.random(),name:'',qty:1,rate:0,gst:18,discount:0,hsnSac:'',isService:svc}])
   const upd=(id,k,v)=>setItems(p=>p.map(x=>x.id===id?{...x,[k]:v}:x))
   const updTot=(id,tot)=>setItems(p=>p.map(x=>{
@@ -439,11 +439,11 @@ function LineEd({items,setItems,parts,gstType}){
         </tr>)}</tbody>
       </table>
     </div>}
-    {items.length===0&&<div style={{textAlign:'center',padding:20,color:'#636b82',fontSize:12,border:'1px dashed #252d3d',borderRadius:8}}>No items yet. Add a part or labour above.</div>}
+    {items.length===0&&<div style={{textAlign:'center',padding:20,color:'#636b82',fontSize:12,border:light?'1px dashed #d0d7de':'1px dashed #252d3d',borderRadius:8}}>No items yet. Add a part or labour above.</div>}
     <div style={{display:'flex',justifyContent:'flex-end',marginTop:12}}>
       <div style={{width:280,fontSize:12}}>
-        {(gstType==='igst'?[['Subtotal (taxable)',sub],['IGST',gt],['Total GST',gt]]:[['Subtotal (taxable)',sub],['CGST',gt/2],['SGST',gt/2],['Total GST',gt]]).map(([l,v])=><div key={l} style={{display:'flex',justifyContent:'space-between',padding:'5px 0',borderBottom:'1px solid #1e2235'}}><span style={{color:'#818aa0'}}>{l}</span><span>{fmt(v)}</span></div>)}
-        <div style={{display:'flex',justifyContent:'space-between',padding:'8px 0',fontWeight:700,fontSize:17,color:'#e8eaf2'}}><span>Grand Total</span><span>{fmt(grand)}</span></div>
+        {(gstType==='igst'?[['Subtotal (taxable)',sub],['IGST',gt],['Total GST',gt]]:[['Subtotal (taxable)',sub],['CGST',gt/2],['SGST',gt/2],['Total GST',gt]]).map(([l,v])=><div key={l} style={{display:'flex',justifyContent:'space-between',padding:'5px 0',borderBottom:light?'1px solid #e8ecef':'1px solid #1e2235'}}><span style={{color:light?'#6b7280':'#818aa0'}}>{l}</span><span style={{color:light?'#111':'inherit'}}>{fmt(v)}</span></div>)}
+        <div style={{display:'flex',justifyContent:'space-between',padding:'8px 0',fontWeight:700,fontSize:17,color:light?'#1a1a2e':'#e8eaf2'}}><span>Grand Total</span><span>{fmt(grand)}</span></div>
       </div>
     </div>
   </div>
@@ -458,6 +458,7 @@ function PrintDoc({inv,settings,onClose}){
   const F='Helvetica,Arial,sans-serif'
   const cell={border:'1px solid #1565c0',padding:'5px 7px',fontSize:10,verticalAlign:'top',fontFamily:F}
   const hcell={...cell,background:'#1565c0',color:'#fff',fontWeight:700}
+  const fcell={...cell,color:'#e8eaf2'}
   const ic={border:'none',padding:'6px 8px',fontFamily:F,fontSize:10,verticalAlign:'middle'}
   const emptyRows=Math.max(0,5-lines.length)
   const totalQty=lines.reduce((a,it)=>a+(+it.qty||0),0)
@@ -587,13 +588,13 @@ function PrintDoc({inv,settings,onClose}){
       <tfoot>
         <tr style={{background:'#0d1a30'}}>
           <td colSpan={4} style={{...hcell,textAlign:'right',background:'#1565c0'}}>TOTALS</td>
-          <td style={cell}></td>
-          <td style={{...cell,textAlign:'center',fontWeight:700}}>{totalQty}</td>
-          <td style={cell}></td>
-          <td style={{...cell,textAlign:'right',fontWeight:700}}>₹{totalPreDisc.toFixed(2)}</td>
-          <td style={{...cell,textAlign:'right',fontWeight:700}}>₹{itemDiscountTotal.toFixed(2)}</td>
-          {isIGST?<td style={{...cell,textAlign:'right',fontWeight:700}}>₹{gt.toFixed(2)}</td>:<React.Fragment><td style={{...cell,textAlign:'right',fontWeight:700}}>₹{(gt/2).toFixed(2)}</td><td style={{...cell,textAlign:'right',fontWeight:700}}>₹{(gt/2).toFixed(2)}</td></React.Fragment>}
-          <td style={{...cell,textAlign:'right',fontWeight:800,color:'#1565c0'}}>₹{sub.toFixed(2)}</td>
+          <td style={fcell}></td>
+          <td style={{...fcell,textAlign:'center',fontWeight:700}}>{totalQty}</td>
+          <td style={fcell}></td>
+          <td style={{...fcell,textAlign:'right',fontWeight:700}}>₹{totalPreDisc.toFixed(2)}</td>
+          <td style={{...fcell,textAlign:'right',fontWeight:700}}>₹{itemDiscountTotal.toFixed(2)}</td>
+          {isIGST?<td style={{...fcell,textAlign:'right',fontWeight:700}}>₹{gt.toFixed(2)}</td>:<React.Fragment><td style={{...fcell,textAlign:'right',fontWeight:700}}>₹{(gt/2).toFixed(2)}</td><td style={{...fcell,textAlign:'right',fontWeight:700}}>₹{(gt/2).toFixed(2)}</td></React.Fragment>}
+          <td style={{...fcell,textAlign:'right',fontWeight:800,color:'#93c5fd'}}>₹{sub.toFixed(2)}</td>
         </tr>
       </tfoot>
     </table>
@@ -645,7 +646,7 @@ function PrintDoc({inv,settings,onClose}){
 }
 
 /* ─── INVOICE EDITOR (all fields editable) ──────────── */
-function InvEditor({initial,data,onSave,onClose}){
+function InvEditor({initial,data,onSave,onClose,light}){
   const blank={type:'invoice',gstType:'cgst_sgst',date:today(),dueDate:'',jobCardId:'',customerId:'',vehicleId:'',customerName:'',companyName:'',customerPhone:'',customerAddress:'',customerGstin:'',customerEmail:'',vehicleReg:'',vehicleDetails:'',odometer:'',vinNo:'',engineNo:'',vehicleColor:'',vehicleFuel:'',items:[],notes:'',termsConditions:'',paymentStatus:'pending',paymentMethod:'',amountPaid:0,additionalDiscount:0,adjustment:0}
   const[form,setForm]=useState(initial?{...blank,...initial}:blank)
   const[items,setItems]=useState(initial?.items||[])
@@ -747,13 +748,13 @@ function InvEditor({initial,data,onSave,onClose}){
       </FR>
     </div>
     <div style={sec}><div style={stl}>📋 Parts &amp; Labour Items</div>
-      <LineEd items={items} setItems={setItems} parts={data.parts} gstType={form.gstType}/>
+      <LineEd items={items} setItems={setItems} parts={data.parts} gstType={form.gstType} light={light}/>
     </div>
     <div style={sec}><div style={stl}>💰 Adjustments &amp; Totals</div>
       <FR>
         <F label="Additional Discount (₹)" third><In type="number" value={form.additionalDiscount||0} onChange={e=>f('additionalDiscount',+e.target.value)} min={0}/></F>
         <F label="Adjustment ± (₹)" third><In type="number" value={form.adjustment||0} onChange={e=>f('adjustment',+e.target.value)}/></F>
-        <F label="Final Grand Total (preview)" third><div style={{padding:'8px 11px',background:'#162040',borderRadius:8,fontWeight:700,fontSize:15,color:'#6875f5'}}>{fmt(finalTotal)}</div></F>
+        <F label="Final Grand Total (preview)" third><div style={{padding:'8px 11px',background:light?'#f0f4ff':'#162040',border:light?'1px solid #c7d2fe':'none',borderRadius:8,fontWeight:700,fontSize:15,color:light?'#3730a3':'#6875f5'}}>{fmt(finalTotal)}</div></F>
       </FR>
     </div>
     <div style={sec}><div style={stl}>💳 Payment</div>
@@ -1481,8 +1482,8 @@ function Invoices({data,db}){
     })}</tbody></table>
     </div>
     {list.length===0&&<p style={{textAlign:'center',color:'#818aa0',padding:36}}>No records found. {sub!=='all'&&<button onClick={()=>setShowNew(true)} style={{color:'#6875f5',background:'none',border:'none',cursor:'pointer',textDecoration:'underline'}}>Create one →</button>}</p>}
-    {showNew&&<Modal title="New Invoice / Estimate" onClose={()=>setShowNew(false)} wide light><div className="inv-form"><InvEditor data={data} onSave={async f=>{await db.saveInvoice(f);setShowNew(false)}} onClose={()=>setShowNew(false)}/></div></Modal>}
-    {editI&&<Modal title={'Edit — '+buildInvNo(data.settings||DEF,editI)} onClose={()=>setEditI(null)} wide light><div className="inv-form"><InvEditor initial={editI} data={data} onSave={async f=>{await db.saveInvoice(f);setEditI(null)}} onClose={()=>setEditI(null)}/></div></Modal>}
+    {showNew&&<Modal title="New Invoice / Estimate" onClose={()=>setShowNew(false)} wide light><div className="inv-form"><InvEditor data={data} onSave={async f=>{await db.saveInvoice(f);setShowNew(false)}} onClose={()=>setShowNew(false)} light={true}/></div></Modal>}
+    {editI&&<Modal title={'Edit — '+buildInvNo(data.settings||DEF,editI)} onClose={()=>setEditI(null)} wide light><div className="inv-form"><InvEditor initial={editI} data={data} onSave={async f=>{await db.saveInvoice(f);setEditI(null)}} onClose={()=>setEditI(null)} light={true}/></div></Modal>}
     {printI&&<Modal title="Invoice Preview" onClose={()=>setPrintI(null)} wide><PrintDoc inv={printI} settings={data.D?.settings||data.settings} onClose={()=>setPrintI(null)}/></Modal>}
   </div>
 }
