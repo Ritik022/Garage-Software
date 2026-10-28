@@ -12,16 +12,28 @@
 <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
 <script src="https://unpkg.com/@babel/standalone@7.21.4/babel.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 html,body,#root{height:100%}
-body{font-family:'Manrope',system-ui,-apple-system,'Segoe UI',sans-serif;font-size:14px;background:#0d0f14;color:#e8eaf2;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
+body{font-family:'Manrope',system-ui,-apple-system,'Segoe UI',sans-serif;font-size:14px;background:#111114;color:#e8eaf2;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
 input,select,textarea,button{font-family:'Manrope',system-ui,-apple-system,'Segoe UI',sans-serif;font-size:13px}
 input,select,textarea{padding:8px 11px;border:1px solid #252d3d;border-radius:8px;background:#1a1d27;color:#e8eaf2;outline:none;width:100%;transition:border-color .15s,box-shadow .15s}
 input:focus,select:focus,textarea:focus{border-color:#2453c7;box-shadow:0 0 0 3px rgba(36,83,199,.12)}
 table{border-collapse:collapse;width:100%}
 tbody tr:hover td{background:#1e2235!important}
-::-webkit-scrollbar{width:5px;height:5px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:#3a4260;border-radius:3px}
+#pd-print tbody tr:hover td{background:transparent!important}
+.inv-form input,.inv-form select,.inv-form textarea{background:#fff!important;color:#111!important;border-color:#d0d7de!important}
+.inv-form input:focus,.inv-form select:focus,.inv-form textarea:focus{border-color:#4f63d2!important;box-shadow:0 0 0 3px rgba(79,99,210,.15)!important}
+.inv-form .fi-sep{border-top-color:#e8ecef!important}
+.inv-form label,.inv-form .f-label{color:#555!important}
+.inv-form table{background:#fff!important}
+.inv-form th{background:#f6f8fa!important;color:#555!important;border-bottom-color:#d0d7de!important;border-top-color:#d0d7de!important}
+.inv-form td{background:#fff!important;color:#111!important;border-bottom-color:#eef0f3!important}
+.inv-form tbody tr{background:#fff!important}
+.inv-form tbody tr:hover td{background:#f8f9fa!important}
+.inv-form tbody tr:hover{background:#f8f9fa!important}
+::-webkit-scrollbar{width:5px;height:5px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:#3a3a55;border-radius:3px}
 @keyframes spin{to{transform:rotate(360deg)}}
 @keyframes fadein{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
 @media print{.np{display:none!important}body{background:#fff}body.printing>*:not(#pd-print){display:none!important}#pd-print{display:block!important;margin:0;padding:0}*{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}}@page{size:A4;margin:8mm}
@@ -319,21 +331,21 @@ function useDB(){
 }
 
 /* ─── UI PRIMITIVES ─────────────────────────────────── */
-const BM={draft:"#e5ecfb|#2453c7",open:"#fbeed6|#8f5300","in-progress":"#e0f1e6|#1b6e44",completed:"#e5ecfb|#2453c7",delivered:"#e0f1e6|#1b6e44",cancelled:"#fbe6e4|#b02e2b",pending:"#fbeed6|#8f5300",paid:"#e0f1e6|#1b6e44",partial:"#fbeed6|#8f5300",normal:"#eceef2|#4a5263",high:"#fbeed6|#8f5300",urgent:"#fbe6e4|#b02e2b",individual:"#e5ecfb|#2453c7",corporate:"#e0f1e6|#1b6e44",fleet:"#f0ebf8|#6d3db7",petrol:"#e5ecfb|#2453c7",diesel:"#fbe6e4|#b02e2b",cng:"#e0f1e6|#1b6e44",electric:"#e0f1e6|#1b6e44",hybrid:"#e0f1e6|#1b6e44",spare:"#e5ecfb|#2453c7",consumable:"#e0f1e6|#1b6e44",lubricant:"#fbeed6|#8f5300",tyre:"#f0ebf8|#6d3db7",electrical:"#fbeed6|#8f5300",body:"#e0f1e6|#1b6e44",accessory:"#e0f1e6|#1b6e44",other:"#eceef2|#5c6576"}
+const BM={draft:"#0d1a30|#6875f5",open:"#1e1000|#fb923c","in-progress":"#0a1f0d|#4ade80",completed:"#0a2010|#4ade80",delivered:"#0a2010|#22c55e",cancelled:"#2a0a10|#f87171",pending:"#1c1500|#fbbf24",paid:"#0a1f0d|#4ade80",partial:"#1a1200|#fb923c",normal:"#1e1e28|#9daabb",high:"#1e1000|#fb923c",urgent:"#2a0a10|#f87171",individual:"#0d1a30|#6875f5",corporate:"#0a1f0d|#4ade80",fleet:"#1a0f2a|#a78bfa",petrol:"#0d1a30|#6875f5",diesel:"#2a0a10|#f87171",cng:"#0a1f0d|#4ade80",electric:"#0a1f0d|#22c55e",hybrid:"#0a1f0d|#34d399",spare:"#0d1a30|#6875f5",consumable:"#0a1f0d|#4ade80",lubricant:"#1c1500|#fbbf24",tyre:"#1a0f2a|#a78bfa",electrical:"#1e1000|#fb923c",body:"#0a1f0d|#4ade80",accessory:"#0d2020|#2dd4bf",other:"#1e1e28|#818aa0"}
 const Bdg=({s})=>{const c=BM[s]||'#eceef2|#5c6576';const[bg,fg]=c.split('|');return<span style={{display:'inline-flex',alignItems:'center',gap:5,height:22,padding:'0 9px',borderRadius:99,background:bg,color:fg,fontSize:11,fontWeight:700,whiteSpace:'nowrap'}}><span style={{width:6,height:6,borderRadius:'50%',background:fg,flexShrink:0,opacity:.8}}/>{(s||'').replace(/-/g,' ')}</span>}
 
 const IS={width:'100%',boxSizing:'border-box',padding:'8px 11px',border:'1px solid #252d3d',borderRadius:8,fontSize:13,fontFamily:"'Manrope',system-ui,sans-serif",background:'#1a1d27',color:'#e8eaf2',transition:'border-color .15s,box-shadow .15s'}
 const TH={padding:'10px 16px',textAlign:'left',fontWeight:600,fontSize:12,borderBottom:'1px solid #1e2235',background:'#0f1117',color:'#818aa0',letterSpacing:'.04em',textTransform:'uppercase',whiteSpace:'nowrap'}
 const TD={padding:'12px 16px',fontSize:13.5,borderBottom:'1px solid #1e2235',verticalAlign:'middle',color:'#e8eaf2'}
 
-function Modal({title,onClose,wide,children}){
-  return <div className="np" style={{position:'fixed',inset:0,background:'rgba(0,0,0,.42)',zIndex:999,display:'flex',alignItems:'flex-start',justifyContent:'center',overflowY:'auto',padding:'28px 14px',backdropFilter:'blur(4px)'}}>
-    <div style={{background:'#1a1d27',borderRadius:14,width:wide?960:640,maxWidth:'99vw',boxShadow:'0 0 0 1px #1e2235,0 24px 56px -12px rgba(16,24,40,.28)',animation:'fadein .18s ease',display:'flex',flexDirection:'column',maxHeight:'92vh'}}>
-      <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'16px 24px',borderBottom:'1px solid #1e2235',flexShrink:0,background:'#0d0f14',borderRadius:'14px 14px 0 0'}}>
-        <strong style={{fontSize:14.5,color:'#e8eaf2',fontWeight:700,letterSpacing:'-.01em'}}>{title}</strong>
-        <button onClick={onClose} style={{border:'none',background:'#1e2235',cursor:'pointer',fontSize:18,color:'#636b82',width:28,height:28,borderRadius:7,display:'flex',alignItems:'center',justifyContent:'center',lineHeight:1,fontWeight:400}}>×</button>
+function Modal({title,onClose,wide,light,children}){
+  return <div className="np" style={{position:'fixed',inset:0,background:'rgba(0,0,0,.55)',zIndex:999,display:'flex',alignItems:'flex-start',justifyContent:'center',overflowY:'auto',padding:'28px 14px',backdropFilter:'blur(4px)'}}>
+    <div style={{background:light?'#ffffff':'#1a1d27',borderRadius:14,width:wide?960:640,maxWidth:'99vw',boxShadow:'0 0 0 1px '+(light?'#d0d7de':'#1e2235')+',0 24px 56px -12px rgba(0,0,0,.45)',animation:'fadein .18s ease',display:'flex',flexDirection:'column',maxHeight:'92vh'}}>
+      <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'16px 24px',borderBottom:'1px solid '+(light?'#e8ecef':'#1e2235'),flexShrink:0,background:light?'#f6f8fa':'#0f0f14',borderRadius:'14px 14px 0 0'}}>
+        <strong style={{fontSize:14.5,color:light?'#1a1a2e':'#e8eaf2',fontWeight:700,letterSpacing:'-.01em'}}>{title}</strong>
+        <button onClick={onClose} style={{border:'none',background:light?'#e8ecef':'#1e2235',cursor:'pointer',fontSize:18,color:light?'#4a5263':'#636b82',width:28,height:28,borderRadius:7,display:'flex',alignItems:'center',justifyContent:'center',lineHeight:1,fontWeight:400}}>×</button>
       </div>
-      <div style={{padding:24,overflowY:'auto',flex:1}}>{children}</div>
+      <div style={{padding:24,overflowY:'auto',flex:1,background:light?'#ffffff':'transparent'}}>{children}</div>
     </div>
   </div>
 }
@@ -397,19 +409,19 @@ function LineEd({items,setItems,parts,gstType}){
     upd(id,'name',name)
   }
   const{lines,sub,gt,grand}=calcItems(items)
-  const ith={padding:'8px 6px',textAlign:'left',fontWeight:600,fontSize:11,background:'#0d0f14',borderBottom:'1px solid #1e2235',color:'#818aa0',whiteSpace:'nowrap'}
+  const ith={padding:'8px 6px',textAlign:'left',fontWeight:600,fontSize:11,background:'#0f0f14',borderBottom:'1px solid #1e2235',color:'#818aa0',whiteSpace:'nowrap'}
   const itd={padding:'5px 5px',fontSize:12,borderBottom:'1px solid #1e2235',verticalAlign:'middle'}
   const ii={padding:'4px 7px',border:'1px solid #252d3d',borderRadius:6,fontSize:12,fontFamily:"'Manrope',sans-serif",background:'#1a1d27',outline:'none'}
   return <div>
     <div style={{display:'flex',gap:8,marginBottom:10}}>
       <button onClick={()=>add(false)} style={{padding:'6px 14px',background:'#162040',color:'#6875f5',border:'1px solid #2a3d80',borderRadius:7,cursor:'pointer',fontSize:12,fontWeight:600}}>+ Add Part</button>
-      <button onClick={()=>add(true)} style={{padding:'6px 14px',background:'#e0f1e6',color:'#1b6e44',border:'1px solid #b3dfc0',borderRadius:7,cursor:'pointer',fontSize:12,fontWeight:600}}>+ Add Labour / Service</button>
+      <button onClick={()=>add(true)} style={{padding:'6px 14px',background:'#0a1f0d',color:'#4ade80',border:'1px solid #1a5c2a',borderRadius:7,cursor:'pointer',fontSize:12,fontWeight:600}}>+ Add Labour / Service</button>
     </div>
     {items.length>0&&<div style={{overflowX:'auto',marginBottom:8}}>
       <table style={{minWidth:740,borderCollapse:'collapse',width:'100%'}}>
         <thead><tr>{['#','Description','HSN/SAC','Qty','Rate (₹)','Disc %','GST %','Taxable','CGST','SGST','Total (₹) ↕',''].map((h,i)=><th key={i} style={ith}>{h}</th>)}</tr></thead>
         <tbody>{lines.map((it,i)=><tr key={it.id} style={{background:it.isService?'#131d15':'#1a1d27'}}>
-          <td style={{...itd,color:'#aaa',width:22,textAlign:'center'}}>{i+1}</td>
+          <td style={{...itd,color:'#636b82',width:22,textAlign:'center'}}>{i+1}</td>
           <td style={{...itd,minWidth:160}}>
             <input list={`dl${it.id}`} value={it.name} onChange={e=>fill(it.id,e.target.value)} placeholder={it.isService?'Service name':'Part name'} style={{...ii,width:'100%',minWidth:140}}/>
             <datalist id={`dl${it.id}`}>{(it.isService?SERVICES.map(s=>({n:s.n})):[...parts.map(p=>({n:p.name})),...SERVICES]).map(p=><option key={p.n} value={p.n}/>)}</datalist>
@@ -419,18 +431,18 @@ function LineEd({items,setItems,parts,gstType}){
           <td style={itd}><NumInput value={it.rate} onChange={e=>upd(it.id,'rate',e.target.value)} min={0} style={{...ii,width:76}}/></td>
           <td style={itd}><NumInput value={it.discount||0} onChange={e=>upd(it.id,'discount',e.target.value)} min={0} max={100} style={{...ii,width:44}}/></td>
           <td style={itd}><select value={it.gst} onChange={e=>upd(it.id,'gst',+e.target.value)} style={{...ii,width:56}}>{[0,5,12,18,28].map(r=><option key={r} value={r}>{r}%</option>)}</select></td>
-          <td style={{...itd,textAlign:'right',color:'#555'}}>{fmt(it.tax)}</td>
-          <td style={{...itd,textAlign:'right',color:'#388e3c'}}>{fmt(it.ga/2)}</td>
-          <td style={{...itd,textAlign:'right',color:'#388e3c'}}>{fmt(it.ga/2)}</td>
+          <td style={{...itd,textAlign:'right',color:'#818aa0'}}>{fmt(it.tax)}</td>
+          <td style={{...itd,textAlign:'right',color:'#4ade80'}}>{fmt(it.ga/2)}</td>
+          <td style={{...itd,textAlign:'right',color:'#4ade80'}}>{fmt(it.ga/2)}</td>
           <TotCell tot={it.tot} id={it.id} updTot={updTot} ii={ii} itd={itd}/>
           <td style={itd}><button onClick={()=>setItems(p=>p.filter(x=>x.id!==it.id))} style={{border:'none',background:'none',color:'#e53935',cursor:'pointer',fontSize:18,padding:'0 4px'}}>×</button></td>
         </tr>)}</tbody>
       </table>
     </div>}
-    {items.length===0&&<div style={{textAlign:'center',padding:20,color:'#aaa',fontSize:12,border:'1px dashed #d0d7de',borderRadius:8}}>No items yet. Add a part or labour above.</div>}
+    {items.length===0&&<div style={{textAlign:'center',padding:20,color:'#636b82',fontSize:12,border:'1px dashed #252d3d',borderRadius:8}}>No items yet. Add a part or labour above.</div>}
     <div style={{display:'flex',justifyContent:'flex-end',marginTop:12}}>
       <div style={{width:280,fontSize:12}}>
-        {(gstType==='igst'?[['Subtotal (taxable)',sub],['IGST',gt],['Total GST',gt]]:[['Subtotal (taxable)',sub],['CGST',gt/2],['SGST',gt/2],['Total GST',gt]]).map(([l,v])=><div key={l} style={{display:'flex',justifyContent:'space-between',padding:'5px 0',borderBottom:'1px solid #f0f0f0'}}><span style={{color:'#888'}}>{l}</span><span>{fmt(v)}</span></div>)}
+        {(gstType==='igst'?[['Subtotal (taxable)',sub],['IGST',gt],['Total GST',gt]]:[['Subtotal (taxable)',sub],['CGST',gt/2],['SGST',gt/2],['Total GST',gt]]).map(([l,v])=><div key={l} style={{display:'flex',justifyContent:'space-between',padding:'5px 0',borderBottom:'1px solid #1e2235'}}><span style={{color:'#818aa0'}}>{l}</span><span>{fmt(v)}</span></div>)}
         <div style={{display:'flex',justifyContent:'space-between',padding:'8px 0',fontWeight:700,fontSize:17,color:'#e8eaf2'}}><span>Grand Total</span><span>{fmt(grand)}</span></div>
       </div>
     </div>
@@ -500,7 +512,7 @@ function PrintDoc({inv,settings,onClose}){
           <div style={{marginTop:2}}>Date: <b>{fmtD(inv.date)}</b></div>
           {settings.upiId&&<div style={{marginTop:6,display:'flex',flexDirection:'column',alignItems:'flex-end',gap:2}}>
             <img src={`https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=${encodeURIComponent(`upi://pay?pa=${settings.upiId||'9654483936@ybl'}&pn=${settings.shopName||'Friends Automotive'}&am=${Number(fg||0).toFixed(2)}&cu=INR`)}`} alt="UPI QR" style={{width:120,height:120}}/>
-            <div style={{fontSize:8,color:'#888'}}>Scan to Pay via UPI</div>
+            <div style={{fontSize:8,color:'#818aa0'}}>Scan to Pay via UPI</div>
           </div>}
         </td>
       </tr></tbody>
@@ -560,7 +572,7 @@ function PrintDoc({inv,settings,onClose}){
         {lines.map((it,i)=><tr key={it.id} style={{background:i%2?'#f9f9f9':'#fff'}}>
           <td style={{...cell,textAlign:'center',width:22}}>{i+1}</td>
           <td style={{...cell,fontWeight:600}}>{it.name}</td>
-          <td style={{...cell,textAlign:'center',color:'#555'}}>{it.isService?'Labour':'Part'}</td>
+          <td style={{...cell,textAlign:'center',color:'#818aa0'}}>{it.isService?'Labour':'Part'}</td>
           <td style={{...cell,textAlign:'center'}}>{it.hsnSac}</td>
           <td style={{...cell,textAlign:'center'}}>{it.gst}%</td>
           <td style={{...cell,textAlign:'center'}}>{it.qty}</td>
@@ -691,16 +703,16 @@ function InvEditor({initial,data,onSave,onClose}){
       await onSave({...form,jobCardId:ni(form.jobCardId),customerId:ni(form.customerId),vehicleId:ni(form.vehicleId),odometer:ni(form.odometer),items,subtotal:s,gstTot:g,cgstTot:cg,sgstTot:sg,grand:fg})
     }catch(e){alert('Error saving invoice: '+e.message);setSaving(false)}
   }
-  const sec={border:'1px solid #1e2235',borderRadius:10,padding:16,marginBottom:16,background:'#1a1d27'}
-  const stl={fontSize:12,fontWeight:700,color:'#e8eaf2',marginBottom:12,paddingBottom:8,borderBottom:'1px solid #1e2235'}
+  const sec={border:'1px solid #e2e6ed',borderRadius:10,padding:16,marginBottom:16,background:'#f8f9fb'}
+  const stl={fontSize:12,fontWeight:700,color:'#374151',marginBottom:12,paddingBottom:8,borderBottom:'1px solid #e2e6ed'}
   return <div>
-    <div style={{background:'#162040',border:'1px solid #2a3d80',borderRadius:10,padding:'11px 16px',marginBottom:16,display:'flex',alignItems:'center',gap:12,flexWrap:'wrap'}}>
+    <div style={{background:'#eef2ff',border:'1px solid #c7d2fe',borderRadius:10,padding:'11px 16px',marginBottom:16,display:'flex',alignItems:'center',gap:12,flexWrap:'wrap'}}>
       <div style={{flex:1,minWidth:180}}>
-        <div style={{fontWeight:700,fontSize:13,color:'#e8eaf2',marginBottom:2}}>🤖 AI Auto-Fill from PDF</div>
-        <div style={{fontSize:12,color:'#636b82'}}>Upload any invoice or document — Claude AI will extract and fill in all fields automatically.</div>
+        <div style={{fontWeight:700,fontSize:13,color:'#3730a3',marginBottom:2}}>🤖 AI Auto-Fill from PDF</div>
+        <div style={{fontSize:12,color:'#6b7280'}}>Upload any invoice or document — Claude AI will extract and fill in all fields automatically.</div>
       </div>
       <input ref={pdfRef} type="file" accept=".pdf" style={{display:'none'}} onChange={e=>{if(e.target.files[0])importFromPDF(e.target.files[0]);e.target.value=''}}/>
-      <PBtn onClick={()=>pdfRef.current?.click()} col={aiLoading?'#5c6576':'#1b6e44'} style={{whiteSpace:'nowrap'}}>{aiLoading?'⏳ AI Processing…':'📎 Import from PDF'}</PBtn>
+      <PBtn onClick={()=>pdfRef.current?.click()} col={aiLoading?'#9ca3af':'#4f63d2'} style={{whiteSpace:'nowrap'}}>{aiLoading?'⏳ AI Processing…':'📎 Import from PDF'}</PBtn>
     </div>
     <div style={sec}><div style={stl}>📄 Document Type &amp; Dates</div>
       <FR>
@@ -783,7 +795,6 @@ function Dashboard({data,setTab}){
   const overdueInvs=data.invoices.filter(i=>i.paymentStatus==='pending'&&i.dueDate&&i.dueDate<todayStr)
   const lowS=data.parts.filter(p=>(+p.qty||0)<=(+p.minQty||2)).length
 
-  // Last 6 months revenue chart data
   const months=[]
   for(let i=5;i>=0;i--){
     const d=new Date(now.getFullYear(),now.getMonth()-i,1)
@@ -794,16 +805,63 @@ function Dashboard({data,setTab}){
       +data.invoices.filter(inv=>inv.date?.startsWith(key)&&inv.paymentStatus==='partial').reduce((s,inv)=>s+(+inv.amountPaid||0),0)
     months.push({key,label,rev,col})
   }
-  const maxRev=Math.max(...months.map(m=>m.rev),1)
 
-  // Top customers by revenue
   const custMap={}
   active.forEach(i=>{if(i.customerName)custMap[i.customerName]=(custMap[i.customerName]||0)+(+i.grand||0)})
   const topCusts=Object.entries(custMap).sort((a,b)=>b[1]-a[1]).slice(0,5)
 
+  const paidC=active.filter(i=>i.paymentStatus==='paid').length
+  const partC=active.filter(i=>i.paymentStatus==='partial').length
+  const pendC=active.filter(i=>i.paymentStatus==='pending').length
+
+  // Chart.js refs
+  const revRef=useRef(null);const revInst=useRef(null)
+  const donutRef=useRef(null);const donutInst=useRef(null)
+
+  useEffect(()=>{
+    if(!revRef.current||typeof Chart==='undefined') return
+    if(revInst.current) revInst.current.destroy()
+    revInst.current=new Chart(revRef.current,{
+      type:'bar',
+      data:{
+        labels:months.map(x=>x.label),
+        datasets:[
+          {label:'Billed',data:months.map(x=>x.rev),backgroundColor:'rgba(104,117,245,.18)',borderColor:'#6875f5',borderWidth:2,borderRadius:5,borderSkipped:false},
+          {label:'Collected',data:months.map(x=>x.col),backgroundColor:months.map((_,i)=>['#4ade80','#6875f5','#fb923c','#fbbf24','#a78bfa','#38bdf8'][i%6]),borderWidth:0,borderRadius:5,borderSkipped:false}
+        ]
+      },
+      options:{
+        responsive:true,maintainAspectRatio:false,
+        plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>`${c.dataset.label}: ₹${(c.raw||0).toLocaleString('en-IN')}`},backgroundColor:'#1a1d27',borderColor:'#2a2a34',borderWidth:1,titleColor:'#e8eaf2',bodyColor:'#818aa0'}},
+        scales:{
+          x:{grid:{color:'rgba(255,255,255,.04)'},ticks:{color:'#818aa0',font:{size:11,family:'Manrope'}}},
+          y:{grid:{color:'rgba(255,255,255,.04)'},border:{dash:[4,4]},ticks:{color:'#818aa0',font:{size:11},callback:v=>v>=1000?'₹'+(v/1000).toFixed(0)+'k':'₹'+v}}
+        }
+      }
+    })
+    return ()=>{if(revInst.current)revInst.current.destroy()}
+  },[months.map(x=>x.rev+x.col).join(',')])
+
+  useEffect(()=>{
+    if(!donutRef.current||typeof Chart==='undefined') return
+    if(donutInst.current) donutInst.current.destroy()
+    donutInst.current=new Chart(donutRef.current,{
+      type:'doughnut',
+      data:{
+        labels:['Paid','Partial','Pending'],
+        datasets:[{data:[paidC,partC,pendC],backgroundColor:['#4ade80','#fb923c','#fbbf24'],borderColor:'#111114',borderWidth:3,hoverOffset:8}]
+      },
+      options:{
+        responsive:true,maintainAspectRatio:false,cutout:'70%',
+        plugins:{legend:{position:'bottom',labels:{color:'#818aa0',font:{size:11,family:'Manrope'},padding:12,usePointStyle:true,pointStyleWidth:8}},tooltip:{backgroundColor:'#1a1d27',borderColor:'#2a2a34',borderWidth:1,titleColor:'#e8eaf2',bodyColor:'#818aa0'}}
+      }
+    })
+    return ()=>{if(donutInst.current)donutInst.current.destroy()}
+  },[paidC,partC,pendC])
+
   const card={background:'#1a1d27',borderRadius:12,padding:'18px 20px',boxShadow:'0 1px 2px rgba(16,24,40,.06)',border:'1px solid #1e2235'}
   const ctitle={fontSize:11,fontWeight:700,color:'#818aa0',letterSpacing:'.08em',textTransform:'uppercase',marginBottom:14}
-  const pC={paid:'#1b6e44',partial:'#8f5300',pending:'#8f5300',cancelled:'#5c6576'}
+  const pC={paid:'#4ade80',partial:'#fb923c',pending:'#fbbf24',cancelled:'#636b82'}
 
   return <div style={{animation:'fadein .2s ease'}}>
     {/* Page header */}
@@ -832,49 +890,60 @@ function Dashboard({data,setTab}){
       </div>)}
     </div>
 
-    {/* Chart + Top Customers */}
-    <div style={{display:'grid',gridTemplateColumns:'2fr 1fr',gap:16,marginBottom:16}}>
+    {/* Charts Row */}
+    <div style={{display:'grid',gridTemplateColumns:'2fr 1fr',gap:16,marginBottom:16,minWidth:0}}>
 
-      {/* Monthly Revenue Bar Chart */}
-      <div style={card}>
-        <div style={ctitle}>Monthly Revenue — Last 6 Months</div>
-        <div style={{display:'flex',alignItems:'flex-end',gap:8,height:110,marginBottom:8}}>
-          {months.map(({label,rev,col})=>{
-            const pct=Math.max(rev/maxRev*100,rev>0?4:0)
-            const cpct=rev>0?Math.round(col/rev*100):0
-            return <div key={label} style={{flex:1,display:'flex',flexDirection:'column',alignItems:'center',gap:0,height:'100%',justifyContent:'flex-end'}}>
-              <div title={`Billed: ${fmt(rev)}\nCollected: ${fmt(col)}`} style={{width:'100%',background:'#1e2d52',borderRadius:'4px 4px 0 0',height:pct+'%',position:'relative',minHeight:rev>0?4:0}}>
-                <div style={{position:'absolute',bottom:0,left:0,right:0,background:'#4f63d2',borderRadius:'4px 4px 0 0',height:cpct+'%',minHeight:col>0?2:0,transition:'height .3s'}}/>
+      {/* Revenue Chart (Chart.js) */}
+      <div style={{...card,minWidth:0,overflow:'hidden'}}>
+        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:14}}>
+          <div style={ctitle}>Revenue — Last 6 Months</div>
+          <div style={{display:'flex',gap:12}}>
+            <div style={{display:'flex',alignItems:'center',gap:5,fontSize:11,color:'#818aa0'}}><div style={{width:9,height:9,borderRadius:2,background:'rgba(104,117,245,.3)',border:'1.5px solid #6875f5'}}/> Billed</div>
+            <div style={{display:'flex',alignItems:'center',gap:5,fontSize:11,color:'#818aa0'}}><div style={{width:9,height:9,borderRadius:2,background:'#4ade80'}}/> Collected</div>
+          </div>
+        </div>
+        <div style={{position:'relative',height:170,width:'100%',overflow:'hidden'}}><canvas ref={revRef} style={{width:'100%!important'}}/></div>
+        <div style={{marginTop:10,paddingTop:10,borderTop:'1px solid #1e2235',display:'flex',justifyContent:'space-between',fontSize:11,color:'#818aa0'}}>
+          <span>This month billed: <b style={{color:'#6875f5'}}>{fmt(mRev)}</b></span>
+          <span>Collected: <b style={{color:'#4ade80'}}>{fmt(mCollected)}</b></span>
+        </div>
+      </div>
+
+      {/* Payment Status Donut */}
+      <div style={{...card,position:'relative',minWidth:0,overflow:'hidden'}}>
+        <div style={ctitle}>Invoice Status</div>
+        <div style={{position:'relative',height:170,width:'100%',overflow:'hidden'}}><canvas ref={donutRef} style={{width:'100%!important'}}/>
+          {active.length===0&&<div style={{position:'absolute',inset:0,display:'flex',alignItems:'center',justifyContent:'center',color:'#636b82',fontSize:12}}>No invoices yet</div>}
+        </div>
+        <div style={{marginTop:10,paddingTop:10,borderTop:'1px solid #1e2235',display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:4,textAlign:'center'}}>
+          {[['Paid',paidC,'#4ade80'],['Partial',partC,'#fb923c'],['Pending',pendC,'#fbbf24']].map(([l,v,c])=><div key={l}><div style={{fontSize:18,fontWeight:800,color:c}}>{v}</div><div style={{fontSize:10,color:'#636b82',textTransform:'uppercase',letterSpacing:'.04em'}}>{l}</div></div>)}
+        </div>
+      </div>
+    </div>
+
+    {/* Top Customers */}
+    <div style={{...card,marginBottom:16}}>
+      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:14}}>
+        <div style={ctitle}>Top Customers by Revenue</div>
+        <button onClick={()=>setTab('Customers')} style={{fontSize:12,color:'#6875f5',background:'none',border:'none',cursor:'pointer',fontWeight:600}}>All →</button>
+      </div>
+      {topCusts.length===0
+        ?<p style={{color:'#818aa0',fontSize:12,textAlign:'center',padding:'16px 0'}}>No invoices yet</p>
+        :<div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(200px,1fr))',gap:12}}>
+          {topCusts.map(([name,rev],i)=>{
+            const colors=['#6875f5','#4ade80','#fb923c','#fbbf24','#a78bfa']
+            const c=colors[i]||'#6875f5'
+            return <div key={name} style={{display:'flex',alignItems:'center',gap:10,padding:'10px 12px',background:'#111114',borderRadius:8,border:'1px solid #1e2235'}}>
+              <div style={{width:32,height:32,borderRadius:'50%',background:c+'22',border:'1.5px solid '+c+'55',display:'flex',alignItems:'center',justifyContent:'center',color:c,fontSize:13,fontWeight:700,flexShrink:0}}>{name[0].toUpperCase()}</div>
+              <div style={{minWidth:0,flex:1}}>
+                <div style={{fontSize:12,fontWeight:600,color:'#e8eaf2',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{name}</div>
+                <div style={{fontSize:12,fontWeight:700,color:c,marginTop:2}}>{fmt(rev)}</div>
               </div>
+              <div style={{fontSize:11,color:'#636b82',flexShrink:0}}>#{i+1}</div>
             </div>
           })}
         </div>
-        <div style={{display:'flex',gap:8,marginBottom:8}}>
-          {months.map(({label,key})=><div key={key} style={{flex:1,textAlign:'center',fontSize:10,color:'#818aa0',fontWeight:600}}>{label}</div>)}
-        </div>
-        <div style={{display:'flex',gap:14,paddingTop:6,borderTop:'1px solid #1e2235'}}>
-          <div style={{display:'flex',alignItems:'center',gap:5,fontSize:11,color:'#818aa0'}}><div style={{width:10,height:10,borderRadius:2,background:'#1e2d52',border:'1px solid #a8c0f4'}}/> Billed</div>
-          <div style={{display:'flex',alignItems:'center',gap:5,fontSize:11,color:'#818aa0'}}><div style={{width:10,height:10,borderRadius:2,background:'#4f63d2'}}/> Collected</div>
-          <div style={{marginLeft:'auto',fontSize:11,color:'#818aa0'}}>This month: <b style={{color:'#6875f5'}}>{fmt(mRev)}</b></div>
-        </div>
-      </div>
-
-      {/* Top Customers */}
-      <div style={card}>
-        <div style={ctitle}>Top Customers</div>
-        {topCusts.length===0
-          ?<p style={{color:'#818aa0',fontSize:12,textAlign:'center',padding:'20px 0'}}>No invoices yet</p>
-          :topCusts.map(([name,rev],i)=><div key={name} style={{marginBottom:12}}>
-            <div style={{display:'flex',justifyContent:'space-between',marginBottom:4}}>
-              <span style={{fontSize:12,fontWeight:600,color:'#e8eaf2',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',maxWidth:'60%'}}>{name}</span>
-              <span style={{fontSize:12,fontWeight:700,color:'#6875f5',flexShrink:0}}>{fmt(rev)}</span>
-            </div>
-            <div style={{height:3,background:'#1e2235',borderRadius:2}}>
-              <div style={{height:'100%',background: i===0?'#2453c7':i===1?'#6d3db7':'#252d3d',borderRadius:2,width:(rev/topCusts[0][1]*100)+'%',transition:'width .4s'}}/>
-            </div>
-          </div>)
-        }
-      </div>
+      }
     </div>
 
     {/* Needs Attention + Recent Invoices + Recent Jobs */}
@@ -885,7 +954,7 @@ function Dashboard({data,setTab}){
         <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:14}}>
           <div style={ctitle}>Needs Attention</div>
         </div>
-        {lowS>0&&<div onClick={()=>setTab('Inventory')} style={{background:'#fbeed6',border:'1px solid #f0cc8c',borderRadius:8,padding:'9px 12px',marginBottom:8,fontSize:12,color:'#8f5300',cursor:'pointer',display:'flex',justifyContent:'space-between'}}>
+        {lowS>0&&<div onClick={()=>setTab('Inventory')} style={{background:'#1e1000',border:'1px solid #7c3a00',borderRadius:8,padding:'9px 12px',marginBottom:8,fontSize:12,color:'#fb923c',cursor:'pointer',display:'flex',justifyContent:'space-between'}}>
           <span>⚠ {lowS} part{lowS>1?'s':''} low stock</span><span style={{fontWeight:700}}>Fix →</span>
         </div>}
         {overdueInvs.length===0&&lowS===0
@@ -895,7 +964,7 @@ function Dashboard({data,setTab}){
               <div style={{fontSize:13,fontWeight:600,color:'#e8eaf2',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{i.customerName||'—'}</div>
               <div style={{fontSize:11,color:'#818aa0'}}>Due {fmtD(i.dueDate)}</div>
             </div>
-            <span style={{fontSize:13,fontWeight:700,color:'#b02e2b',flexShrink:0,marginLeft:8}}>{fmt(i.grand)}</span>
+            <span style={{fontSize:13,fontWeight:700,color:'#f87171',flexShrink:0,marginLeft:8}}>{fmt(i.grand)}</span>
           </div>)
         }
         {overdueInvs.length>4&&<button onClick={()=>setTab('Invoices')} style={{fontSize:12,color:'#6875f5',background:'none',border:'none',cursor:'pointer',marginTop:6}}>+{overdueInvs.length-4} more overdue →</button>}
@@ -962,16 +1031,16 @@ function Customers({data,db}){
     <table><thead><tr>{['ID','Name','Phone','Email','Type','GSTIN','Actions'].map(h=><th key={h} style={TH}>{h}</th>)}</tr></thead>
     <tbody>{list.map(c=><tr key={c.id}>
       <td style={{...TD,color:'#6875f5',fontWeight:700}}>C-{c.id}</td>
-      <td style={{...TD,fontWeight:700}}>{c.name}{c.companyName&&<div style={{fontSize:10,color:'#888'}}>{c.companyName}</div>}</td>
-      <td style={TD}>{c.phone}</td><td style={{...TD,color:'#6b7280'}}>{c.email||'—'}</td>
+      <td style={{...TD,fontWeight:700}}>{c.name}{c.companyName&&<div style={{fontSize:10,color:'#818aa0'}}>{c.companyName}</div>}</td>
+      <td style={TD}>{c.phone}</td><td style={{...TD,color:'#818aa0'}}>{c.email||'—'}</td>
       <td style={TD}><Bdg s={c.type||'individual'}/></td>
       <td style={{...TD,fontFamily:'monospace',fontSize:10}}>{c.gstin||'—'}</td>
       <td style={TD}>
-        <button onClick={()=>open(c)} style={{marginRight:5,padding:'3px 9px',border:'1px solid #d0d7de',borderRadius:5,cursor:'pointer',fontSize:11}}>✏</button>
-        <button onClick={async()=>{if(confirm('Delete customer?'))await db.delCustomer(c.id)}} style={{padding:'3px 9px',border:'1px solid #ffcdd2',borderRadius:5,cursor:'pointer',fontSize:11,color:'#c62828'}}>🗑</button>
+        <button onClick={()=>open(c)} style={{marginRight:5,padding:'3px 9px',border:'1px solid #252d3d',borderRadius:5,cursor:'pointer',fontSize:11}}>✏</button>
+        <button onClick={async()=>{if(confirm('Delete customer?'))await db.delCustomer(c.id)}} style={{padding:'3px 9px',border:'1px solid #7f1d1d',borderRadius:5,cursor:'pointer',fontSize:11,color:'#f87171'}}>🗑</button>
       </td>
     </tr>)}</tbody></table>
-    {list.length===0&&<p style={{textAlign:'center',color:'#aaa',padding:36}}>No customers yet.</p>}
+    {list.length===0&&<p style={{textAlign:'center',color:'#636b82',padding:36}}>No customers yet.</p>}
     {show&&<Modal title={ed?'Edit Customer':'Add Customer'} onClose={()=>setShow(false)}>
       <FR>
         <F label="Full Name *" half><In value={form.name} onChange={e=>f('name',e.target.value)}/></F>
@@ -1008,18 +1077,18 @@ function Vehicles({data,db}){
       <tbody>{list.map(v=><tr key={v.id}>
         <td style={{...TD,color:'#6875f5',fontWeight:700}}>V-{v.id}</td>
         <td style={{...TD,fontWeight:900,fontSize:13}}>{v.regNo}</td>
-        <td style={TD}>{v.make} {v.model}{v.variant&&<span style={{color:'#888'}}> ({v.variant})</span>}</td>
+        <td style={TD}>{v.make} {v.model}{v.variant&&<span style={{color:'#818aa0'}}> ({v.variant})</span>}</td>
         <td style={TD}>{v.year||'—'}</td><td style={TD}><Bdg s={v.fuelType||'petrol'}/></td>
-        <td style={{...TD,color:'#6b7280'}}>{v.color||'—'}</td>
+        <td style={{...TD,color:'#818aa0'}}>{v.color||'—'}</td>
         <td style={TD}>{getCust(v.customerId)?.name||'—'}</td>
-        <td style={{...TD,color:'#6b7280'}}>{v.odometer?v.odometer+' km':'—'}</td>
+        <td style={{...TD,color:'#818aa0'}}>{v.odometer?v.odometer+' km':'—'}</td>
         <td style={TD}>
-          <button onClick={()=>open(v)} style={{marginRight:5,padding:'3px 9px',border:'1px solid #d0d7de',borderRadius:5,cursor:'pointer',fontSize:11}}>✏</button>
-          <button onClick={async()=>{if(confirm('Delete?'))await db.delVehicle(v.id)}} style={{padding:'3px 9px',border:'1px solid #ffcdd2',borderRadius:5,cursor:'pointer',fontSize:11,color:'#c62828'}}>🗑</button>
+          <button onClick={()=>open(v)} style={{marginRight:5,padding:'3px 9px',border:'1px solid #252d3d',borderRadius:5,cursor:'pointer',fontSize:11}}>✏</button>
+          <button onClick={async()=>{if(confirm('Delete?'))await db.delVehicle(v.id)}} style={{padding:'3px 9px',border:'1px solid #7f1d1d',borderRadius:5,cursor:'pointer',fontSize:11,color:'#f87171'}}>🗑</button>
         </td>
       </tr>)}</tbody></table>
     </div>
-    {list.length===0&&<p style={{textAlign:'center',color:'#aaa',padding:36}}>No vehicles yet.</p>}
+    {list.length===0&&<p style={{textAlign:'center',color:'#636b82',padding:36}}>No vehicles yet.</p>}
     {show&&<Modal title={ed?'Edit Vehicle':'Add Vehicle'} onClose={()=>setShow(false)}>
       <FR>
         <F label="Customer *"><Sl value={form.customerId||''} onChange={e=>f('customerId',+e.target.value)} opts={data.customers.map(c=>({v:c.id,l:`${c.name} — ${c.phone}`}))}/></F>
@@ -1114,25 +1183,25 @@ function Inventory({data,db}){
     {low>0&&<div style={{background:'#2a1400',border:'1px solid #7c3a00',borderRadius:8,padding:'9px 16px',marginBottom:14,fontSize:12,color:'#fb923c'}}>⚠ <b>{low} part{low>1?'s':''}</b> at or below minimum stock level.</div>}
     <div style={{overflowX:'auto'}}>
       <table style={{minWidth:960}}><thead><tr>{['Part Name','Part No.','Make / Model','Category','HSN Code','GST','Sell Price','Buy Price','Stock','Min','Actions'].map(h=><th key={h} style={TH}>{h}</th>)}</tr></thead>
-      <tbody>{list.map(p=><tr key={p.id} style={{background:(+p.qty||0)<=(+p.minQty||2)?'#fff8e1':'#fff'}}>
-        <td style={{...TD,fontWeight:700}}>{p.name}</td>
-        <td style={{...TD,fontFamily:'monospace',fontSize:10,color:'#888'}}>{p.partNo||'—'}</td>
-        <td style={{...TD,fontSize:11,color:'#555'}}>{[p.vehicleMake,p.vehicleModel].filter(Boolean).join(' ')||'—'}</td>
+      <tbody>{list.map(p=>{const low=(+p.qty||0)<=(+p.minQty||2);return<tr key={p.id} style={{background:low?'#1e0f00':'#1a1d27'}}>
+        <td style={{...TD,fontWeight:700,color:'#e8eaf2'}}>{p.name}</td>
+        <td style={{...TD,fontFamily:'monospace',fontSize:10,color:'#818aa0'}}>{p.partNo||'—'}</td>
+        <td style={{...TD,fontSize:11,color:'#818aa0'}}>{[p.vehicleMake,p.vehicleModel].filter(Boolean).join(' ')||'—'}</td>
         <td style={TD}><Bdg s={p.category||'spare'}/></td>
-        <td style={{...TD,fontFamily:'monospace',fontSize:10}}>{p.hsnCode}</td>
-        <td style={TD}>{p.gst}%</td>
+        <td style={{...TD,fontFamily:'monospace',fontSize:10,color:'#818aa0'}}>{p.hsnCode||'—'}</td>
+        <td style={{...TD,color:'#9daabb'}}>{p.gst}%</td>
         <td style={{...TD,fontWeight:700,color:'#e8eaf2'}}>{fmt(p.sellingPrice)}</td>
-        <td style={{...TD,color:'#888'}}>{fmt(p.purchasePrice)}</td>
-        <td style={{...TD,fontWeight:900,color:(+p.qty||0)<=(+p.minQty||2)?'#c62828':'#2e7d32'}}>{p.qty||0} {p.unit}</td>
-        <td style={{...TD,color:'#aaa'}}>{p.minQty||2}</td>
+        <td style={{...TD,color:'#818aa0'}}>{fmt(p.purchasePrice)}</td>
+        <td style={{...TD,fontWeight:700,color:low?'#f87171':'#4ade80'}}>{p.qty||0} {p.unit}</td>
+        <td style={{...TD,color:'#636b82'}}>{p.minQty||2}</td>
         <td style={TD}>
-          <button onClick={()=>setUsage(p)} style={{marginRight:4,padding:'3px 9px',border:'1px solid #c5cae9',borderRadius:5,cursor:'pointer',fontSize:11,color:'#3949ab'}}>📊</button>
-          <button onClick={()=>open(p)} style={{marginRight:4,padding:'3px 9px',border:'1px solid #d0d7de',borderRadius:5,cursor:'pointer',fontSize:11}}>✏</button>
-          <button onClick={async()=>{if(confirm('Delete?'))await db.delPart(p.id)}} style={{padding:'3px 9px',border:'1px solid #ffcdd2',borderRadius:5,cursor:'pointer',fontSize:11,color:'#c62828'}}>🗑</button>
+          <button onClick={()=>setUsage(p)} title="Usage history" style={{marginRight:4,width:28,height:28,background:'#0d1a30',border:'1px solid #1e2d52',borderRadius:5,cursor:'pointer',fontSize:12,color:'#6875f5',display:'inline-flex',alignItems:'center',justifyContent:'center'}}>📊</button>
+          <button onClick={()=>open(p)} title="Edit" style={{marginRight:4,width:28,height:28,background:'#1e2235',border:'1px solid #252d3d',borderRadius:5,cursor:'pointer',fontSize:12,color:'#9daabb',display:'inline-flex',alignItems:'center',justifyContent:'center'}}>✏</button>
+          <button onClick={async()=>{if(confirm('Delete?'))await db.delPart(p.id)}} title="Delete" style={{width:28,height:28,background:'#2a0a10',border:'1px solid #7f1d1d',borderRadius:5,cursor:'pointer',fontSize:12,color:'#f87171',display:'inline-flex',alignItems:'center',justifyContent:'center'}}>🗑</button>
         </td>
-      </tr>)}</tbody></table>
+      </tr>})}</tbody></table>
     </div>
-    {list.length===0&&<p style={{textAlign:'center',color:'#aaa',padding:36}}>No parts yet.</p>}
+    {list.length===0&&<p style={{textAlign:'center',color:'#636b82',padding:36}}>No parts yet.</p>}
     {usage&&<Modal title={`Usage History — ${usage.name}`} onClose={()=>setUsage(null)}>
       {(()=>{
         const rows=(data.invoices||[]).flatMap(inv=>{
@@ -1140,7 +1209,7 @@ function Inventory({data,db}){
           return its.map(it=>({invNo:buildInvNo(data.settings||{},inv),date:inv.date,customer:inv.customerName||'—',qty:+it.qty||0,rate:+it.rate||0}))
         }).sort((a,b)=>(b.date||'').localeCompare(a.date||''))
         const totalQty=rows.reduce((s,r)=>s+r.qty,0)
-        if(!rows.length)return <p style={{color:'#aaa',textAlign:'center',padding:20}}>No usage found in any invoice.</p>
+        if(!rows.length)return <p style={{color:'#636b82',textAlign:'center',padding:20}}>No usage found in any invoice.</p>
         return <div>
           <div style={{background:'#0a2010',border:'1px solid #1a5c2a',borderRadius:7,padding:'8px 14px',marginBottom:14,fontSize:12}}>
             Total issued: <b>{totalQty} {usage.unit}</b> across <b>{rows.length}</b> invoice(s) &nbsp;|&nbsp; Current stock: <b>{usage.qty||0} {usage.unit}</b>
@@ -1213,7 +1282,7 @@ function JobForm({initial,data,onSave,onClose}){
     <F label="Customer Complaint"><Tx value={form.complaint||''} onChange={e=>f('complaint',e.target.value)} placeholder="What the customer reported…"/></F>
     <F label="Diagnosis / Work Done"><Tx value={form.diagnosis||''} onChange={e=>f('diagnosis',e.target.value)} placeholder="Technician notes & work performed…"/></F>
     <F label="Internal Notes"><Tx value={form.notes||''} onChange={e=>f('notes',e.target.value)} style={{minHeight:48}}/></F>
-    <div style={{border:'1px solid #1e2235',borderRadius:8,padding:14,margin:'12px 0',background:'#0d0f14'}}>
+    <div style={{border:'1px solid #1e2235',borderRadius:8,padding:14,margin:'12px 0',background:'#0f0f14'}}>
       <div style={{fontSize:12,fontWeight:700,color:'#e8eaf2',marginBottom:10}}>📋 Parts &amp; Labour Items</div>
       <LineEd items={items} setItems={setItems} parts={data.parts}/>
     </div>
@@ -1246,19 +1315,19 @@ function JobCards({data,db,setTab}){
         <td style={{...TD,color:'#6875f5',fontWeight:700}}>JC-{j.id}</td>
         <td style={TD}>{j.customerName}</td><td style={{...TD,fontWeight:800}}>{j.vehicleReg}</td>
         <td style={TD}><Bdg s={j.status}/></td><td style={TD}><Bdg s={j.priority||'normal'}/></td>
-        <td style={{...TD,color:'#6b7280'}}>{j.technicianName||'—'}</td>
+        <td style={{...TD,color:'#818aa0'}}>{j.technicianName||'—'}</td>
         <td style={{...TD,fontWeight:800}}>{fmt(j.grand)}</td>
-        <td style={{...TD,color:'#6b7280'}}>{fmtD(j.createdAt)}</td>
+        <td style={{...TD,color:'#818aa0'}}>{fmtD(j.createdAt)}</td>
         <td style={TD}><div style={{display:'flex',gap:3}}>
-          <button onClick={()=>open(j)} style={{padding:'3px 8px',border:'1px solid #d0d7de',borderRadius:5,cursor:'pointer',fontSize:11}}>✏</button>
+          <button onClick={()=>open(j)} style={{padding:'3px 8px',border:'1px solid #252d3d',borderRadius:5,cursor:'pointer',fontSize:11}}>✏</button>
           <button onClick={()=>genInv(j,'estimate')} style={{padding:'3px 7px',background:'#2a0d14',color:'#f48fb1',border:'1px solid #880e4f',borderRadius:5,cursor:'pointer',fontSize:10,fontWeight:700}}>EST</button>
           <button onClick={()=>genInv(j,'invoice')} style={{padding:'3px 7px',background:'#0d1a30',color:'#90caf9',border:'1px solid #1565c0',borderRadius:5,cursor:'pointer',fontSize:10,fontWeight:700}}>INV</button>
           <button onClick={()=>genInv(j,'final-invoice')} style={{padding:'3px 7px',background:'#0a2010',color:'#4ade80',border:'1px solid #1a5c2a',borderRadius:5,cursor:'pointer',fontSize:10,fontWeight:700}}>FINAL</button>
-          <button onClick={async()=>{if(confirm('Delete?'))await db.delJob(j.id)}} style={{padding:'3px 8px',border:'1px solid #ffcdd2',borderRadius:5,cursor:'pointer',fontSize:11,color:'#c62828'}}>🗑</button>
+          <button onClick={async()=>{if(confirm('Delete?'))await db.delJob(j.id)}} style={{padding:'3px 8px',border:'1px solid #7f1d1d',borderRadius:5,cursor:'pointer',fontSize:11,color:'#f87171'}}>🗑</button>
         </div></td>
       </tr>)}</tbody></table>
     </div>
-    {list.length===0&&<p style={{textAlign:'center',color:'#aaa',padding:36}}>No job cards yet.</p>}
+    {list.length===0&&<p style={{textAlign:'center',color:'#636b82',padding:36}}>No job cards yet.</p>}
     {show&&<Modal title={ed?'Edit Job Card':'New Job Card'} onClose={()=>{setShow(false);setEd(null)}} wide><JobForm initial={ed} data={data} onSave={doSave} onClose={()=>{setShow(false);setEd(null)}}/></Modal>}
     {newInv&&<Modal title="Generate Invoice from Job Card" onClose={()=>setNewInv(null)} wide><InvEditor initial={newInv} data={data} onSave={saveNewInv} onClose={()=>setNewInv(null)}/></Modal>}
   </div>
@@ -1270,13 +1339,15 @@ function Invoices({data,db}){
   const[showNew,setShowNew]=useState(false);const[editI,setEditI]=useState(null);const[printI,setPrintI]=useState(null)
   const[q,setQ]=useState('');const[fType,setFType]=useState('all');const[fStatus,setFStatus]=useState('all');const[sort,setSort]=useState('serial-desc');const[fCust,setFCust]=useState('all')
   const TABS=[{k:'all',l:'All Invoices'},{k:'estimate',l:'Estimates'},{k:'invoice',l:'Tax Invoices'},{k:'final-invoice',l:'Final Invoices'}]
-  const pC={paid:'#e8f5e9|#1b5e20',partial:'#fff3e0|#bf360c',pending:'#fff8e1|#f57f17',cancelled:'#fce4ec|#880e4f'}
+  const pC={paid:'#0a1f0d|#4ade80',partial:'#1a1200|#fb923c',pending:'#1c1500|#fbbf24',cancelled:'#2a0a10|#f87171'}
   const docInfo=i=>{
-    if(i.paymentStatus==='cancelled') return {label:'Cancelled',bg:'#fce4ec',fg:'#880e4f'}
-    if(i.type==='estimate') return {label:'Estimate',bg:'#e3f2fd',fg:'#0d47a1'}
-    if(i.type==='final-invoice') return {label:'Final Invoice',bg:'#ede7f6',fg:'#4527a0'}
-    return {label:'Tax Invoice',bg:'#e8f5e9',fg:'#1b5e20'}
+    if(i.paymentStatus==='cancelled') return {label:'Cancelled',bg:'#2a0a10',fg:'#f87171'}
+    if(i.type==='estimate') return {label:'Estimate',bg:'#0d1a30',fg:'#6875f5'}
+    if(i.type==='final-invoice') return {label:'Final',bg:'#1a0f2a',fg:'#a78bfa'}
+    return {label:'Tax Inv.',bg:'#0a1f0d',fg:'#4ade80'}
   }
+  const AC=['#4f63d2','#6875f5','#1b6e44','#8f5300','#b02e2b','#6d3db7']
+  const ava=name=>{const n=name||'?';return{l:n[0].toUpperCase(),c:AC[n.charCodeAt(0)%AC.length]}}
   const matches=i=>{
     const custOk=fCust==='all'||(i.customerName||'')===(fCust)
     if(!custOk) return false
@@ -1334,12 +1405,12 @@ function Invoices({data,db}){
       {TABS.map(t=><button key={t.k} onClick={()=>{setSub(t.k);setFType('all');setFStatus('all')}} style={{padding:'7px 16px',border:'none',borderRadius:7,cursor:'pointer',background:sub===t.k?'#4f63d2':'transparent',color:sub===t.k?'#ffffff':'#636b82',fontWeight:sub===t.k?600:500,fontSize:13}}>{t.l} <span style={{fontSize:11,opacity:.7}}>({tabCount(t.k)})</span></button>)}
     </div>
     <div style={{display:'flex',gap:8,marginBottom:14,flexWrap:'wrap',alignItems:'center'}}>
-      <span style={{fontSize:12,color:'#666',fontWeight:600}}>Customer:</span>
+      <span style={{fontSize:12,color:'#818aa0',fontWeight:600}}>Customer:</span>
       <select value={fCust} onChange={e=>setFCust(e.target.value)} style={{...IS,width:'auto',fontSize:12,padding:'5px 8px',maxWidth:200}}>
         <option value="all">All Customers</option>
         {custNames.map(n=><option key={n} value={n}>{n}</option>)}
       </select>
-      {sub==='all'&&<span style={{fontSize:12,color:'#666',fontWeight:600,marginLeft:4}}>Filter:</span>}
+      {sub==='all'&&<span style={{fontSize:12,color:'#818aa0',fontWeight:600,marginLeft:4}}>Filter:</span>}
       {sub==='all'&&<select value={fType} onChange={e=>setFType(e.target.value)} style={{...IS,width:'auto',fontSize:12,padding:'5px 8px'}}>
         <option value="all">All Types</option>
         <option value="estimate">Estimate</option>
@@ -1353,8 +1424,8 @@ function Invoices({data,db}){
         <option value="paid">Paid</option>
         <option value="cancelled">Cancelled</option>
       </select>}
-      {(fCust!=='all'||fType!=='all'||fStatus!=='all')&&<button onClick={()=>{setFCust('all');setFType('all');setFStatus('all')}} style={{fontSize:11,color:'#c62828',background:'none',border:'1px solid #ffcdd2',borderRadius:5,padding:'4px 8px',cursor:'pointer'}}>✕ Clear</button>}
-      <span style={{fontSize:12,color:'#666',fontWeight:600,marginLeft:4}}>Sort:</span>
+      {(fCust!=='all'||fType!=='all'||fStatus!=='all')&&<button onClick={()=>{setFCust('all');setFType('all');setFStatus('all')}} style={{fontSize:11,color:'#f87171',background:'#2a0a10',border:'1px solid #7f1d1d',borderRadius:5,padding:'4px 8px',cursor:'pointer'}}>✕ Clear</button>}
+      <span style={{fontSize:12,color:'#818aa0',fontWeight:600,marginLeft:4}}>Sort:</span>
       <select value={sort} onChange={e=>setSort(e.target.value)} style={{...IS,width:'auto',fontSize:12,padding:'5px 8px'}}>
         <option value="serial-asc">Invoice # ↑ (oldest first)</option>
         <option value="serial-desc">Invoice # ↓ (newest first)</option>
@@ -1367,41 +1438,51 @@ function Invoices({data,db}){
     </div>
     {list.length>0&&<div style={{display:'flex',gap:10,marginBottom:14,flexWrap:'wrap',alignItems:'center'}}>
       {fCust!=='all'&&<div style={{background:'#0d1a30',border:'1px solid #1e40af',borderRadius:8,padding:'7px 16px',fontSize:12,fontWeight:700,color:'#6875f5'}}>👤 {fCust} — {list.length} invoice{list.length!==1?'s':''}</div>}
-      {[['Active Billed',total,'#dbeafe','#1e40af'],['Collected',collected,'#dcfce7','#166534'],['Outstanding',total-collected,'#fef3c7','#92400e']].map(([l,v,bg,fg])=><div key={l} style={{background:bg,borderRadius:8,padding:'7px 16px',fontSize:12}}><span style={{color:'#888'}}>{l}: </span><b style={{color:fg,fontSize:13}}>{fmt(v)}</b></div>)}
+      {[['Active Billed',total,'#0d1a30','#6875f5'],['Collected',collected,'#0a1f0d','#4ade80'],['Outstanding',total-collected,'#1c1500','#fbbf24']].map(([l,v,bg,fg])=><div key={l} style={{background:bg,border:`1px solid ${fg}33`,borderRadius:8,padding:'7px 16px',fontSize:12}}><span style={{color:'#818aa0'}}>{l}: </span><b style={{color:fg,fontSize:13}}>{fmt(v)}</b></div>)}
       {list.filter(i=>i.paymentStatus==='cancelled').length>0&&<div style={{background:'#2a0a10',borderRadius:8,padding:'7px 16px',fontSize:12}}><span style={{color:'#818aa0'}}>Cancelled: </span><b style={{color:'#f87171',fontSize:13}}>{list.filter(i=>i.paymentStatus==='cancelled').length}</b></div>}
     </div>}
     <div style={{overflowX:'auto'}}>
-    <table style={{minWidth:sub==='all'?880:740}}><thead><tr>
-      {['#','Customer','Vehicle','Date','Amount','Payment','Method',sub==='all'?'Doc Type':null,'Actions'].filter(Boolean).map(h=><th key={h} style={TH}>{h}</th>)}
+    <table style={{minWidth:800}}><thead><tr>
+      {['Invoice','Customer','Vehicle','Date','Amount','Status','Actions'].map(h=><th key={h} style={TH}>{h}</th>)}
     </tr></thead>
     <tbody>{sortedList.map(inv=>{
       const cancelled=inv.paymentStatus==='cancelled'
       const paid=inv.paymentStatus==='paid'
-      const[pbg,pfg]=(pC[inv.paymentStatus]||'#f5f5f5|#777').split('|')
+      const[pbg,pfg]=(pC[inv.paymentStatus]||'#1a1d27|#818aa0').split('|')
       const di=docInfo(inv)
-      return <tr key={inv.id} style={cancelled?{opacity:.6,background:'#1a0808'}:{}}>
-        <td style={{...TD,color:'#6875f5',fontWeight:700}}>{buildInvNo(data.settings||DEF,inv)}</td>
-        <td style={TD}>{inv.customerName}{inv.companyName&&<div style={{fontSize:10,color:'#888'}}>{inv.companyName}</div>}</td>
-        <td style={{...TD,fontWeight:700}}>{inv.vehicleReg||'—'}</td>
-        <td style={{...TD,color:'#6b7280'}}>{fmtD(inv.date)}</td>
-        <td style={{...TD,fontWeight:800}}>{fmt(inv.grand)}</td>
+      const av=ava(inv.customerName)
+      return <tr key={inv.id} style={cancelled?{opacity:.55,background:'#160a0a'}:{}}>
+        <td style={{...TD,paddingTop:12,paddingBottom:12}}>
+          <div style={{color:'#6875f5',fontWeight:700,fontSize:13,letterSpacing:'-.01em'}}>{buildInvNo(data.settings||DEF,inv)}</div>
+          <div style={{fontSize:10,fontWeight:600,color:di.fg,background:di.bg,display:'inline-block',padding:'1px 6px',borderRadius:3,marginTop:3,lineHeight:'16px'}}>{di.label}</div>
+        </td>
+        <td style={{...TD,paddingTop:12,paddingBottom:12,minWidth:200}}>
+          <div style={{display:'flex',alignItems:'center',gap:9}}>
+            <div style={{width:30,height:30,borderRadius:'50%',background:av.c,display:'flex',alignItems:'center',justifyContent:'center',color:'#fff',fontSize:12,fontWeight:700,flexShrink:0}}>{av.l}</div>
+            <div>
+              <div style={{fontWeight:600,color:'#e8eaf2',fontSize:13}}>{inv.customerName||'—'}</div>
+              {inv.companyName&&<div style={{fontSize:10,color:'#636b82',marginTop:1}}>{inv.companyName}</div>}
+            </div>
+          </div>
+        </td>
+        <td style={{...TD,fontFamily:'monospace',fontSize:12,color:'#9daabb',letterSpacing:'.02em'}}>{inv.vehicleReg||'—'}</td>
+        <td style={{...TD,color:'#818aa0',fontSize:12,whiteSpace:'nowrap'}}>{fmtD(inv.date)}</td>
+        <td style={{...TD,fontWeight:700,fontSize:14,whiteSpace:'nowrap'}}>{fmt(inv.grand)}</td>
         <td style={TD}>{cancelled
-          ?<span style={{fontSize:11,fontWeight:700,color:'#b02e2b',background:'#fbe6e4',padding:'3px 9px',borderRadius:99,height:22,display:'inline-flex',alignItems:'center'}}>Cancelled</span>
-          :<select value={inv.paymentStatus||'pending'} onChange={e=>db.markPay(inv.id,e.target.value)} style={{padding:'4px 8px',border:'1px solid #252d3d',borderRadius:8,fontSize:12,background:pbg,color:pfg,fontWeight:600,cursor:'pointer',width:'auto'}}><option value="pending">Pending</option><option value="partial">Partial</option><option value="paid">Paid</option></select>
+          ?<span style={{fontSize:11,fontWeight:700,color:'#f87171',background:'#2a0a10',padding:'3px 9px',borderRadius:99,display:'inline-flex',alignItems:'center'}}>Cancelled</span>
+          :<select value={inv.paymentStatus||'pending'} onChange={e=>db.markPay(inv.id,e.target.value)} style={{padding:'4px 10px',border:'1px solid #252d3d',borderRadius:8,fontSize:12,background:pbg,color:pfg,fontWeight:600,cursor:'pointer',width:'auto',outline:'none'}}><option value="pending">⏳ Pending</option><option value="partial">⚡ Partial</option><option value="paid">✓ Paid</option></select>
         }</td>
-        <td style={{...TD,color:'#6b7280',fontSize:11}}>{inv.paymentMethod||'—'}</td>
-        {sub==='all'&&<td style={TD}><span style={{fontSize:11,fontWeight:700,color:di.fg,background:di.bg,padding:'3px 8px',borderRadius:4,whiteSpace:'nowrap'}}>{di.label}</span></td>}
-        <td style={TD}><div style={{display:'flex',gap:4,flexWrap:'wrap'}}>
-          <button onClick={()=>setPrintI(inv)} style={{padding:'4px 10px',background:'#4f63d2',color:'#ffffff',border:'none',borderRadius:6,cursor:'pointer',fontSize:11,fontWeight:600}}>🖨</button>
-          {!cancelled&&!paid&&<button onClick={()=>setEditI(inv)} style={{padding:'3px 8px',border:'1px solid #d0d7de',borderRadius:5,cursor:'pointer',fontSize:11}}>✏</button>}
-          {!cancelled&&!paid&&<button onClick={()=>doCancel(inv)} title="Cancel invoice" style={{padding:'3px 8px',border:'1px solid #ffcdd2',borderRadius:5,cursor:'pointer',fontSize:11,color:'#c62828'}}>⊘</button>}
+        <td style={TD}><div style={{display:'flex',gap:5,alignItems:'center'}}>
+          <button onClick={()=>setPrintI(inv)} title="Print" style={{width:30,height:30,background:'#1e2235',color:'#9daabb',border:'1px solid #252d3d',borderRadius:6,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',fontSize:13}}>🖨</button>
+          {!cancelled&&!paid&&<button onClick={()=>setEditI(inv)} title="Edit" style={{width:30,height:30,background:'#1e2235',color:'#9daabb',border:'1px solid #252d3d',borderRadius:6,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',fontSize:13}}>✏</button>}
+          {!cancelled&&!paid&&<button onClick={()=>doCancel(inv)} title="Cancel invoice" style={{width:30,height:30,background:'#2a0a10',color:'#f87171',border:'1px solid #7f1d1d',borderRadius:6,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',fontSize:13}}>⊘</button>}
         </div></td>
       </tr>
     })}</tbody></table>
     </div>
     {list.length===0&&<p style={{textAlign:'center',color:'#818aa0',padding:36}}>No records found. {sub!=='all'&&<button onClick={()=>setShowNew(true)} style={{color:'#6875f5',background:'none',border:'none',cursor:'pointer',textDecoration:'underline'}}>Create one →</button>}</p>}
-    {showNew&&<Modal title="New Invoice / Estimate" onClose={()=>setShowNew(false)} wide><InvEditor data={data} onSave={async f=>{await db.saveInvoice(f);setShowNew(false)}} onClose={()=>setShowNew(false)}/></Modal>}
-    {editI&&<Modal title={'Edit — '+buildInvNo(data.settings||DEF,editI)} onClose={()=>setEditI(null)} wide><InvEditor initial={editI} data={data} onSave={async f=>{await db.saveInvoice(f);setEditI(null)}} onClose={()=>setEditI(null)}/></Modal>}
+    {showNew&&<Modal title="New Invoice / Estimate" onClose={()=>setShowNew(false)} wide light><div className="inv-form"><InvEditor data={data} onSave={async f=>{await db.saveInvoice(f);setShowNew(false)}} onClose={()=>setShowNew(false)}/></div></Modal>}
+    {editI&&<Modal title={'Edit — '+buildInvNo(data.settings||DEF,editI)} onClose={()=>setEditI(null)} wide light><div className="inv-form"><InvEditor initial={editI} data={data} onSave={async f=>{await db.saveInvoice(f);setEditI(null)}} onClose={()=>setEditI(null)}/></div></Modal>}
     {printI&&<Modal title="Invoice Preview" onClose={()=>setPrintI(null)} wide><PrintDoc inv={printI} settings={data.D?.settings||data.settings} onClose={()=>setPrintI(null)}/></Modal>}
   </div>
 }
@@ -1482,11 +1563,11 @@ serve(async (req) => {
     <div style={sec}><div style={stl}>📄 Default Invoice Terms &amp; Conditions</div>
       <Tx value={form.invoiceTerms||''} onChange={e=>f('invoiceTerms',e.target.value)} style={{minHeight:100}}/>
     </div>
-    <PBtn onClick={doSave} col={ok?'#1b6e44':'#4f63d2'}>{ok?'✓ Saved!':'Save Settings'}</PBtn>
+    <PBtn onClick={doSave} col={ok?'#0a3d1a':'#4f63d2'} style={{border:ok?'1px solid #4ade80':'none',color:ok?'#4ade80':'#fff'}}>{ok?'✓ Saved!':'Save Settings'}</PBtn>
     <div style={{...sec,marginTop:24}}>
       <div style={stl}>📊 Database Statistics</div>
       <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(110px,1fr))',gap:10}}>
-        {[['Customers',data.customers.length,'#e5ecfb','#2453c7'],['Vehicles',data.vehicles.length,'#e0f1e6','#1b6e44'],['Parts',data.parts.length,'#fbeed6','#8f5300'],['Job Cards',data.jobCards.length,'#f0ebf8','#6d3db7'],['Invoices',data.invoices.length,'#fbe6e4','#b02e2b']].map(([l,v,bg,fg])=><div key={l} style={{background:bg,borderRadius:8,padding:'10px 14px',textAlign:'center',border:'1px solid #1e2235'}}><div style={{fontSize:24,fontWeight:700,color:fg,letterSpacing:'-.03em'}}>{v}</div><div style={{fontSize:11,color:fg,opacity:.8,marginTop:2}}>{l}</div></div>)}
+        {[['Customers',data.customers.length,'#0d1a30','#6875f5'],['Vehicles',data.vehicles.length,'#0a1f0d','#4ade80'],['Parts',data.parts.length,'#1c1500','#fbbf24'],['Job Cards',data.jobCards.length,'#1a0f2a','#a78bfa'],['Invoices',data.invoices.length,'#2a0a10','#f87171']].map(([l,v,bg,fg])=><div key={l} style={{background:bg,borderRadius:8,padding:'10px 14px',textAlign:'center',border:`1px solid ${fg}33`}}><div style={{fontSize:24,fontWeight:700,color:fg,letterSpacing:'-.03em'}}>{v}</div><div style={{fontSize:11,color:fg,opacity:.7,marginTop:2}}>{l}</div></div>)}
       </div>
       <p style={{fontSize:12,color:'#818aa0',marginTop:12,lineHeight:1.6}}>All data is stored in your <b>Supabase PostgreSQL database</b> — accessible from any device, anywhere in the world. Automatic backups included.</p>
     </div>
@@ -1495,16 +1576,16 @@ serve(async (req) => {
 
 /* ─── SETUP SCREEN ──────────────────────────────────── */
 function SetupScreen(){
-  return <div style={{display:'flex',alignItems:'center',justifyContent:'center',minHeight:'100vh',padding:20,background:'#0d0f14'}}>
+  return <div style={{display:'flex',alignItems:'center',justifyContent:'center',minHeight:'100vh',padding:20,background:'#0f0f14'}}>
     <div style={{background:'#1a1d27',borderRadius:12,padding:36,maxWidth:600,width:'100%',boxShadow:'0 0 0 1px #1e2235,0 12px 32px rgba(16,24,40,.1)',textAlign:'center'}}>
       <div style={{fontSize:48,marginBottom:12}}>🔧</div>
       <h1 style={{fontSize:22,fontWeight:700,color:'#e8eaf2',marginBottom:8,letterSpacing:'-.025em'}}>Friends Automotive</h1>
       <p style={{color:'#818aa0',marginBottom:24,lineHeight:1.7,fontSize:13}}>Industrial-Grade Garage Management System</p>
-      <div style={{background:'#fbeed6',border:'1px solid #f0cc8c',borderRadius:8,padding:16,marginBottom:20,textAlign:'left'}}>
-        <b style={{color:'#8f5300'}}>⚠ Supabase credentials not configured yet.</b>
+      <div style={{background:'#1e1000',border:'1px solid #7c3a00',borderRadius:8,padding:16,marginBottom:20,textAlign:'left'}}>
+        <b style={{color:'#fb923c'}}>⚠ Supabase credentials not configured yet.</b>
         <p style={{color:'#636b82',marginTop:6,fontSize:12,lineHeight:1.7}}>Edit <code style={{background:'#1e2235',padding:'1px 4px',borderRadius:3}}>index.html</code> and replace the two placeholder values near the top of the file with your Supabase URL and anon key.</p>
       </div>
-      <div style={{background:'#0d0f14',borderRadius:8,padding:20,textAlign:'left',marginBottom:20}}>
+      <div style={{background:'#0f0f14',borderRadius:8,padding:20,textAlign:'left',marginBottom:20}}>
         <p style={{fontWeight:600,marginBottom:10,color:'#e8eaf2',fontSize:13}}>How to set up (free, takes 5 minutes):</p>
         <ol style={{paddingLeft:18,lineHeight:2.2,color:'#636b82',fontSize:12}}>
           <li>Go to <a href="https://supabase.com" target="_blank" style={{color:'#6875f5',fontWeight:600}}>supabase.com</a> → Sign up free (no credit card)</li>
@@ -1516,19 +1597,19 @@ function SetupScreen(){
           <li>Push to GitHub → Enable GitHub Pages → done!</li>
         </ol>
       </div>
-      <p style={{fontSize:12,color:'#888',lineHeight:1.6}}>Your data will be stored in a real <b>PostgreSQL database</b> — accessible from any phone, tablet, or computer worldwide. 500MB free storage handles thousands of customers and invoices.</p>
+      <p style={{fontSize:12,color:'#818aa0',lineHeight:1.6}}>Your data will be stored in a real <b>PostgreSQL database</b> — accessible from any phone, tablet, or computer worldwide. 500MB free storage handles thousands of customers and invoices.</p>
     </div>
   </div>
 }
 
 /* ─── ERROR SCREEN ──────────────────────────────────── */
 function ErrScreen({msg,onRetry}){
-  return <div style={{display:'flex',alignItems:'center',justifyContent:'center',minHeight:'100vh',padding:20,background:'#0d0f14'}}>
+  return <div style={{display:'flex',alignItems:'center',justifyContent:'center',minHeight:'100vh',padding:20,background:'#0f0f14'}}>
     <div style={{background:'#1a1d27',borderRadius:12,padding:32,maxWidth:500,width:'100%',textAlign:'center',boxShadow:'0 0 0 1px #1e2235,0 12px 32px rgba(16,24,40,.1)'}}>
       <div style={{fontSize:40,marginBottom:12}}>⚠️</div>
-      <h2 style={{color:'#b02e2b',marginBottom:12,fontSize:18,fontWeight:700}}>Database Connection Failed</h2>
+      <h2 style={{color:'#f87171',marginBottom:12,fontSize:18,fontWeight:700}}>Database Connection Failed</h2>
       <p style={{color:'#636b82',marginBottom:20,lineHeight:1.7,fontSize:13}}>{msg}</p>
-      <div style={{background:'#0d0f14',borderRadius:8,padding:16,textAlign:'left',fontSize:12,marginBottom:20}}>
+      <div style={{background:'#0f0f14',borderRadius:8,padding:16,textAlign:'left',fontSize:12,marginBottom:20}}>
         <b>Checklist:</b>
         <ul style={{paddingLeft:16,marginTop:8,lineHeight:2.2,color:'#444'}}>
           <li>Is <code>FA_SUPABASE_URL</code> correct in <code>index.html</code>?</li>
@@ -1554,7 +1635,7 @@ function LoginScreen(){
     if(error) setErr(error.message)
     setLoading(false)
   }
-  return <div style={{display:'flex',alignItems:'center',justifyContent:'center',minHeight:'100vh',background:'#0d0f14'}}>
+  return <div style={{display:'flex',alignItems:'center',justifyContent:'center',minHeight:'100vh',background:'#0f0f14'}}>
     <div style={{background:'#1a1d27',borderRadius:16,padding:'40px 40px 36px',maxWidth:380,width:'100%',margin:16,boxShadow:'0 0 0 1px #1e2235,0 20px 56px -12px rgba(16,24,40,.22)'}}>
       <div style={{textAlign:'center',marginBottom:30}}>
         <div style={{width:56,height:56,background:'#4f63d2',borderRadius:14,display:'flex',alignItems:'center',justifyContent:'center',color:'#ffffff',fontSize:20,fontWeight:800,margin:'0 auto 16px',letterSpacing:'.4px'}}>FA</div>
@@ -1570,7 +1651,7 @@ function LoginScreen(){
           <label style={{fontSize:11,fontWeight:600,color:'#636b82',display:'block',marginBottom:5,letterSpacing:'.04em',textTransform:'uppercase'}}>Password</label>
           <input type="password" value={pass} onChange={e=>setPass(e.target.value)} required style={{width:'100%',padding:'10px 12px',border:'1px solid #252d3d',borderRadius:8,fontSize:13,outline:'none',boxSizing:'border-box',background:'#1a1d27',color:'#e8eaf2',fontFamily:"'Manrope',sans-serif"}} placeholder="••••••••"/>
         </div>
-        {err&&<div style={{background:'#fbe6e4',color:'#b02e2b',padding:'10px 12px',borderRadius:8,fontSize:13,marginBottom:16,lineHeight:1.5}}>{err}</div>}
+        {err&&<div style={{background:'#fbe6e4',color:'#f87171',padding:'10px 12px',borderRadius:8,fontSize:13,marginBottom:16,lineHeight:1.5}}>{err}</div>}
         <button type="submit" disabled={loading} style={{width:'100%',height:42,background:'#f0f2f8',color:'#0d0f14',border:'none',borderRadius:8,fontSize:14,fontWeight:600,cursor:'pointer',opacity:loading?.7:1,fontFamily:"'Manrope',sans-serif",letterSpacing:'-.01em'}}>
           {loading?'Signing in…':'Sign In'}
         </button>
@@ -1608,7 +1689,7 @@ function AppShell({onLogout}){
   const[col,setCol]=useState(false)
 
   if(ready&&err)return <ErrScreen msg={err} onRetry={reload}/>
-  if(!ready)return <div style={{display:'flex',alignItems:'center',justifyContent:'center',height:'100vh',flexDirection:'column',gap:14,background:'#0d0f14'}}>
+  if(!ready)return <div style={{display:'flex',alignItems:'center',justifyContent:'center',height:'100vh',flexDirection:'column',gap:14,background:'#0f0f14'}}>
     <div style={{width:48,height:48,border:'4px solid #1e2235',borderTop:'4px solid #4f63d2',borderRadius:'50%',animation:'spin .8s linear infinite'}}/>
     <div style={{fontSize:15,fontWeight:800,color:'#e8eaf2',letterSpacing:'-.02em'}}>Friends Automotive</div>
     <div style={{fontSize:12,color:'#818aa0'}}>Loading data…</div>
@@ -1616,9 +1697,9 @@ function AppShell({onLogout}){
 
   const data={...D}
 
-  return <div style={{display:'flex',height:'100vh',overflow:'hidden',background:'#0d0f14'}}>
+  return <div style={{display:'flex',height:'100vh',overflow:'hidden',background:'#0f0f14'}}>
     {/* SIDEBAR */}
-    <div style={{width:col?60:252,background:'#111622',flexShrink:0,display:'flex',flexDirection:'column',transition:'width .22s',overflow:'hidden',borderRight:'1px solid #1a1f2e'}}>
+    <div style={{width:col?60:252,background:'#17171d',flexShrink:0,display:'flex',flexDirection:'column',transition:'width .22s',overflow:'hidden',borderRight:'1px solid #1e1e28'}}>
       <div style={{padding:col?'16px 14px':'16px 20px',borderBottom:'1px solid #1a1f2e',display:'flex',alignItems:'center',gap:12,minHeight:64}}>
         <div style={{width:32,height:32,background:'#4f63d2',borderRadius:8,display:'flex',alignItems:'center',justifyContent:'center',color:'#ffffff',fontSize:12,fontWeight:800,flexShrink:0,letterSpacing:'.4px'}}>FA</div>
         {!col&&<div style={{overflow:'hidden'}}>
@@ -1651,7 +1732,7 @@ function AppShell({onLogout}){
 
     {/* MAIN */}
     <div style={{flex:1,display:'flex',flexDirection:'column',minWidth:0,overflow:'hidden'}}>
-      <div style={{height:54,background:'rgba(13,15,20,.92)',borderBottom:'1px solid #1e2235',display:'flex',alignItems:'center',padding:'0 28px',gap:14,flexShrink:0,backdropFilter:'blur(14px) saturate(1.3)',WebkitBackdropFilter:'blur(14px) saturate(1.3)',position:'sticky',top:0,zIndex:50}}>
+      <div style={{height:54,background:'rgba(17,17,20,.92)',borderBottom:'1px solid #1e2235',display:'flex',alignItems:'center',padding:'0 28px',gap:14,flexShrink:0,backdropFilter:'blur(14px) saturate(1.3)',WebkitBackdropFilter:'blur(14px) saturate(1.3)',position:'sticky',top:0,zIndex:50}}>
         <button onClick={()=>setCol(p=>!p)} style={{border:'none',background:'#1e2235',cursor:'pointer',color:'#818aa0',padding:'7px 10px',lineHeight:1,borderRadius:8,display:'flex',alignItems:'center'}}>{I.menu}</button>
         <span style={{fontSize:15,fontWeight:700,color:'#e8eaf2',letterSpacing:'-.02em',whiteSpace:'nowrap'}}>{tab}</span>
         <div style={{flex:1}}/>
@@ -1662,7 +1743,7 @@ function AppShell({onLogout}){
         {busy&&<span style={{fontSize:11,color:'#6875f5',fontWeight:700,background:'#162040',padding:'4px 10px',borderRadius:20,border:'1px solid #2a3d80'}}>⟳ Saving…</span>}
         <div style={{background:'#1a1d27',color:'#818aa0',fontSize:10,padding:'5px 12px',borderRadius:8,fontWeight:600,fontFamily:'monospace',border:'1px solid #1e2235',letterSpacing:'.4px'}}>{data.settings?.gstin}</div>
       </div>
-      <div style={{flex:1,overflowY:'auto',padding:'28px 32px 48px',background:'#0d0f14'}}>
+      <div style={{flex:1,overflowY:'auto',padding:'28px 32px 48px',background:'#0f0f14'}}>
         {tab==='Dashboard'&&<Dashboard data={data} setTab={setTab}/>}
         {tab==='Job Cards'&&<JobCards data={data} db={db} setTab={setTab}/>}
         {tab==='Invoices'&&<Invoices data={data} db={db}/>}
@@ -1688,7 +1769,7 @@ function App(){
   },[])
 
   if(!configured) return <SetupScreen/>
-  if(!authChecked) return <div style={{display:'flex',alignItems:'center',justifyContent:'center',height:'100vh',flexDirection:'column',gap:16,background:'#0d0f14'}}>
+  if(!authChecked) return <div style={{display:'flex',alignItems:'center',justifyContent:'center',height:'100vh',flexDirection:'column',gap:16,background:'#0f0f14'}}>
     <div style={{width:44,height:44,border:'4px solid #1e2235',borderTop:'4px solid #4f63d2',borderRadius:'50%',animation:'spin .8s linear infinite'}}/>
     <div style={{fontSize:13,color:'#818aa0',fontWeight:500}}>Checking authentication…</div>
   </div>
