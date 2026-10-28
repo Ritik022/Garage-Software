@@ -341,7 +341,7 @@ const Tx=p=><textarea {...p} style={{...IS,minHeight:60,...p.style}}/>
 const Sl=({opts=[],...p})=><select {...p} style={{...IS,...p.style}}><option value="">— Select —</option>{opts.map(o=><option key={o.v??o} value={o.v??o}>{o.l??o}</option>)}</select>
 const PBtn=({onClick,children,col='#1565c0',style:s})=><button onClick={onClick} style={{padding:'8px 20px',background:col,color:'#fff',border:'none',borderRadius:8,cursor:'pointer',fontSize:12,fontWeight:700,display:'inline-flex',alignItems:'center',gap:6,whiteSpace:'nowrap',boxShadow:'0 1px 3px rgba(0,0,0,.15)',letterSpacing:'.1px',...s}}>{children}</button>
 const GBtn=({onClick,children,col,style:s})=><button onClick={onClick} style={{padding:'8px 14px',background:'#fff',border:'1px solid #e2e8f0',borderRadius:8,cursor:'pointer',fontSize:12,color:col||'#374151',fontWeight:600,whiteSpace:'nowrap',boxShadow:'0 1px 2px rgba(0,0,0,.05)',...s}}>{children}</button>
-const Btns=({onCancel,onSave,label='Save'})=><div style={{display:'flex',gap:8,justifyContent:'flex-end',marginTop:16,paddingTop:14,borderTop:'1px solid #f1f5f9'}}><GBtn onClick={onCancel}>Cancel</GBtn><PBtn onClick={onSave}>{label}</PBtn></div>
+const Btns=({onCancel,onSave,label='Save',saving})=><div style={{display:'flex',gap:8,justifyContent:'flex-end',marginTop:16,paddingTop:14,borderTop:'1px solid #f1f5f9'}}><GBtn onClick={onCancel} style={{opacity:saving?.5:1,pointerEvents:saving?'none':'auto'}}>Cancel</GBtn><PBtn onClick={onSave} col={saving?'#6b7280':'#1565c0'} style={{minWidth:130,cursor:saving?'not-allowed':'pointer',opacity:saving?.85:1}}>{saving?<>⏳ Saving…</>:label}</PBtn></div>
 const SC=({label,val,em,col})=><div style={{background:'#fff',border:'1px solid #e2e8f0',borderRadius:12,padding:'16px 20px',borderTop:`3px solid ${col}`,boxShadow:'0 1px 3px rgba(0,0,0,.05)'}}><div style={{display:'flex',alignItems:'center',gap:8,marginBottom:8}}><span style={{fontSize:20}}>{em}</span><span style={{fontSize:10.5,color:'#64748b',fontWeight:700,letterSpacing:'.4px',textTransform:'uppercase'}}>{label}</span></div><div style={{fontSize:22,fontWeight:800,color:'#0f172a'}}>{val}</div></div>
 
 /* ─── LINE ITEM EDITOR ──────────────────────────────── */
@@ -602,6 +602,7 @@ function InvEditor({initial,data,onSave,onClose}){
   const[form,setForm]=useState(initial?{...blank,...initial}:blank)
   const[items,setItems]=useState(initial?.items||[])
   const[aiLoading,setAiLoading]=useState(false)
+  const[saving,setSaving]=useState(false)
   const pdfRef=useRef(null)
   const f=(k,v)=>setForm(p=>({...p,[k]:v}))
   const custVehs=data.vehicles.filter(v=>v.customerId==form.customerId)
@@ -643,11 +644,16 @@ function InvEditor({initial,data,onSave,onClose}){
   }
   const{sub,gt,grand}=calcItems(items)
   const finalTotal=(grand-(form.additionalDiscount||0))+(form.adjustment||0)
-  function doSave(){
-    const{sub:s,gt:g,cgst:cg,sgst:sg,grand:gr}=calcItems(items)
-    const fg=gr-(form.additionalDiscount||0)+(form.adjustment||0)
-    const ni=v=>v===''||v==null?null:+v
-    onSave({...form,jobCardId:ni(form.jobCardId),customerId:ni(form.customerId),vehicleId:ni(form.vehicleId),odometer:ni(form.odometer),items,subtotal:s,gstTot:g,cgstTot:cg,sgstTot:sg,grand:fg})
+  async function doSave(){
+    if(saving) return
+    if(!form.customerName){alert('Customer name is required.');return}
+    setSaving(true)
+    try{
+      const{sub:s,gt:g,cgst:cg,sgst:sg,grand:gr}=calcItems(items)
+      const fg=gr-(form.additionalDiscount||0)+(form.adjustment||0)
+      const ni=v=>v===''||v==null?null:+v
+      await onSave({...form,jobCardId:ni(form.jobCardId),customerId:ni(form.customerId),vehicleId:ni(form.vehicleId),odometer:ni(form.odometer),items,subtotal:s,gstTot:g,cgstTot:cg,sgstTot:sg,grand:fg})
+    }catch(e){alert('Error saving invoice: '+e.message);setSaving(false)}
   }
   const sec={border:'1px solid #e8ecf0',borderRadius:8,padding:14,marginBottom:14,background:'#fafbfc'}
   const stl={fontSize:12,fontWeight:800,color:'#1565c0',marginBottom:12,paddingBottom:8,borderBottom:'1px solid #e8ecf0'}
@@ -715,7 +721,14 @@ function InvEditor({initial,data,onSave,onClose}){
         <F label="Terms &amp; Conditions (override; blank = use default from Settings)"><Tx value={form.termsConditions||''} onChange={e=>f('termsConditions',e.target.value)} style={{minHeight:72}}/></F>
       </FR>
     </div>
-    <Btns onCancel={onClose} onSave={doSave} label={initial?.id?'Save Changes':'Create Invoice'}/>
+    {saving&&<div style={{position:'fixed',inset:0,background:'rgba(15,23,42,.35)',zIndex:9999,display:'flex',alignItems:'center',justifyContent:'center',backdropFilter:'blur(2px)'}}>
+      <div style={{background:'#fff',borderRadius:14,padding:'28px 40px',textAlign:'center',boxShadow:'0 12px 40px rgba(0,0,0,.2)'}}>
+        <div style={{width:44,height:44,border:'4px solid #e2e8f0',borderTop:'4px solid #1565c0',borderRadius:'50%',animation:'spin .8s linear infinite',margin:'0 auto 14px'}}/>
+        <div style={{fontSize:14,fontWeight:800,color:'#0f172a',marginBottom:4}}>{initial?.id?'Updating Invoice…':'Creating Invoice…'}</div>
+        <div style={{fontSize:11,color:'#94a3b8'}}>Please wait, do not close this window</div>
+      </div>
+    </div>}
+    <Btns onCancel={onClose} onSave={doSave} label={initial?.id?'Save Changes':'Create Invoice'} saving={saving}/>
   </div>
 }
 
