@@ -336,8 +336,8 @@ const BM={draft:"#0d1a30|#6875f5",open:"#1e1000|#fb923c","in-progress":"#0a1f0d|
 const Bdg=({s})=>{const c=BM[s]||'#eceef2|#5c6576';const[bg,fg]=c.split('|');return<span style={{display:'inline-flex',alignItems:'center',gap:5,height:22,padding:'0 9px',borderRadius:99,background:bg,color:fg,fontSize:11,fontWeight:700,whiteSpace:'nowrap'}}><span style={{width:6,height:6,borderRadius:'50%',background:fg,flexShrink:0,opacity:.8}}/>{(s||'').replace(/-/g,' ')}</span>}
 
 const IS={width:'100%',boxSizing:'border-box',padding:'8px 11px',border:'1px solid #252d3d',borderRadius:8,fontSize:13,fontFamily:"'Manrope',system-ui,sans-serif",background:'#1a1d27',color:'#e8eaf2',transition:'border-color .15s,box-shadow .15s'}
-const TH={padding:'12px 16px',textAlign:'left',fontWeight:700,fontSize:11,borderBottom:'1px solid #1e2235',background:'#0f1018',color:'#818aa0',letterSpacing:'.07em',textTransform:'uppercase',whiteSpace:'nowrap'}
-const TD={padding:'13px 16px',fontSize:13,borderBottom:'1px solid #1e2235',verticalAlign:'middle',color:'#e8eaf2'}
+const TH={padding:'9px 14px',textAlign:'left',fontWeight:700,fontSize:10,borderBottom:'1px solid #1e2235',background:'#0f1018',color:'#818aa0',letterSpacing:'.08em',textTransform:'uppercase',whiteSpace:'nowrap'}
+const TD={padding:'10px 14px',fontSize:13,borderBottom:'1px solid #1e2235',verticalAlign:'middle',color:'#e8eaf2',whiteSpace:'nowrap'}
 
 function Modal({title,onClose,wide,light,children}){
   return <div className="np" style={{position:'fixed',inset:0,background:'rgba(0,0,0,.55)',zIndex:999,display:'flex',alignItems:'flex-start',justifyContent:'center',overflowY:'auto',padding:'28px 14px',backdropFilter:'blur(4px)'}}>
@@ -1034,16 +1034,16 @@ function Customers({data,db}){
       <div style={{overflowX:'auto'}}>
         <table><thead><tr>{['ID','Name','Phone','Email','Type','GSTIN','Actions'].map(h=><th key={h} style={TH}>{h}</th>)}</tr></thead>
         <tbody>{list.map(c=><tr key={c.id}>
-          <td style={{...TD,color:'#6875f5',fontWeight:700,fontFamily:'monospace',fontSize:12}}>C-{c.id}</td>
-          <td style={{...TD,fontWeight:700,color:'#e8eaf2'}}>{c.name}{c.companyName&&<div style={{fontSize:11,color:'#818aa0',marginTop:2}}>{c.companyName}</div>}</td>
-          <td style={{...TD,color:'#e8eaf2'}}>{c.phone}</td>
+          <td style={{...TD,color:'#6875f5',fontWeight:700,fontFamily:'monospace',fontSize:11}}>C-{c.id}</td>
+          <td style={{...TD,fontWeight:600,color:'#e8eaf2',whiteSpace:'normal'}}>{c.name}{c.companyName&&<div style={{fontSize:11,color:'#818aa0',marginTop:1,fontWeight:400}}>{c.companyName}</div>}</td>
+          <td style={{...TD,color:'#e8eaf2',fontFamily:'monospace',fontSize:12}}>{c.phone}</td>
           <td style={{...TD,color:'#818aa0',fontSize:12}}>{c.email||'—'}</td>
           <td style={TD}><Bdg s={c.type||'individual'}/></td>
           <td style={{...TD,fontFamily:'monospace',fontSize:11,color:'#818aa0'}}>{c.gstin||'—'}</td>
-          <td style={TD}>
-            <button onClick={()=>open(c)} title="Edit" style={{marginRight:5,width:28,height:28,background:'#1e2235',border:'1px solid #252d3d',borderRadius:6,cursor:'pointer',fontSize:13,color:'#9daabb',display:'inline-flex',alignItems:'center',justifyContent:'center'}}>✏</button>
-            <button onClick={async()=>{if(confirm('Delete customer?'))await db.delCustomer(c.id)}} title="Delete" style={{width:28,height:28,background:'#2a0a10',border:'1px solid #7f1d1d',borderRadius:6,cursor:'pointer',fontSize:13,color:'#f87171',display:'inline-flex',alignItems:'center',justifyContent:'center'}}>🗑</button>
-          </td>
+          <td style={TD}><div style={{display:'flex',gap:4,alignItems:'center'}}>
+            <button onClick={()=>open(c)} title="Edit" style={{width:28,height:28,background:'#1e2235',border:'1px solid #252d3d',borderRadius:6,cursor:'pointer',fontSize:12,color:'#9daabb',display:'flex',alignItems:'center',justifyContent:'center'}}>✏</button>
+            <button onClick={async()=>{if(confirm('Delete customer?'))await db.delCustomer(c.id)}} title="Delete" style={{width:28,height:28,background:'#2a0a10',border:'1px solid #7f1d1d',borderRadius:6,cursor:'pointer',fontSize:12,color:'#f87171',display:'flex',alignItems:'center',justifyContent:'center'}}>🗑</button>
+          </div></td>
         </tr>)}</tbody></table>
       </div>
     </div>
@@ -1083,18 +1083,18 @@ function Vehicles({data,db}){
       <div style={{overflowX:'auto'}}>
         <table style={{minWidth:800}}><thead><tr>{['ID','Reg No.','Make / Model','Year','Fuel','Color','Customer','Odo.','Actions'].map(h=><th key={h} style={TH}>{h}</th>)}</tr></thead>
         <tbody>{list.map(v=><tr key={v.id}>
-          <td style={{...TD,color:'#6875f5',fontWeight:700,fontFamily:'monospace',fontSize:12}}>V-{v.id}</td>
-          <td style={{...TD,fontWeight:900,fontSize:13,letterSpacing:'.03em',color:'#e8eaf2'}}>{v.regNo}</td>
-          <td style={{...TD,fontWeight:600,color:'#e8eaf2'}}>{v.make} {v.model}{v.variant&&<span style={{color:'#818aa0',fontWeight:400}}> {v.variant}</span>}</td>
+          <td style={{...TD,color:'#6875f5',fontWeight:700,fontFamily:'monospace',fontSize:11}}>V-{v.id}</td>
+          <td style={{...TD,fontWeight:700,fontSize:13,letterSpacing:'.04em',color:'#e8eaf2'}}>{v.regNo}</td>
+          <td style={{...TD,fontWeight:500,color:'#e8eaf2'}}>{v.make} {v.model}{v.variant&&<span style={{color:'#818aa0',fontWeight:400}}> {v.variant}</span>}</td>
           <td style={{...TD,color:'#818aa0'}}>{v.year||'—'}</td>
           <td style={TD}><Bdg s={v.fuelType||'petrol'}/></td>
-          <td style={{...TD,color:'#818aa0',fontSize:12}}>{v.color||'—'}</td>
-          <td style={{...TD,fontWeight:600,color:'#e8eaf2'}}>{getCust(v.customerId)?.name||'—'}</td>
-          <td style={{...TD,color:'#818aa0',fontSize:12}}>{v.odometer?v.odometer+' km':'—'}</td>
-          <td style={TD}>
-            <button onClick={()=>open(v)} title="Edit" style={{marginRight:5,width:28,height:28,background:'#1e2235',border:'1px solid #252d3d',borderRadius:6,cursor:'pointer',fontSize:13,color:'#9daabb',display:'inline-flex',alignItems:'center',justifyContent:'center'}}>✏</button>
-            <button onClick={async()=>{if(confirm('Delete?'))await db.delVehicle(v.id)}} title="Delete" style={{width:28,height:28,background:'#2a0a10',border:'1px solid #7f1d1d',borderRadius:6,cursor:'pointer',fontSize:13,color:'#f87171',display:'inline-flex',alignItems:'center',justifyContent:'center'}}>🗑</button>
-          </td>
+          <td style={{...TD,color:'#818aa0'}}>{v.color||'—'}</td>
+          <td style={{...TD,fontWeight:500,color:'#e8eaf2'}}>{getCust(v.customerId)?.name||'—'}</td>
+          <td style={{...TD,color:'#818aa0',fontFamily:'monospace',fontSize:12}}>{v.odometer?v.odometer+' km':'—'}</td>
+          <td style={TD}><div style={{display:'flex',gap:4,alignItems:'center'}}>
+            <button onClick={()=>open(v)} title="Edit" style={{width:28,height:28,background:'#1e2235',border:'1px solid #252d3d',borderRadius:6,cursor:'pointer',fontSize:12,color:'#9daabb',display:'flex',alignItems:'center',justifyContent:'center'}}>✏</button>
+            <button onClick={async()=>{if(confirm('Delete?'))await db.delVehicle(v.id)}} title="Delete" style={{width:28,height:28,background:'#2a0a10',border:'1px solid #7f1d1d',borderRadius:6,cursor:'pointer',fontSize:12,color:'#f87171',display:'flex',alignItems:'center',justifyContent:'center'}}>🗑</button>
+          </div></td>
         </tr>)}</tbody></table>
       </div>
     </div>
@@ -1195,21 +1195,21 @@ function Inventory({data,db}){
       <div style={{overflowX:'auto'}}>
         <table style={{minWidth:960}}><thead><tr>{['Part Name','Part No.','Make / Model','Category','HSN Code','GST','Sell Price','Buy Price','Stock','Min','Actions'].map(h=><th key={h} style={TH}>{h}</th>)}</tr></thead>
         <tbody>{list.map(p=>{const low=(+p.qty||0)<=(+p.minQty||2);return<tr key={p.id} style={low?{background:'#1e0f00'}:{}}>
-          <td style={{...TD,fontWeight:700,color:'#e8eaf2'}}>{p.name}</td>
+          <td style={{...TD,fontWeight:600,color:'#e8eaf2',whiteSpace:'normal'}}>{p.name}</td>
           <td style={{...TD,fontFamily:'monospace',fontSize:11,color:'#818aa0'}}>{p.partNo||'—'}</td>
           <td style={{...TD,fontSize:12,color:'#818aa0'}}>{[p.vehicleMake,p.vehicleModel].filter(Boolean).join(' ')||'—'}</td>
           <td style={TD}><Bdg s={p.category||'spare'}/></td>
           <td style={{...TD,fontFamily:'monospace',fontSize:11,color:'#818aa0'}}>{p.hsnCode||'—'}</td>
           <td style={{...TD,color:'#e8eaf2'}}>{p.gst}%</td>
-          <td style={{...TD,fontWeight:700,color:'#e8eaf2'}}>{fmt(p.sellingPrice)}</td>
+          <td style={{...TD,fontWeight:600,color:'#e8eaf2'}}>{fmt(p.sellingPrice)}</td>
           <td style={{...TD,color:'#818aa0'}}>{fmt(p.purchasePrice)}</td>
           <td style={{...TD,fontWeight:700,color:low?'#f87171':'#4ade80'}}>{p.qty||0} {p.unit}</td>
           <td style={{...TD,color:'#818aa0'}}>{p.minQty||2}</td>
-          <td style={TD}>
-            <button onClick={()=>setUsage(p)} title="Usage history" style={{marginRight:4,width:28,height:28,background:'#0d1a30',border:'1px solid #1e2d52',borderRadius:5,cursor:'pointer',fontSize:12,color:'#6875f5',display:'inline-flex',alignItems:'center',justifyContent:'center'}}>📊</button>
-            <button onClick={()=>open(p)} title="Edit" style={{marginRight:4,width:28,height:28,background:'#1e2235',border:'1px solid #252d3d',borderRadius:5,cursor:'pointer',fontSize:12,color:'#9daabb',display:'inline-flex',alignItems:'center',justifyContent:'center'}}>✏</button>
-            <button onClick={async()=>{if(confirm('Delete?'))await db.delPart(p.id)}} title="Delete" style={{width:28,height:28,background:'#2a0a10',border:'1px solid #7f1d1d',borderRadius:5,cursor:'pointer',fontSize:12,color:'#f87171',display:'inline-flex',alignItems:'center',justifyContent:'center'}}>🗑</button>
-          </td>
+          <td style={TD}><div style={{display:'flex',gap:4,alignItems:'center'}}>
+            <button onClick={()=>setUsage(p)} title="Usage history" style={{width:28,height:28,background:'#0d1a30',border:'1px solid #1e2d52',borderRadius:5,cursor:'pointer',fontSize:12,color:'#6875f5',display:'flex',alignItems:'center',justifyContent:'center'}}>📊</button>
+            <button onClick={()=>open(p)} title="Edit" style={{width:28,height:28,background:'#1e2235',border:'1px solid #252d3d',borderRadius:5,cursor:'pointer',fontSize:12,color:'#9daabb',display:'flex',alignItems:'center',justifyContent:'center'}}>✏</button>
+            <button onClick={async()=>{if(confirm('Delete?'))await db.delPart(p.id)}} title="Delete" style={{width:28,height:28,background:'#2a0a10',border:'1px solid #7f1d1d',borderRadius:5,cursor:'pointer',fontSize:12,color:'#f87171',display:'flex',alignItems:'center',justifyContent:'center'}}>🗑</button>
+          </div></td>
         </tr>})}</tbody></table>
       </div>
     </div>
@@ -1325,13 +1325,13 @@ function JobCards({data,db,setTab}){
       <div style={{overflowX:'auto'}}>
         <table style={{minWidth:900}}><thead><tr>{['Job #','Customer','Vehicle','Status','Priority','Technician','Amount','Date','Actions'].map(h=><th key={h} style={TH}>{h}</th>)}</tr></thead>
         <tbody>{list.map(j=><tr key={j.id}>
-          <td style={{...TD,color:'#6875f5',fontWeight:700}}>JC-{j.id}</td>
-          <td style={{...TD,color:'#e8eaf2'}}>{j.customerName}</td>
-          <td style={{...TD,fontWeight:800,color:'#e8eaf2'}}>{j.vehicleReg}</td>
+          <td style={{...TD,color:'#6875f5',fontWeight:700,fontFamily:'monospace',fontSize:11}}>JC-{j.id}</td>
+          <td style={{...TD,color:'#e8eaf2',fontWeight:500}}>{j.customerName}</td>
+          <td style={{...TD,fontWeight:700,color:'#e8eaf2',letterSpacing:'.03em'}}>{j.vehicleReg}</td>
           <td style={TD}><Bdg s={j.status}/></td><td style={TD}><Bdg s={j.priority||'normal'}/></td>
           <td style={{...TD,color:'#818aa0'}}>{j.technicianName||'—'}</td>
-          <td style={{...TD,fontWeight:800,color:'#e8eaf2'}}>{fmt(j.grand)}</td>
-          <td style={{...TD,color:'#818aa0'}}>{fmtD(j.createdAt)}</td>
+          <td style={{...TD,fontWeight:700,color:'#e8eaf2'}}>{fmt(j.grand)}</td>
+          <td style={{...TD,color:'#818aa0',fontSize:12}}>{fmtD(j.createdAt)}</td>
           <td style={TD}><div style={{display:'flex',gap:3}}>
             <button onClick={()=>open(j)} style={{padding:'3px 8px',background:'#1e2235',border:'1px solid #252d3d',borderRadius:5,cursor:'pointer',fontSize:11,color:'#9daabb'}}>✏</button>
             <button onClick={()=>genInv(j,'estimate')} style={{padding:'3px 7px',background:'#2a0d14',color:'#f48fb1',border:'1px solid #880e4f',borderRadius:5,cursor:'pointer',fontSize:10,fontWeight:700}}>EST</button>
