@@ -23,7 +23,7 @@ input:focus,select:focus,textarea:focus{border-color:#2453c7;box-shadow:0 0 0 3p
 table{border-collapse:collapse;width:100%}
 tbody tr:hover td{background:#1e2235!important}
 tbody tr:last-child td{border-bottom:none!important}
-#pd tbody tr:hover td,#pd-print tbody tr:hover td{background:transparent!important}
+#pd tbody tr:hover td,#pd-print tbody tr:hover td,#rpd tbody tr:hover td,#rpd-print tbody tr:hover td{background:transparent!important}
 .inv-form input,.inv-form select,.inv-form textarea{background:#fff!important;color:#111!important;border-color:#d0d7de!important}
 .inv-form input:focus,.inv-form select:focus,.inv-form textarea:focus{border-color:#4f63d2!important;box-shadow:0 0 0 3px rgba(79,99,210,.15)!important}
 .inv-form .fi-sep{border-top-color:#e8ecef!important}
@@ -1552,7 +1552,7 @@ function RentPrintDoc({inv,settings,onClose}){
   function doPrint(){
     const el=document.getElementById('rpd');if(!el)return
     const clone=el.cloneNode(true);clone.querySelectorAll('style,script').forEach(s=>s.remove())
-    clone.id='pd-print';document.body.appendChild(clone);document.body.classList.add('printing')
+    clone.id='rpd-print';document.body.appendChild(clone);document.body.classList.add('printing')
     const cleanup=()=>{document.body.classList.remove('printing');document.body.contains(clone)&&document.body.removeChild(clone);window.removeEventListener('afterprint',cleanup)}
     window.addEventListener('afterprint',cleanup);window.print()
   }
@@ -1622,8 +1622,8 @@ function RentPrintDoc({inv,settings,onClose}){
     </table>
     <table style={{width:'100%',borderCollapse:'collapse',border:'1px solid #333',borderTop:'none'}}>
       <thead><tr>
-        {(isIGST?[['#',false],['Description',false],['SAC Code',false],['GST (%)',false],['Months',false],['Unit Price (₹)',true],[igstH,true],['Total (₹)',true]]
-                :[['#',false],['Description',false],['SAC Code',false],['GST (%)',false],['Months',false],['Unit Price (₹)',true],[cgstH,true],[sgstH,true],['Total (₹)',true]]).map(([h,r])=><th key={h} style={{...hcell,textAlign:r?'right':'center',padding:'6px'}}>{h}</th>)}
+        {(isIGST?[['#',false],['Description',false],['SAC Code',false],['GST (%)',false],['Months',false],['Unit Price (₹)',true],[igstH,true],['Total Taxable (₹)',true]]
+                :[['#',false],['Description',false],['SAC Code',false],['GST (%)',false],['Months',false],['Unit Price (₹)',true],[cgstH,true],[sgstH,true],['Total Taxable (₹)',true]]).map(([h,r])=><th key={h} style={{...hcell,textAlign:r?'right':'center',padding:'6px'}}>{h}</th>)}
       </tr></thead>
       <tbody>
         {lines.map((it,i)=><tr key={it.id||i} style={{background:i%2?'#f9f9f9':'#fff'}}>
