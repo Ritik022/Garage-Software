@@ -320,6 +320,10 @@ function useDB(){
     const{data:d,error:e}=await sb.from('invoices').update({payment_status:'cancelled'}).eq('id',id).select().single(); if(e)throw e
     const r=toCamel(d); setD(p=>({...p,invoices:p.invoices.map(i=>i.id===id?r:i)}))
   }),[])
+  const restoreInvoice=useCallback(async id=>op(async()=>{
+    const{data:d,error:e}=await sb.from('invoices').update({payment_status:'pending'}).eq('id',id).select().single(); if(e)throw e
+    const r=toCamel(d); setD(p=>({...p,invoices:p.invoices.map(i=>i.id===id?r:i)}))
+  }),[])
 
   // ── Settings
   const saveSettings=useCallback(async form=>op(async()=>{
@@ -328,7 +332,7 @@ function useDB(){
     const r=toCamel(d); setD(p=>({...p,settings:r})); return r
   }),[])
 
-  return{D,ready,busy,err,reload:load,saveCustomer,delCustomer,saveVehicle,delVehicle,savePart,delPart,saveJob,delJob,saveInvoice,markPay,cancelInvoice,saveSettings}
+  return{D,ready,busy,err,reload:load,saveCustomer,delCustomer,saveVehicle,delVehicle,savePart,delPart,saveJob,delJob,saveInvoice,markPay,cancelInvoice,restoreInvoice,saveSettings}
 }
 
 /* ─── UI PRIMITIVES ─────────────────────────────────── */
@@ -1353,6 +1357,13 @@ function Invoices({data,db}){
   const[sub,setSub]=useState('all')
   const[showNew,setShowNew]=useState(false);const[editI,setEditI]=useState(null);const[printI,setPrintI]=useState(null)
   const[q,setQ]=useState('');const[fType,setFType]=useState('all');const[fStatus,setFStatus]=useState('all');const[sort,setSort]=useState('serial-desc');const[fCust,setFCust]=useState('all')
+  const[restoreTarget,setRestoreTarget]=useState(null);const[pinInput,setPinInput]=useState('');const[pinErr,setPinErr]=useState('')
+  async function doRestore(){
+    const pin=data.settings?.adminPin||''
+    if(pin&&pinInput!==pin){setPinErr('Incorrect PIN. Try again.');return}
+    await db.restoreInvoice(restoreTarget.id)
+    setRestoreTarget(null);setPinInput('');setPinErr('')
+  }
   const TABS=[{k:'all',l:'All Invoices'},{k:'estimate',l:'Estimates'},{k:'invoice',l:'Tax Invoices'},{k:'final-invoice',l:'Final Invoices'}]
   const pC={paid:'#0a1f0d|#4ade80',partial:'#1a1200|#fb923c',pending:'#1c1500|#fbbf24',cancelled:'#2a0a10|#f87171'}
   const docInfo=i=>{
@@ -1491,6 +1502,7 @@ function Invoices({data,db}){
           <button onClick={()=>setPrintI(inv)} title="Print" style={{width:30,height:30,background:'#1e2235',color:'#9daabb',border:'1px solid #252d3d',borderRadius:6,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',fontSize:13}}>🖨</button>
           {!cancelled&&!paid&&<button onClick={()=>setEditI(inv)} title="Edit" style={{width:30,height:30,background:'#1e2235',color:'#9daabb',border:'1px solid #252d3d',borderRadius:6,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',fontSize:13}}>✏</button>}
           {!cancelled&&!paid&&<button onClick={()=>doCancel(inv)} title="Cancel invoice" style={{width:30,height:30,background:'#2a0a10',color:'#f87171',border:'1px solid #7f1d1d',borderRadius:6,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',fontSize:13}}>⊘</button>}
+          {cancelled&&<button onClick={()=>{setRestoreTarget(inv);setPinInput('');setPinErr('')}} title="Restore invoice (Admin)" style={{width:30,height:30,background:'#0a1f0d',color:'#4ade80',border:'1px solid #1a5c2a',borderRadius:6,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',fontSize:13}}>↩</button>}
         </div></td>
       </tr>
     })}</tbody></table>
@@ -1499,6 +1511,22 @@ function Invoices({data,db}){
     {showNew&&<Modal title="New Invoice / Estimate" onClose={()=>setShowNew(false)} wide light><div className="inv-form"><InvEditor data={data} onSave={async f=>{await db.saveInvoice(f);setShowNew(false)}} onClose={()=>setShowNew(false)} light={true}/></div></Modal>}
     {editI&&<Modal title={'Edit — '+buildInvNo(data.settings||DEF,editI)} onClose={()=>setEditI(null)} wide light><div className="inv-form"><InvEditor initial={editI} data={data} onSave={async f=>{await db.saveInvoice(f);setEditI(null)}} onClose={()=>setEditI(null)} light={true}/></div></Modal>}
     {printI&&<Modal title="Invoice Preview" onClose={()=>setPrintI(null)} wide><PrintDoc inv={printI} settings={data.D?.settings||data.settings} onClose={()=>setPrintI(null)}/></Modal>}
+    {restoreTarget&&<Modal title="Restore Invoice — Admin Access" onClose={()=>{setRestoreTarget(null);setPinInput('');setPinErr('')}}>
+      <div style={{padding:'4px 0 8px'}}>
+        <div style={{background:'#1c1500',border:'1px solid #78350f',borderRadius:8,padding:'10px 14px',marginBottom:16,fontSize:12,color:'#fbbf24'}}>
+          ⚠ You are about to restore <b>{buildInvNo(data.settings||DEF,restoreTarget)}</b> from cancelled → pending.
+        </div>
+        {data.settings?.adminPin
+          ?<><F label="Enter Admin PIN to confirm"><In type="password" value={pinInput} onChange={e=>{setPinInput(e.target.value);setPinErr('')}} placeholder="••••" maxLength={8} autoFocus onKeyDown={e=>e.key==='Enter'&&doRestore()}/></F>
+            {pinErr&&<div style={{color:'#f87171',fontSize:12,marginTop:4}}>⚠ {pinErr}</div>}</>
+          :<div style={{fontSize:12,color:'#818aa0',marginBottom:8}}>No admin PIN set. Go to Settings → Admin PIN to add protection.</div>
+        }
+        <div style={{display:'flex',gap:8,justifyContent:'flex-end',marginTop:16}}>
+          <GBtn onClick={()=>{setRestoreTarget(null);setPinInput('');setPinErr('')}}>Cancel</GBtn>
+          <PBtn onClick={doRestore} col='#1a5c2a' style={{color:'#4ade80'}}>↩ Restore Invoice</PBtn>
+        </div>
+      </div>
+    </Modal>}
   </div>
 }
 
@@ -1577,6 +1605,14 @@ serve(async (req) => {
     </div>
     <div style={sec}><div style={stl}>📄 Default Invoice Terms &amp; Conditions</div>
       <Tx value={form.invoiceTerms||''} onChange={e=>f('invoiceTerms',e.target.value)} style={{minHeight:100}}/>
+    </div>
+    <div style={sec}><div style={stl}>🔐 Admin PIN</div>
+      <div style={{fontSize:12,color:'#818aa0',marginBottom:12}}>Required to restore accidentally cancelled invoices. Leave blank to disable PIN protection.</div>
+      <FR>
+        <F label="Admin PIN (4–8 digits)" half><In type="password" value={form.adminPin||''} onChange={e=>f('adminPin',e.target.value)} placeholder="e.g. 1234" maxLength={8}/></F>
+        <F label="Confirm PIN" half><In type="password" value={form.adminPinConfirm||''} onChange={e=>f('adminPinConfirm',e.target.value)} placeholder="re-enter PIN" maxLength={8}/></F>
+      </FR>
+      {form.adminPin&&form.adminPinConfirm&&form.adminPin!==form.adminPinConfirm&&<div style={{color:'#f87171',fontSize:12,marginTop:4}}>⚠ PINs do not match</div>}
     </div>
     <PBtn onClick={doSave} col={ok?'#0a3d1a':'#4f63d2'} style={{border:ok?'1px solid #4ade80':'none',color:ok?'#4ade80':'#fff'}}>{ok?'✓ Saved!':'Save Settings'}</PBtn>
     <div style={{...sec,marginTop:24}}>
