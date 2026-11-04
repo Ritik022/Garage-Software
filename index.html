@@ -37,7 +37,7 @@ tbody tr:last-child td{border-bottom:none!important}
 ::-webkit-scrollbar{width:5px;height:5px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:#3a3a55;border-radius:3px}
 @keyframes spin{to{transform:rotate(360deg)}}
 @keyframes fadein{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
-@media print{.np{display:none!important}body{background:#fff}body.printing>*:not(#pd-print):not(#rpd-print){display:none!important}#pd-print,#rpd-print{display:block!important;margin:0;padding:0}*{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}}@page{size:A4;margin:8mm}
+@media print{.np{display:none!important}body{background:#fff}body.printing>*:not(#pd-print){display:none!important}#pd-print{display:block!important;margin:0;padding:0}*{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}}@page{size:A4;margin:8mm}
 </style>
 </head>
 <body><div id="root"></div>
@@ -1552,7 +1552,7 @@ function RentPrintDoc({inv,settings,onClose}){
   function doPrint(){
     const el=document.getElementById('rpd');if(!el)return
     const clone=el.cloneNode(true);clone.querySelectorAll('style,script').forEach(s=>s.remove())
-    clone.id='rpd-print';document.body.appendChild(clone);document.body.classList.add('printing')
+    clone.id='pd-print';document.body.appendChild(clone);document.body.classList.add('printing')
     const cleanup=()=>{document.body.classList.remove('printing');document.body.contains(clone)&&document.body.removeChild(clone);window.removeEventListener('afterprint',cleanup)}
     window.addEventListener('afterprint',cleanup);window.print()
   }
