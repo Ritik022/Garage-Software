@@ -1359,7 +1359,7 @@ function Invoices({data,db}){
   const[q,setQ]=useState('');const[fType,setFType]=useState('all');const[fStatus,setFStatus]=useState('all');const[sort,setSort]=useState('serial-desc');const[fCust,setFCust]=useState('all')
   const[restoreTarget,setRestoreTarget]=useState(null);const[pinInput,setPinInput]=useState('');const[pinErr,setPinErr]=useState('')
   async function doRestore(){
-    const pin=data.settings?.adminPin||''
+    let pin='';try{pin=localStorage.getItem('fa_admin_pin')||''}catch(e){}
     if(pin&&pinInput!==pin){setPinErr('Incorrect PIN. Try again.');return}
     await db.restoreInvoice(restoreTarget.id)
     setRestoreTarget(null);setPinInput('');setPinErr('')
@@ -1516,8 +1516,8 @@ function Invoices({data,db}){
         <div style={{background:'#1c1500',border:'1px solid #78350f',borderRadius:8,padding:'10px 14px',marginBottom:16,fontSize:12,color:'#fbbf24'}}>
           ⚠ You are about to restore <b>{buildInvNo(data.settings||DEF,restoreTarget)}</b> from cancelled → pending.
         </div>
-        {data.settings?.adminPin
-          ?<><F label="Enter Admin PIN to confirm"><In type="password" value={pinInput} onChange={e=>{setPinInput(e.target.value);setPinErr('')}} placeholder="••••" maxLength={8} autoFocus onKeyDown={e=>e.key==='Enter'&&doRestore()}/></F>
+        {(()=>{let p='';try{p=localStorage.getItem('fa_admin_pin')||''}catch(e){}return p})()?
+          <><F label="Enter Admin PIN to confirm"><In type="password" value={pinInput} onChange={e=>{setPinInput(e.target.value);setPinErr('')}} placeholder="••••" maxLength={8} autoFocus onKeyDown={e=>e.key==='Enter'&&doRestore()}/></F>
             {pinErr&&<div style={{color:'#f87171',fontSize:12,marginTop:4}}>⚠ {pinErr}</div>}</>
           :<div style={{fontSize:12,color:'#818aa0',marginBottom:8}}>No admin PIN set. Go to Settings → Admin PIN to add protection.</div>
         }
@@ -1527,6 +1527,35 @@ function Invoices({data,db}){
         </div>
       </div>
     </Modal>}
+  </div>
+}
+
+/* ─── ADMIN PIN (localStorage, no DB column needed) ─── */
+function AdminPinSection(){
+  const getPin=()=>{try{return localStorage.getItem('fa_admin_pin')||''}catch(e){return''}}
+  const[has,setHas]=useState(()=>!!getPin())
+  const[np,setNp]=useState('');const[cp,setCp]=useState('');const[msg,setMsg]=useState('')
+  function savePin(){
+    if(!np){setMsg('Enter a PIN to set.');return}
+    if(np!==cp){setMsg('PINs do not match.');return}
+    try{localStorage.setItem('fa_admin_pin',np);setHas(true);setNp('');setCp('');setMsg('✓ Admin PIN saved to this device.')}catch(e){setMsg('Could not save: '+e.message)}
+  }
+  function clearPin(){
+    try{localStorage.removeItem('fa_admin_pin');setHas(false);setNp('');setCp('');setMsg('PIN removed.')}catch(e){}
+  }
+  return <div style={{background:'#1a1d27',border:'1px solid #1e2235',borderRadius:10,padding:18,marginBottom:16}}>
+    <div style={{fontSize:13,fontWeight:700,color:'#e8eaf2',marginBottom:14,paddingBottom:10,borderBottom:'1px solid #1e2235'}}>🔐 Admin PIN</div>
+    <div style={{fontSize:12,color:'#818aa0',marginBottom:12}}>Stored on this device only. Required to restore accidentally cancelled invoices.</div>
+    {has&&<div style={{background:'#0a1f0d',border:'1px solid #1a5c2a',borderRadius:6,padding:'7px 12px',fontSize:12,color:'#4ade80',marginBottom:12}}>✓ Admin PIN is set on this device. Enter a new PIN below to change it.</div>}
+    <FR>
+      <F label={has?'New PIN':'Admin PIN (4–8 digits)'} half><In type="password" value={np} onChange={e=>setNp(e.target.value)} placeholder="••••" maxLength={8}/></F>
+      <F label="Confirm PIN" half><In type="password" value={cp} onChange={e=>setCp(e.target.value)} placeholder="re-enter" maxLength={8}/></F>
+    </FR>
+    {msg&&<div style={{fontSize:12,color:msg.startsWith('✓')?'#4ade80':'#f87171',marginBottom:8}}>{msg}</div>}
+    <div style={{display:'flex',gap:8,marginTop:4}}>
+      <PBtn onClick={savePin} col='#1a3a60'>{has?'Update PIN':'Set PIN'}</PBtn>
+      {has&&<GBtn onClick={clearPin}>Remove PIN</GBtn>}
+    </div>
   </div>
 }
 
@@ -1606,14 +1635,7 @@ serve(async (req) => {
     <div style={sec}><div style={stl}>📄 Default Invoice Terms &amp; Conditions</div>
       <Tx value={form.invoiceTerms||''} onChange={e=>f('invoiceTerms',e.target.value)} style={{minHeight:100}}/>
     </div>
-    <div style={sec}><div style={stl}>🔐 Admin PIN</div>
-      <div style={{fontSize:12,color:'#818aa0',marginBottom:12}}>Required to restore accidentally cancelled invoices. Leave blank to disable PIN protection.</div>
-      <FR>
-        <F label="Admin PIN (4–8 digits)" half><In type="password" value={form.adminPin||''} onChange={e=>f('adminPin',e.target.value)} placeholder="e.g. 1234" maxLength={8}/></F>
-        <F label="Confirm PIN" half><In type="password" value={form.adminPinConfirm||''} onChange={e=>f('adminPinConfirm',e.target.value)} placeholder="re-enter PIN" maxLength={8}/></F>
-      </FR>
-      {form.adminPin&&form.adminPinConfirm&&form.adminPin!==form.adminPinConfirm&&<div style={{color:'#f87171',fontSize:12,marginTop:4}}>⚠ PINs do not match</div>}
-    </div>
+    <AdminPinSection/>
     <PBtn onClick={doSave} col={ok?'#0a3d1a':'#4f63d2'} style={{border:ok?'1px solid #4ade80':'none',color:ok?'#4ade80':'#fff'}}>{ok?'✓ Saved!':'Save Settings'}</PBtn>
     <div style={{...sec,marginTop:24}}>
       <div style={stl}>📊 Database Statistics</div>
