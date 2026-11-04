@@ -262,7 +262,7 @@ function useDB(){
       // Resolve customer — selected id > match name+phone and update > create new
       let custId=form.customerId?+form.customerId:null
       let vehId=form.vehicleId?+form.vehicleId:null
-      if(!custId&&form.customerName){
+      if(!custId&&form.customerName&&form.type!=='rent-invoice'){
         if(form.customerPhone){
           const{data:found}=await sb.from('customers').select('id,name').eq('phone',form.customerPhone).limit(1)
           if(found?.length&&found[0].name.toLowerCase().trim()===form.customerName.toLowerCase().trim()){
@@ -280,7 +280,7 @@ function useDB(){
         }
       }
       // Resolve vehicle — selected id > match reg_no and update > create new
-      if(!vehId&&form.vehicleReg){
+      if(!vehId&&form.vehicleReg&&form.type!=='rent-invoice'){
         const{data:found}=await sb.from('vehicles').select('id').eq('reg_no',form.vehicleReg).limit(1)
         if(found?.length){
           vehId=found[0].id
