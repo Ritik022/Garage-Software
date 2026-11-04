@@ -792,34 +792,56 @@ function Dashboard({data,setTab}){
   const m=now.toISOString().slice(0,7)
   const todayStr=now.toISOString().slice(0,10)
 
+  const[period,setPeriod]=useState('this-month')
+  const[cFrom,setCFrom]=useState('')
+  const[cTo,setCTo]=useState(todayStr)
+
+  // Compute date range from selected period
+  let filterStart=m+'-01',filterEnd=todayStr,filterLabel='This Month'
+  if(period==='this-week'){const dow=now.getDay();const s=new Date(now);s.setDate(now.getDate()-(dow===0?6:dow-1));filterStart=s.toISOString().slice(0,10);filterLabel='This Week'}
+  else if(period==='last-3m'){const s=new Date(now.getFullYear(),now.getMonth()-2,1);filterStart=s.toISOString().slice(0,10);filterLabel='Last 3 Months'}
+  else if(period==='last-6m'){const s=new Date(now.getFullYear(),now.getMonth()-5,1);filterStart=s.toISOString().slice(0,10);filterLabel='Last 6 Months'}
+  else if(period==='this-year'){filterStart=now.getFullYear()+'-01-01';filterLabel='This Year'}
+  else if(period==='custom'&&cFrom&&cTo){filterStart=cFrom;filterEnd=cTo;filterLabel=`${fmtD(cFrom)} – ${fmtD(cTo)}`}
+  const inP=i=>i.date&&i.date>=filterStart&&i.date<=filterEnd
+
   const active=data.invoices.filter(i=>i.paymentStatus!=='cancelled')
   const openJ=data.jobCards.filter(j=>['open','in-progress'].includes(j.status)).length
-  const mRev=data.invoices.filter(i=>i.type!=='rent-invoice'&&i.date?.startsWith(m)&&i.paymentStatus!=='cancelled').reduce((s,i)=>s+(+i.grand||0),0)
-  const mRentRev=data.invoices.filter(i=>i.type==='rent-invoice'&&i.date?.startsWith(m)&&i.paymentStatus!=='cancelled').reduce((s,i)=>s+(+i.grand||0),0)
-  const mCollected=data.invoices.filter(i=>i.type!=='rent-invoice'&&i.date?.startsWith(m)&&i.paymentStatus==='paid').reduce((s,i)=>s+(+i.grand||0),0)
-    +data.invoices.filter(i=>i.type!=='rent-invoice'&&i.date?.startsWith(m)&&i.paymentStatus==='partial').reduce((s,i)=>s+(+i.amountPaid||0),0)
-  const pendingDue=active.filter(i=>i.type!=='rent-invoice'&&i.paymentStatus!=='paid').reduce((s,i)=>s+(+i.grand||0),0)
+  const mRev=data.invoices.filter(i=>i.type!=='rent-invoice'&&inP(i)&&i.paymentStatus!=='cancelled').reduce((s,i)=>s+(+i.grand||0),0)
+  const mRentRev=data.invoices.filter(i=>i.type==='rent-invoice'&&inP(i)&&i.paymentStatus!=='cancelled').reduce((s,i)=>s+(+i.grand||0),0)
+  const mCollected=data.invoices.filter(i=>i.type!=='rent-invoice'&&inP(i)&&i.paymentStatus==='paid').reduce((s,i)=>s+(+i.grand||0),0)
+    +data.invoices.filter(i=>i.type!=='rent-invoice'&&inP(i)&&i.paymentStatus==='partial').reduce((s,i)=>s+(+i.amountPaid||0),0)
+  const pendingDue=data.invoices.filter(i=>i.type!=='rent-invoice'&&inP(i)&&i.paymentStatus!=='cancelled'&&i.paymentStatus!=='paid').reduce((s,i)=>s+(+i.grand||0),0)
   const overdueInvs=data.invoices.filter(i=>i.paymentStatus==='pending'&&i.dueDate&&i.dueDate<todayStr)
   const lowS=data.parts.filter(p=>(+p.qty||0)<=(+p.minQty||2)).length
 
-  const months=[]
-  for(let i=5;i>=0;i--){
-    const d=new Date(now.getFullYear(),now.getMonth()-i,1)
-    const key=d.toISOString().slice(0,7)
-    const label=d.toLocaleDateString('en-IN',{month:'short'})
-    const rev=data.invoices.filter(inv=>inv.date?.startsWith(key)&&inv.paymentStatus!=='cancelled').reduce((s,inv)=>s+(+inv.grand||0),0)
-    const col=data.invoices.filter(inv=>inv.date?.startsWith(key)&&inv.paymentStatus==='paid').reduce((s,inv)=>s+(+inv.grand||0),0)
-      +data.invoices.filter(inv=>inv.date?.startsWith(key)&&inv.paymentStatus==='partial').reduce((s,inv)=>s+(+inv.amountPaid||0),0)
-    months.push({key,label,rev,col})
+  // Chart buckets: daily ≤14d, weekly ≤100d, monthly otherwise
+  const diffDays=Math.round((new Date(filterEnd)-new Date(filterStart))/86400000)+1
+  const chartBuckets=[]
+  if(diffDays<=14){
+    for(let i=0;i<diffDays;i++){const d=new Date(filterStart);d.setDate(d.getDate()+i);const k=d.toISOString().slice(0,10);chartBuckets.push({key:k,keyEnd:k,label:d.toLocaleDateString('en-IN',{day:'numeric',month:'short'}),type:'day'})}
+  } else if(diffDays<=100){
+    let cur=new Date(filterStart);const dow=cur.getDay();cur.setDate(cur.getDate()-(dow===0?6:dow-1));const eD=new Date(filterEnd)
+    while(cur<=eD){const ws=new Date(cur);const we=new Date(cur);we.setDate(cur.getDate()+6);chartBuckets.push({key:ws.toISOString().slice(0,10),keyEnd:we.toISOString().slice(0,10),label:ws.toLocaleDateString('en-IN',{day:'numeric',month:'short'}),type:'week'});cur.setDate(cur.getDate()+7)}
+  } else {
+    const sD=new Date(filterStart);const eD=new Date(filterEnd);let cur=new Date(sD.getFullYear(),sD.getMonth(),1)
+    while(cur<=eD){const k=cur.toISOString().slice(0,7);chartBuckets.push({key:k,keyEnd:k,label:cur.toLocaleDateString('en-IN',{month:'short',year:'2-digit'}),type:'month'});cur.setMonth(cur.getMonth()+1)}
   }
+  const chartData=chartBuckets.map(b=>{
+    const invs=data.invoices.filter(i=>i.paymentStatus!=='cancelled'&&(b.type==='month'?i.date?.startsWith(b.key):i.date&&i.date>=b.key&&i.date<=b.keyEnd))
+    const rev=invs.reduce((s,i)=>s+(+i.grand||0),0)
+    const col=invs.filter(i=>i.paymentStatus==='paid').reduce((s,i)=>s+(+i.grand||0),0)+invs.filter(i=>i.paymentStatus==='partial').reduce((s,i)=>s+(+i.amountPaid||0),0)
+    return{label:b.label,rev,col}
+  })
 
   const custMap={}
-  active.forEach(i=>{if(i.customerName)custMap[i.customerName]=(custMap[i.customerName]||0)+(+i.grand||0)})
+  data.invoices.filter(i=>i.paymentStatus!=='cancelled'&&inP(i)).forEach(i=>{if(i.customerName)custMap[i.customerName]=(custMap[i.customerName]||0)+(+i.grand||0)})
   const topCusts=Object.entries(custMap).sort((a,b)=>b[1]-a[1]).slice(0,5)
 
-  const paidC=active.filter(i=>i.paymentStatus==='paid').length
-  const partC=active.filter(i=>i.paymentStatus==='partial').length
-  const pendC=active.filter(i=>i.paymentStatus==='pending').length
+  const pInv=active.filter(inP)
+  const paidC=pInv.filter(i=>i.paymentStatus==='paid').length
+  const partC=pInv.filter(i=>i.paymentStatus==='partial').length
+  const pendC=pInv.filter(i=>i.paymentStatus==='pending').length
 
   // Chart.js refs
   const revRef=useRef(null);const revInst=useRef(null)
@@ -831,10 +853,10 @@ function Dashboard({data,setTab}){
     revInst.current=new Chart(revRef.current,{
       type:'bar',
       data:{
-        labels:months.map(x=>x.label),
+        labels:chartData.map(x=>x.label),
         datasets:[
-          {label:'Billed',data:months.map(x=>x.rev),backgroundColor:'rgba(104,117,245,.18)',borderColor:'#6875f5',borderWidth:2,borderRadius:5,borderSkipped:false},
-          {label:'Collected',data:months.map(x=>x.col),backgroundColor:months.map((_,i)=>['#4ade80','#6875f5','#fb923c','#fbbf24','#a78bfa','#38bdf8'][i%6]),borderWidth:0,borderRadius:5,borderSkipped:false}
+          {label:'Billed',data:chartData.map(x=>x.rev),backgroundColor:'rgba(104,117,245,.18)',borderColor:'#6875f5',borderWidth:2,borderRadius:5,borderSkipped:false},
+          {label:'Collected',data:chartData.map(x=>x.col),backgroundColor:chartData.map((_,i)=>['#4ade80','#6875f5','#fb923c','#fbbf24','#a78bfa','#38bdf8'][i%6]),borderWidth:0,borderRadius:5,borderSkipped:false}
         ]
       },
       options:{
@@ -847,7 +869,7 @@ function Dashboard({data,setTab}){
       }
     })
     return ()=>{if(revInst.current)revInst.current.destroy()}
-  },[months.map(x=>x.rev+x.col).join(',')])
+  },[chartData.map(x=>x.label+x.rev+x.col).join(',')])
 
   useEffect(()=>{
     if(!donutRef.current||typeof Chart==='undefined') return
@@ -881,13 +903,28 @@ function Dashboard({data,setTab}){
       <PBtn onClick={()=>setTab('Invoices')} style={{fontSize:12}}>＋ New Invoice</PBtn>
     </div>
 
-    {/* 6 Stat Cards */}
+    {/* Period Filter Bar */}
+    <div style={{display:'flex',alignItems:'center',gap:6,marginBottom:18,flexWrap:'wrap'}}>
+      {[['this-week','This Week'],['this-month','This Month'],['last-3m','Last 3M'],['last-6m','Last 6M'],['this-year','This Year'],['custom','Custom']].map(([k,l])=>(
+        <button key={k} onClick={()=>setPeriod(k)} style={{padding:'5px 14px',borderRadius:20,fontSize:12,fontWeight:600,border:'1px solid',cursor:'pointer',transition:'all .15s',
+          background:period===k?'#4f63d2':'transparent',
+          borderColor:period===k?'#4f63d2':'#2a2d3e',
+          color:period===k?'#fff':'#818aa0'}}>{l}</button>
+      ))}
+      {period==='custom'&&<>
+        <input type="date" value={cFrom} onChange={e=>setCFrom(e.target.value)} style={{padding:'4px 8px',background:'#1a1d27',border:'1px solid #2a2d3e',borderRadius:6,color:'#e8eaf2',fontSize:12,outline:'none'}}/>
+        <span style={{color:'#636b82',fontSize:12}}>→</span>
+        <input type="date" value={cTo} onChange={e=>setCTo(e.target.value)} style={{padding:'4px 8px',background:'#1a1d27',border:'1px solid #2a2d3e',borderRadius:6,color:'#e8eaf2',fontSize:12,outline:'none'}}/>
+      </>}
+    </div>
+
+    {/* Stat Cards */}
     <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:14,marginBottom:22}}>
       {[
-        {l:'Workshop Revenue',    v:fmt(mRev),                s:'Car repair invoices this month'},
-        {l:'Rental Income',       v:fmt(mRentRev),            s:'Rent invoices issued this month',accent:'#a78bfa'},
-        {l:'Collected',           v:fmt(mCollected),           s:'Paid & partial (workshop only)'},
-        {l:'Outstanding',         v:fmt(pendingDue),           s:'Pending workshop invoices'},
+        {l:'Workshop Revenue',    v:fmt(mRev),                s:`Car repairs · ${filterLabel}`},
+        {l:'Rental Income',       v:fmt(mRentRev),            s:`Rent invoices · ${filterLabel}`,accent:'#a78bfa'},
+        {l:'Collected',           v:fmt(mCollected),           s:`Paid & partial · ${filterLabel}`},
+        {l:'Outstanding',         v:fmt(pendingDue),           s:`Unpaid workshop · ${filterLabel}`},
         {l:'Open Job Cards',      v:openJ,                    s:'Active in workshop right now'},
         {l:'Overdue Invoices',    v:overdueInvs.length,       s:overdueInvs.length>0?`${overdueInvs.length} past due date`:'All on time'},
         {l:'Low Stock',           v:lowS,                     s:lowS>0?`${lowS} items below minimum`:'All stock sufficient'},
@@ -904,7 +941,7 @@ function Dashboard({data,setTab}){
       {/* Revenue Chart (Chart.js) */}
       <div style={{...card,minWidth:0,overflow:'hidden'}}>
         <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:14}}>
-          <div style={ctitle}>Revenue — Last 6 Months</div>
+          <div style={ctitle}>Revenue — {filterLabel}</div>
           <div style={{display:'flex',gap:12}}>
             <div style={{display:'flex',alignItems:'center',gap:5,fontSize:11,color:'#818aa0'}}><div style={{width:9,height:9,borderRadius:2,background:'rgba(104,117,245,.3)',border:'1.5px solid #6875f5'}}/> Billed</div>
             <div style={{display:'flex',alignItems:'center',gap:5,fontSize:11,color:'#818aa0'}}><div style={{width:9,height:9,borderRadius:2,background:'#4ade80'}}/> Collected</div>
