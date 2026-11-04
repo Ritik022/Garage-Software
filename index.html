@@ -1382,8 +1382,8 @@ function Invoices({data,db}){
     return (i.customerName||'').toLowerCase().includes(ql)||(i.vehicleReg||'').toLowerCase().includes(ql)||String(i.id).includes(q)||buildInvNo(data.settings||DEF,i).toLowerCase().includes(ql)||(i.customerPhone||'').includes(q)
   }
   const list=sub==='all'
-    ?data.invoices.filter(i=>matches(i)&&(fType==='all'||i.type===fType)&&(fStatus==='all'||i.paymentStatus===fStatus))
-    :data.invoices.filter(i=>i.type===sub&&matches(i))
+    ?data.invoices.filter(i=>i.type!=='rent-invoice'&&matches(i)&&(fType==='all'||i.type===fType)&&(fStatus==='all'||i.paymentStatus===fStatus))
+    :data.invoices.filter(i=>i.type===sub&&i.type!=='rent-invoice'&&matches(i))
   const sortedList=[...list].sort(function(a,b){
     var va,vb
     if(sort==='serial-asc'||sort==='serial-desc'){va=(+a.invSerial||+a.id||0);vb=(+b.invSerial||+b.id||0)}
@@ -1527,6 +1527,286 @@ function Invoices({data,db}){
         </div>
       </div>
     </Modal>}
+  </div>
+}
+
+/* ─── RENT INVOICE PRINT ────────────────────────────── */
+function RentPrintDoc({inv,settings,onClose}){
+  const{lines,sub,gt,grand}=calcItems(inv.items||[])
+  const fg=grand-(inv.additionalDiscount||0)+(inv.adjustment||0)
+  const invNo=buildInvNo(settings,inv)
+  const F='Helvetica,Arial,sans-serif'
+  const cell={border:'1px solid #1565c0',padding:'5px 7px',fontSize:10,verticalAlign:'top',fontFamily:F,color:'#111'}
+  const hcell={...cell,background:'#1565c0',color:'#fff',fontWeight:700}
+  const fcell={...cell,color:'#fff'}
+  const ic={border:'none',padding:'6px 8px',fontFamily:F,fontSize:10,verticalAlign:'middle',color:'#111'}
+  const isIGST=inv.gstType==='igst'
+  const gstRates=[...new Set(lines.map(it=>+it.gst).filter(r=>r>0))]
+  const uRate=gstRates.length===1?gstRates[0]:null
+  const cgstH=uRate!=null?`CGST (${uRate/2}%)`:'CGST'
+  const sgstH=uRate!=null?`SGST (${uRate/2}%)`:'SGST'
+  const igstH=uRate!=null?`IGST (${uRate}%)`:'IGST'
+  const totalQty=lines.reduce((a,it)=>a+(+it.qty||0),0)
+  const totalPreDisc=lines.reduce((s,it)=>s+it.a,0)
+  const emptyRows=Math.max(0,5-lines.length)
+  function doPrint(){
+    const el=document.getElementById('rpd');if(!el)return
+    const clone=el.cloneNode(true);clone.querySelectorAll('style,script').forEach(s=>s.remove())
+    clone.id='pd-print';document.body.appendChild(clone);document.body.classList.add('printing')
+    const cleanup=()=>{document.body.classList.remove('printing');document.body.contains(clone)&&document.body.removeChild(clone);window.removeEventListener('afterprint',cleanup)}
+    window.addEventListener('afterprint',cleanup);window.print()
+  }
+  const defaultTerms='1. Rent is due on the 1st of each month.\n2. Late payment may attract penalty as per lease agreement.\n3. This invoice is computer-generated and valid without physical signature.'
+  return <div style={{fontFamily:F,fontSize:10,color:'#111',background:'#fff',maxWidth:840,margin:'0 auto'}}>
+    <div id="rpd">
+    <table style={{width:'100%',borderCollapse:'collapse',border:'1px solid #1565c0'}}>
+      <tbody><tr>
+        <td style={{...cell,width:'62%',borderRight:'1px solid #1565c0',padding:'12px 16px'}}>
+          <div style={{display:'flex',flexDirection:'column',alignItems:'flex-start',gap:6}}>
+            {settings.logoUrl?<img src={settings.logoUrl} style={{width:140,objectFit:'contain',borderRadius:8,marginBottom:4}} alt="logo"/>
+              :<div style={{width:60,height:60,background:'#1565c0',borderRadius:8,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',color:'#fff',marginBottom:4}}><div style={{fontSize:18,fontWeight:900,letterSpacing:1}}>FA</div><div style={{fontSize:8,opacity:.8,letterSpacing:.5}}>AUTOMOTIVE</div></div>}
+            <div style={{fontSize:20,fontWeight:900,color:'#1565c0',lineHeight:1.2}}>{settings.shopName}</div>
+            {settings.tagline&&<div style={{fontSize:10,color:'#111',fontStyle:'italic',marginTop:-2}}>{settings.tagline}</div>}
+            <div style={{lineHeight:1.8,marginTop:2,color:'#111'}}>{settings.address}<br/>Phone: {settings.phone}&nbsp;&nbsp;|&nbsp;&nbsp;GST: {settings.gstin}</div>
+          </div>
+        </td>
+        <td style={{...cell,textAlign:'right',verticalAlign:'middle',padding:'10px 14px'}}>
+          <div style={{color:'#c0392b',fontSize:15,fontWeight:900,letterSpacing:1}}>RENT INVOICE</div>
+          <div style={{marginTop:4}}>Invoice No: <b>{invNo}</b></div>
+          <div style={{marginTop:2}}>Date: <b>{fmtD(inv.date)}</b></div>
+          {settings.upiId&&<div style={{marginTop:6,display:'flex',flexDirection:'column',alignItems:'flex-end',gap:2}}>
+            <img src={`https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=${encodeURIComponent(`upi://pay?pa=${settings.upiId}&pn=${settings.shopName}&am=${Number(fg||0).toFixed(2)}&cu=INR`)}`} alt="UPI QR" style={{width:120,height:120}}/>
+            <div style={{fontSize:8,color:'#333'}}>Scan to Pay via UPI</div>
+          </div>}
+        </td>
+      </tr></tbody>
+    </table>
+    <table style={{width:'100%',borderCollapse:'collapse',border:'1px solid #333',borderTop:'none'}}>
+      <tbody><tr>
+        <td style={{...cell,width:'45%',borderRight:'1px solid #333'}}>
+          <div style={{fontWeight:900,fontSize:11,color:'#000',marginBottom:3}}>{(settings.shopName||'').toUpperCase()} (LESSOR)</div>
+          <div style={{lineHeight:1.7}}>{settings.address}<br/>GSTIN: {settings.gstin}<br/>Contact: {settings.phone}<br/>Email: {settings.email}</div>
+        </td>
+        <td style={{...cell,padding:0,height:'1px'}}>
+          <table style={{width:'100%',height:'100%',borderCollapse:'collapse',tableLayout:'fixed'}}>
+            <tbody>
+              <tr style={{height:'33.33%'}}><td style={{...ic,borderBottom:'1px solid #333',borderRight:'1px solid #333',fontWeight:700,width:'50%'}}>Invoice No: <span style={{color:'#000',fontWeight:900}}>{invNo}</span></td><td style={{...ic,borderBottom:'1px solid #333',fontWeight:700}}>Date: {fmtD(inv.date)}</td></tr>
+              <tr style={{height:'33.33%'}}><td style={{...ic,borderBottom:'1px solid #333',borderRight:'1px solid #333',fontWeight:700}}>Rental Period: {inv.vehicleReg||'—'}</td><td style={{...ic,borderBottom:'1px solid #333',fontWeight:700}}>Due Date: {inv.dueDate?fmtD(inv.dueDate):'—'}</td></tr>
+              <tr style={{height:'33.34%'}}><td colSpan={2} style={{...ic,fontWeight:700}}>Place of Supply: Haryana (06)</td></tr>
+            </tbody>
+          </table>
+        </td>
+      </tr></tbody>
+    </table>
+    <table style={{width:'100%',borderCollapse:'collapse',border:'1px solid #333',borderTop:'none'}}>
+      <tbody><tr>
+        <td style={{...cell,width:'50%',borderRight:'1px solid #333',verticalAlign:'top'}}>
+          <div style={{fontWeight:800,fontSize:11,color:'#000',marginBottom:5,borderBottom:'1px solid #ccc',paddingBottom:3}}>Bill To (Tenant)</div>
+          <div style={{lineHeight:1.9}}>
+            <div><b>Name:</b> {inv.customerName||'—'}</div>
+            {inv.companyName&&<div><b>Company:</b> {inv.companyName}</div>}
+            <div><b>Phone:</b> {inv.customerPhone||'—'}</div>
+            {inv.customerEmail&&<div><b>Email:</b> {inv.customerEmail}</div>}
+            {inv.customerGstin&&<div><b>GSTIN:</b> {inv.customerGstin}</div>}
+            <div><b>Address:</b> {inv.customerAddress||'—'}</div>
+          </div>
+        </td>
+        <td style={{...cell,width:'50%',verticalAlign:'top'}}>
+          <div style={{fontWeight:800,fontSize:11,color:'#000',marginBottom:5,borderBottom:'1px solid #ccc',paddingBottom:3}}>Property Details</div>
+          <div style={{lineHeight:1.9}}>
+            <div><b>Space / Description:</b> {inv.vehicleDetails||'—'}</div>
+            {inv.vehicleColor&&<div><b>Property Address:</b> {inv.vehicleColor}</div>}
+          </div>
+        </td>
+      </tr></tbody>
+    </table>
+    <table style={{width:'100%',borderCollapse:'collapse',border:'1px solid #333',borderTop:'none'}}>
+      <thead><tr>
+        {(isIGST?[['#',false],['Description',false],['SAC Code',false],['GST (%)',false],['Months',false],['Unit Price (₹)',true],[igstH,true],['Total (₹)',true]]
+                :[['#',false],['Description',false],['SAC Code',false],['GST (%)',false],['Months',false],['Unit Price (₹)',true],[cgstH,true],[sgstH,true],['Total (₹)',true]]).map(([h,r])=><th key={h} style={{...hcell,textAlign:r?'right':'center',padding:'6px'}}>{h}</th>)}
+      </tr></thead>
+      <tbody>
+        {lines.map((it,i)=><tr key={it.id||i} style={{background:i%2?'#f9f9f9':'#fff'}}>
+          <td style={{...cell,textAlign:'center',width:22}}>{i+1}</td>
+          <td style={{...cell,fontWeight:600}}>{it.name}</td>
+          <td style={{...cell,textAlign:'center'}}>{it.hsnSac||'997212'}</td>
+          <td style={{...cell,textAlign:'center'}}>{it.gst}%</td>
+          <td style={{...cell,textAlign:'center'}}>{it.qty}</td>
+          <td style={{...cell,textAlign:'right'}}>₹{Number(it.rate).toFixed(2)}</td>
+          {isIGST?<td style={{...cell,textAlign:'right'}}>₹{Number(it.ga).toFixed(2)}</td>
+            :<React.Fragment><td style={{...cell,textAlign:'right'}}>₹{Number(it.ga/2).toFixed(2)}</td><td style={{...cell,textAlign:'right'}}>₹{Number(it.ga/2).toFixed(2)}</td></React.Fragment>}
+          <td style={{...cell,textAlign:'right',fontWeight:700}}>₹{Number(it.tax).toFixed(2)}</td>
+        </tr>)}
+        {[...Array(emptyRows)].map((_,i)=><tr key={`e${i}`} style={{height:20}}>{[...Array(isIGST?8:9)].map((_,j)=><td key={j} style={cell}>&nbsp;</td>)}</tr>)}
+      </tbody>
+      <tfoot>
+        <tr style={{background:'#0d1a30'}}>
+          <td colSpan={3} style={{...hcell,textAlign:'right',background:'#1565c0'}}>TOTALS</td>
+          <td style={fcell}></td>
+          <td style={{...fcell,textAlign:'center',fontWeight:700}}>{totalQty}</td>
+          <td style={{...fcell,textAlign:'right',fontWeight:700}}>₹{totalPreDisc.toFixed(2)}</td>
+          {isIGST?<td style={{...fcell,textAlign:'right',fontWeight:700}}>₹{gt.toFixed(2)}</td>
+            :<React.Fragment><td style={{...fcell,textAlign:'right',fontWeight:700}}>₹{(gt/2).toFixed(2)}</td><td style={{...fcell,textAlign:'right',fontWeight:700}}>₹{(gt/2).toFixed(2)}</td></React.Fragment>}
+          <td style={{...fcell,textAlign:'right',fontWeight:800}}>₹{sub.toFixed(2)}</td>
+        </tr>
+      </tfoot>
+    </table>
+    <table style={{width:'100%',borderCollapse:'collapse',border:'1px solid #333',borderTop:'none'}}>
+      <tbody><tr>
+        <td style={{...cell,width:'55%',borderRight:'1px solid #333'}}>
+          <div style={{fontWeight:700,fontSize:11,marginBottom:5}}>Amount in Words:<br/><span style={{fontWeight:400,fontStyle:'italic'}}>{toWords(fg)}</span></div>
+          <div style={{fontWeight:700,fontSize:11,marginTop:8}}>Bank Details</div>
+        </td>
+        <td style={cell}>
+          {(isIGST?[['Subtotal (taxable):',sub],[igstH+':',gt],['Total Tax:',gt],['Extra Discount:',inv.additionalDiscount||0],['Adjustment:',inv.adjustment||0]]
+                  :[['Subtotal (taxable):',sub],[cgstH+':',gt/2],[sgstH+':',gt/2],['Total Tax:',gt],['Extra Discount:',inv.additionalDiscount||0],['Adjustment:',inv.adjustment||0]])
+            .map(([l,v])=><div key={l} style={{display:'flex',justifyContent:'space-between',padding:'3px 0'}}><span>{l}</span><span style={{fontWeight:700}}>₹{Number(v).toFixed(2)}</span></div>)}
+        </td>
+      </tr></tbody>
+    </table>
+    <table style={{width:'100%',borderCollapse:'collapse',border:'1px solid #333',borderTop:'none'}}>
+      <thead><tr>
+        {['#','Bank Name','Account No','IFSC Code','Branch'].map(h=><th key={h} style={hcell}>{h}</th>)}
+        <th style={{...hcell,textAlign:'right',fontSize:11}}>Grand Total: ₹{fg.toFixed(2)}</th>
+      </tr></thead>
+      <tbody><tr>
+        <td style={{...cell,textAlign:'center'}}>1</td>
+        <td style={cell}>{settings.bankName}</td>
+        <td style={{...cell,textAlign:'center'}}>{settings.accountNo}</td>
+        <td style={{...cell,textAlign:'center'}}>{settings.ifsc}</td>
+        <td style={cell}>{settings.bankBranch||''}</td>
+        <td style={cell}></td>
+      </tr></tbody>
+    </table>
+    <table style={{width:'100%',borderCollapse:'collapse',border:'1px solid #333',borderTop:'none'}}>
+      <tbody><tr>
+        {['Tenant / Authorized Signatory','Authorized Signatory for Lessor'].map((s,i)=><td key={i} style={{...cell,textAlign:'center',height:60,width:'50%',borderRight:i<1?'1px solid #333':'none'}}><div style={{borderTop:'1px solid #333',marginTop:40,paddingTop:4}}>{s}</div></td>)}
+      </tr></tbody>
+    </table>
+    <table style={{width:'100%',borderCollapse:'collapse',border:'1px solid #333',borderTop:'none'}}><tbody><tr><td style={cell}><b>Terms &amp; Conditions:</b><div style={{whiteSpace:'pre-wrap',marginTop:4,lineHeight:1.6,color:'#111'}}>{inv.termsConditions||defaultTerms}</div></td></tr></tbody></table>
+    {inv.notes&&<table style={{width:'100%',borderCollapse:'collapse',border:'1px solid #333',borderTop:'none'}}><tbody><tr><td style={cell}><b>Notes: </b>{inv.notes}</td></tr></tbody></table>}
+    </div>
+    <div className="np" style={{display:'flex',gap:8,justifyContent:'center',marginTop:16}}>
+      <GBtn onClick={onClose}>Close</GBtn>
+      <PBtn onClick={doPrint}>🖨 Print / Save PDF</PBtn>
+    </div>
+  </div>
+}
+
+/* ─── RENT INVOICE EDITOR ───────────────────────────── */
+function RentInvEditor({initial,data,onSave,onClose}){
+  const blank={type:'rent-invoice',gstType:'cgst_sgst',date:today(),dueDate:'',
+    customerName:'',companyName:'',customerPhone:'',customerAddress:'',customerGstin:'',customerEmail:'',
+    vehicleDetails:'',vehicleColor:'',vehicleReg:'',
+    items:[],notes:'',termsConditions:'',paymentStatus:'pending',amountPaid:0,additionalDiscount:0,adjustment:0}
+  const[form,setForm]=useState(initial?{...blank,...initial}:blank)
+  const[items,setItems]=useState(initial?.items||[])
+  const[saving,setSaving]=useState(false)
+  const f=(k,v)=>setForm(p=>({...p,[k]:v}))
+  async function doSave(){
+    if(!form.customerName){alert('Tenant name is required.');return}
+    if(!form.vehicleDetails){alert('Space / description is required.');return}
+    setSaving(true)
+    try{await onSave({...form,items,customerId:null,vehicleId:null})}finally{setSaving(false)}
+  }
+  const finalTotal=(()=>{const{grand}=calcItems(items);return grand-(form.additionalDiscount||0)+(form.adjustment||0)})()
+  return <div>
+    <div style={{fontSize:12,fontWeight:700,color:'#818aa0',letterSpacing:'.05em',textTransform:'uppercase',marginBottom:12}}>Tenant Details</div>
+    <FR>
+      <F label="Tenant Name *" half><In value={form.customerName} onChange={e=>f('customerName',e.target.value)} autoFocus/></F>
+      <F label="Company Name" half><In value={form.companyName||''} onChange={e=>f('companyName',e.target.value)} placeholder="e.g. Cars24 Financial Services Ltd."/></F>
+      <F label="Tenant Phone" half><In value={form.customerPhone||''} onChange={e=>f('customerPhone',e.target.value)}/></F>
+      <F label="Tenant Email" half><In type="email" value={form.customerEmail||''} onChange={e=>f('customerEmail',e.target.value)}/></F>
+      <F label="Tenant GSTIN" half><In value={form.customerGstin||''} onChange={e=>f('customerGstin',e.target.value)} placeholder="15-digit GSTIN"/></F>
+      <F label="GST Type" half><Sl value={form.gstType||'cgst_sgst'} onChange={e=>f('gstType',e.target.value)} opts={[{v:'cgst_sgst',l:'CGST + SGST (Intra-state)'},{v:'igst',l:'IGST (Inter-state)'}]}/></F>
+      <F label="Tenant Address"><Tx value={form.customerAddress||''} onChange={e=>f('customerAddress',e.target.value)} style={{minHeight:48}}/></F>
+    </FR>
+    <div style={{borderTop:'1px solid #1e2235',marginBottom:14,paddingTop:14}}>
+      <div style={{fontSize:12,fontWeight:700,color:'#818aa0',letterSpacing:'.05em',textTransform:'uppercase',marginBottom:12}}>Property &amp; Period</div>
+      <FR>
+        <F label="Space / Description *"><In value={form.vehicleDetails||''} onChange={e=>f('vehicleDetails',e.target.value)} placeholder="e.g. Ground Floor Workshop Bay, Plot No. 12, Sector 77"/></F>
+        <F label="Property Address (if different)"><In value={form.vehicleColor||''} onChange={e=>f('vehicleColor',e.target.value)} placeholder="Leave blank to use workshop address"/></F>
+        <F label="Rental Period" half><In value={form.vehicleReg||''} onChange={e=>f('vehicleReg',e.target.value)} placeholder="e.g. November 2025 or Nov 2025 – Oct 2026"/></F>
+        <F label="Invoice Date" half><In type="date" value={form.date} onChange={e=>f('date',e.target.value)}/></F>
+        <F label="Due Date" half><In type="date" value={form.dueDate||''} onChange={e=>f('dueDate',e.target.value)}/></F>
+        <F label="Payment Status" half><Sl value={form.paymentStatus||'pending'} onChange={e=>f('paymentStatus',e.target.value)} opts={[{v:'pending',l:'Pending'},{v:'paid',l:'Paid'},{v:'partial',l:'Partial'}]}/></F>
+      </FR>
+    </div>
+    <div style={{borderTop:'1px solid #1e2235',marginBottom:14,paddingTop:14}}>
+      <div style={{fontSize:12,fontWeight:700,color:'#818aa0',letterSpacing:'.05em',textTransform:'uppercase',marginBottom:12}}>Rent Line Items</div>
+      <div style={{fontSize:11,color:'#636b82',marginBottom:10}}>Use SAC code <b>997212</b> for commercial property rental. Add as a service line item.</div>
+      <LineEd items={items} setItems={setItems} parts={[]} gstType={form.gstType} light={true}/>
+    </div>
+    <FR>
+      <F label="Additional Discount (₹)" third><In type="number" value={form.additionalDiscount||0} onChange={e=>f('additionalDiscount',+e.target.value)}/></F>
+      <F label="Adjustment (₹)" third><In type="number" value={form.adjustment||0} onChange={e=>f('adjustment',+e.target.value)}/></F>
+      <F label="Final Total (preview)" third><div style={{padding:'8px 11px',background:'#f0f4ff',border:'1px solid #c7d2fe',borderRadius:8,fontWeight:700,fontSize:15,color:'#3730a3'}}>{fmt(finalTotal)}</div></F>
+    </FR>
+    <FR>
+      <F label="Notes"><Tx value={form.notes||''} onChange={e=>f('notes',e.target.value)} style={{minHeight:40}}/></F>
+      <F label="Terms &amp; Conditions (leave blank for default rent terms)"><Tx value={form.termsConditions||''} onChange={e=>f('termsConditions',e.target.value)} style={{minHeight:60}}/></F>
+    </FR>
+    <Btns onCancel={onClose} onSave={doSave} label={initial?.id?'Update Rent Invoice':'Create Rent Invoice'} saving={saving}/>
+  </div>
+}
+
+/* ─── RENT INVOICES LIST ────────────────────────────── */
+function RentInvoices({data,db}){
+  const[showNew,setShowNew]=useState(false);const[editI,setEditI]=useState(null);const[printI,setPrintI]=useState(null)
+  const[q,setQ]=useState('')
+  const list=data.invoices.filter(i=>i.type==='rent-invoice')
+  const filt=list.filter(i=>!q||(i.customerName||'').toLowerCase().includes(q.toLowerCase())||(i.companyName||'').toLowerCase().includes(q.toLowerCase())||buildInvNo(data.settings||DEF,i).toLowerCase().includes(q.toLowerCase()))
+  const sorted=[...filt].sort((a,b)=>(+b.invSerial||+b.id)-(+a.invSerial||+a.id))
+  const pC={paid:'#0a1f0d|#4ade80',partial:'#1a1200|#fb923c',pending:'#1c1500|#fbbf24',cancelled:'#2a0a10|#f87171'}
+  const total=list.filter(i=>i.paymentStatus!=='cancelled').reduce((s,i)=>s+(+i.grand||0),0)
+  const collected=list.filter(i=>i.paymentStatus==='paid'||i.paymentStatus==='partial').reduce((s,i)=>s+(+i.amountPaid||0),0)
+  return <div>
+    <div style={{display:'flex',alignItems:'center',gap:10,marginBottom:16,flexWrap:'wrap'}}>
+      <h2 style={{fontSize:22,fontWeight:800,margin:0,flex:1,color:'#e8eaf2',letterSpacing:'-.025em'}}>Rent Invoices</h2>
+      <input value={q} onChange={e=>setQ(e.target.value)} placeholder="Search tenant / invoice…" style={{...IS,width:220}}/>
+      <PBtn onClick={()=>setShowNew(true)}>+ New Rent Invoice</PBtn>
+    </div>
+    {list.length>0&&<div style={{display:'flex',gap:10,flexWrap:'wrap',marginBottom:16}}>
+      {[['Total Billed',total,'#0d1a30','#6875f5'],['Collected',collected,'#0a1f0d','#4ade80'],['Outstanding',total-collected,'#1c1500','#fbbf24']].map(([l,v,bg,fg])=><div key={l} style={{background:bg,border:`1px solid ${fg}33`,borderRadius:8,padding:'7px 16px',fontSize:12}}><span style={{color:'#818aa0'}}>{l}: </span><b style={{color:fg,fontSize:13}}>{fmt(v)}</b></div>)}
+    </div>}
+    <div style={{background:'#1a1d27',border:'1px solid #1e2235',borderRadius:12,overflow:'hidden'}}>
+      <div style={{overflowX:'auto'}}>
+        <table style={{minWidth:700}}><thead><tr>
+          {['Invoice No.','Tenant','Space / Period','Date','Amount','Status','Actions'].map(h=><th key={h} style={TH}>{h}</th>)}
+        </tr></thead>
+        <tbody>{sorted.map(inv=>{
+          const cancelled=inv.paymentStatus==='cancelled'
+          const paid=inv.paymentStatus==='paid'
+          const[pbg,pfg]=(pC[inv.paymentStatus]||'#1a1d27|#818aa0').split('|')
+          return <tr key={inv.id} style={cancelled?{opacity:.55,background:'#160a0a'}:{}}>
+            <td style={{...TD,color:'#6875f5',fontWeight:700,fontFamily:'monospace',fontSize:12}}>{buildInvNo(data.settings||DEF,inv)}</td>
+            <td style={{...TD,fontWeight:600,color:'#e8eaf2',whiteSpace:'normal'}}>
+              {inv.customerName||'—'}
+              {inv.companyName&&<div style={{fontSize:11,color:'#818aa0',marginTop:1}}>{inv.companyName}</div>}
+            </td>
+            <td style={{...TD,color:'#818aa0',fontSize:12,whiteSpace:'normal'}}>
+              {inv.vehicleDetails||'—'}
+              {inv.vehicleReg&&<div style={{fontSize:11,marginTop:1,color:'#636b82'}}>{inv.vehicleReg}</div>}
+            </td>
+            <td style={{...TD,color:'#818aa0',fontSize:12}}>{fmtD(inv.date)}</td>
+            <td style={{...TD,fontWeight:700,color:'#e8eaf2'}}>{fmt(inv.grand)}</td>
+            <td style={TD}>{cancelled
+              ?<span style={{fontSize:11,fontWeight:700,color:'#f87171',background:'#2a0a10',padding:'3px 9px',borderRadius:99,display:'inline-flex',alignItems:'center'}}>Cancelled</span>
+              :<select value={inv.paymentStatus||'pending'} onChange={e=>db.markPay(inv.id,e.target.value)} style={{padding:'4px 10px',border:'1px solid #252d3d',borderRadius:8,fontSize:12,background:pbg,color:pfg,fontWeight:600,cursor:'pointer',width:'auto',outline:'none'}}><option value="pending">⏳ Pending</option><option value="partial">⚡ Partial</option><option value="paid">✓ Paid</option></select>
+            }</td>
+            <td style={TD}><div style={{display:'flex',gap:5,alignItems:'center'}}>
+              <button onClick={()=>setPrintI(inv)} title="Print" style={{width:30,height:30,background:'#1e2235',color:'#9daabb',border:'1px solid #252d3d',borderRadius:6,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',fontSize:13}}>🖨</button>
+              {!cancelled&&!paid&&<button onClick={()=>setEditI(inv)} title="Edit" style={{width:30,height:30,background:'#1e2235',color:'#9daabb',border:'1px solid #252d3d',borderRadius:6,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',fontSize:13}}>✏</button>}
+              {!cancelled&&<button onClick={async()=>{if(confirm('Cancel '+buildInvNo(data.settings||DEF,inv)+'?'))await db.cancelInvoice(inv.id)}} title="Cancel" style={{width:30,height:30,background:'#2a0a10',color:'#f87171',border:'1px solid #7f1d1d',borderRadius:6,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',fontSize:13}}>⊘</button>}
+            </div></td>
+          </tr>
+        })}</tbody></table>
+      </div>
+    </div>
+    {sorted.length===0&&<p style={{textAlign:'center',color:'#818aa0',padding:36}}>No rent invoices yet. Click "+ New Rent Invoice" to create one.</p>}
+    {showNew&&<Modal title="New Rent Invoice" onClose={()=>setShowNew(false)} wide light><div className="inv-form"><RentInvEditor data={data} onSave={async f=>{await db.saveInvoice(f);setShowNew(false)}} onClose={()=>setShowNew(false)}/></div></Modal>}
+    {editI&&<Modal title={'Edit — '+buildInvNo(data.settings||DEF,editI)} onClose={()=>setEditI(null)} wide light><div className="inv-form"><RentInvEditor initial={editI} data={data} onSave={async f=>{await db.saveInvoice(f);setEditI(null)}} onClose={()=>setEditI(null)}/></div></Modal>}
+    {printI&&<Modal title="Rent Invoice Preview" onClose={()=>setPrintI(null)} wide><RentPrintDoc inv={printI} settings={data.D?.settings||data.settings} onClose={()=>setPrintI(null)}/></Modal>}
   </div>
 }
 
@@ -1743,13 +2023,14 @@ const I={
   box:<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>,
   cog:<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>,
   logout:<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>,
+  building:<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-4 0v2"/><line x1="12" y1="12" x2="12" y2="12.01"/></svg>,
   menu:<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>,
   search:<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>,
   plus:<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>,
 }
 const NAV_GROUPS=[
   {g:'',     items:[{k:'Dashboard',i:'grid'}]},
-  {g:'WORKSHOP', items:[{k:'Job Cards',i:'wrench'},{k:'Invoices',i:'receipt'}]},
+  {g:'WORKSHOP', items:[{k:'Job Cards',i:'wrench'},{k:'Invoices',i:'receipt'},{k:'Rent Invoices',i:'building'}]},
   {g:'MANAGE',   items:[{k:'Customers',i:'users'},{k:'Vehicles',i:'car'},{k:'Inventory',i:'box'}]},
   {g:'SYSTEM',   items:[{k:'Settings',i:'cog'}]},
 ]
@@ -1820,6 +2101,7 @@ function AppShell({onLogout}){
         {tab==='Dashboard'&&<Dashboard data={data} setTab={setTab}/>}
         {tab==='Job Cards'&&<JobCards data={data} db={db} setTab={setTab}/>}
         {tab==='Invoices'&&<Invoices data={data} db={db}/>}
+        {tab==='Rent Invoices'&&<RentInvoices data={data} db={db}/>}
         {tab==='Customers'&&<Customers data={data} db={db}/>}
         {tab==='Vehicles'&&<Vehicles data={data} db={db}/>}
         {tab==='Inventory'&&<Inventory data={data} db={db}/>}
